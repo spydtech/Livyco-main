@@ -10,6 +10,8 @@ import ClientLogin from "./Client-Login/ClientLogin";
 import OTPVerification from "./Client-Login/OTPVerification ";
 import ClientHomePage from "./Client-Home/ClientHomePage";
 import ClientDashboard from "./Client-Dashboard/ClientDashboard";
+import TenantRequestTable from "./TenantRequests/TenantRequestTable";
+import TenantDetails from "./TenantRequests/TenantDetails";
 // import ClientNav from "./Client-Navbar/ClientNav";
 
 
@@ -24,6 +26,11 @@ const ClientLayout = () => {
         <Route path="/client-otpverify" element={<OTPVerification />} />
         <Route path="/home" element={<ClientHomePage />} />
         <Route path="/dashboard" element={<ClientDashboard />} />
+        <Route path="/tenantrequest" element={<TenantRequestTable />} />
+        <Route path="/tenant-request-view/:id" element={<TenantDetails />} />
+
+
+
         
       </Routes>
     </div>
