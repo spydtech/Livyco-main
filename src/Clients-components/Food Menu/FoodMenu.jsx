@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import ClientNav from "../Client-Navbar/ClientNav";
 
 const FoodMenu = () => {
   const [manualEntry, setManualEntry] = useState(false);

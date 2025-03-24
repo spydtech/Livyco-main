@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiMessageCircle, FiPhone } from "react-icons/fi";
 import ClientNav from "../Client-Navbar/ClientNav";
 
-const TenantDetails = () => {
+const ApproveCheckout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const tenant = location.state || {}; // Ensure tenant data is passed
@@ -86,7 +86,7 @@ const TenantDetails = () => {
       {/* Confirm Booking Button */}
       <div className="flex justify-center mt-8">
         <button className="w-64 py-3 bg-blue-600 text-white text-lg font-semibold rounded-md shadow-md hover:bg-blue-700 transition">
-          Confirm Booking
+         Approve and Process Refund
         </button>
       </div>
     </div>
@@ -94,4 +94,5 @@ const TenantDetails = () => {
   );
 };
 
-export default TenantDetails;
+export default ApproveCheckout;
+

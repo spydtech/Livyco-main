@@ -12,6 +12,16 @@ import ClientHomePage from "./Client-Home/ClientHomePage";
 import ClientDashboard from "./Client-Dashboard/ClientDashboard";
 import TenantRequestTable from "./TenantRequests/TenantRequestTable";
 import TenantDetails from "./TenantRequests/TenantDetails";
+import ServiceRequests from "./ServiceRequest/serviceRequests";
+import ApprovalPage from "./ServiceRequest/ApprovalPage";
+import CancelRequestPage from "./ServiceRequest/CancelRequestPage";
+import TenantCheckoutRequest from "./CheckOutPages/TenantCheckoutRequest";
+import ApproveCheckout from "./CheckOutPages/ApproveCheckout";
+import FoodMenu from "./Food Menu/FoodMenu";
+import TenantProfile from "./TenantList/TenantProfile";
+import TenantList from "./TenantList/TenantList";
+import AddTenant from "./TenantList/AddTenant";
+// import TenantFilter from "./TenantList/TenantFilter";
 // import ClientNav from "./Client-Navbar/ClientNav";
 
 
@@ -28,10 +38,20 @@ const ClientLayout = () => {
         <Route path="/dashboard" element={<ClientDashboard />} />
         <Route path="/tenantrequest" element={<TenantRequestTable />} />
         <Route path="/tenant-request-view/:id" element={<TenantDetails />} />
+        <Route path="/servicerequests" element={<ServiceRequests />} />
+        <Route path="/servicerequests/cancel/:id" element={<CancelRequestPage />} />
+        <Route path="/servicerequests/approval/:id" element={<ApprovalPage />} />
+        <Route path="/checkoutrequest" element={<TenantCheckoutRequest />} />
+        <Route path="/approvecheckout/:id" element={<ApproveCheckout />} />
+        <Route path="/foodmenu" element={<FoodMenu />} />
+        <Route path="/tenantlist" element={<TenantList />} />
+        {/* <Route path="/" element={<TenantFilter />} /> */}
 
-
+        <Route path="/addtenant" element={<AddTenant />} />
+        <Route path="/tenantprofile/:id" element={<TenantProfile />} />
 
         
+
       </Routes>
     </div>
   );

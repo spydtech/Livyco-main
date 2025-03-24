@@ -16,6 +16,7 @@ import {
   import { Line, Doughnut, Bar } from "react-chartjs-2";
   import { MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import ClientNav from "../Client-Navbar/ClientNav";
+import { Link } from "react-router-dom";
   
   // Register Chart.js components
   ChartJS.register(
@@ -92,15 +93,16 @@ const ClientDashboard = () => {
       
       <div>
       <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6 mb-10">
-        <StatCard title="Pending Request" value="N" color="#204CAF" icon={<MdError />} />
-        <StatCard title="Active Issues" value="N" color="#9B3536" icon={<MdError />} />
-        <StatCard title="Check Out Requests" value="N" color="#AF2078" icon={<MdOutlineLogout />} />
-        <StatCard title="Food Menu" value="N" color="#AF5420" icon={<FaUtensils />} />
-        <StatCard title="Rent to be collected" value="₹N / ₹00000" color="#4DAF20" icon={<FaWallet />} />
-        <StatCard title="Current Occupants" value="N" color="#AFA120" icon={<FaUsers />} />
-        <StatCard title="Bed Counts" value="N" color="#20A8AF" icon={<FaBed />} />
-        <StatCard title="Total Guests" value="N" color="#8420AF" icon={<FaUsers />} />
-      </div>
+  <StatCard title="Pending Request" value="N" color="#204CAF" icon={<MdError />} link="/client/tenantrequest" />
+  <StatCard title="Active Issues" value="N" color="#9B3536" icon={<MdError />} link="/client/servicerequests" />
+  <StatCard title="Check Out Requests" value="N" color="#AF2078" icon={<MdOutlineLogout />} link="/client/checkoutrequest" />
+  <StatCard title="Food Menu" value="N" color="#AF5420" icon={<FaUtensils />} link="/client/foodmenu" />
+  <StatCard title="Rent to be collected" value="₹N / ₹00000" color="#4DAF20" icon={<FaWallet />} link="/rent-collection" />
+  <StatCard title="Current Occupants" value="N" color="#AFA120" icon={<FaUsers />} link="/current-occupants" />
+  <StatCard title="Bed Counts" value="N" color="#20A8AF" icon={<FaBed />} link="/bed-counts" />
+  <StatCard title="Total Guests" value="N" color="#8420AF" icon={<FaUsers />} link="/total-guests" />
+</div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-0">
         {/* Line Chart */}
@@ -191,15 +193,17 @@ const ClientDashboard = () => {
 };
 
 // Component: Statistics Card
-const StatCard = ({ title, value, color, icon }) => (
-  <div
-    className="text-white p-4 rounded-lg flex flex-col items-center justify-center h-[150px] w-[230px] shadow-lg"
-    style={{ backgroundColor: color }}
-  >
-    <div className="text-3xl mb-2">{icon}</div>
-    <h4 className="text-lg font-semibold">{title}</h4>
-    <p className="text-xl">{value}</p>
-  </div>
+const StatCard = ({ title, value, color, icon, link }) => (
+  <Link to={link} className="no-underline">
+    <div
+      className="text-white p-4 rounded-lg flex flex-col items-center justify-center h-[150px] w-[230px] shadow-lg cursor-pointer transition-transform transform hover:scale-105"
+      style={{ backgroundColor: color }}
+    >
+      <div className="text-3xl mb-2">{icon}</div>
+      <h4 className="text-lg font-semibold">{title}</h4>
+      <p className="text-xl">{value}</p>
+    </div>
+  </Link>
 );
 
 // Component: Tenant Payment Card

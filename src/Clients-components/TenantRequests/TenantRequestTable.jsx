@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiExternalLink, FiFilter } from "react-icons/fi";
 import FilterModal from "./FilterModal"; // Import the modal
+import ClientNav from "../Client-Navbar/ClientNav";
 
 const tenants = [
   {
@@ -54,19 +55,39 @@ const TenantRequestTable = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter tenants based on search query
-  const filteredTenants = tenants.filter((tenant) =>
+   // Filter tenants based on search query
+   const filteredTenants = tenants.filter((tenant) =>
     tenant.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <>
     <ClientNav />
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-[#F8F8FF] min-h-screen">
       {/* Breadcrumb */}
       <h2 className="text-gray-500 text-sm mb-2">Home / Tenant Request</h2>
+      <div className=" p-4 ">
 
       {/* Search Bar */}
-      <div className="flex items-center bg-white p-3 rounded-lg shadow-md mb-4 border">
+      <div className="flex items-center  mb-4">
+            <input
+              type="text"
+              placeholder="Search By name , Room number"
+              className="w-1/2 p-2 border rounded-3xl text-sm bg-[#F8F8FF] focus:outline-none focus:ring-1 focus:ring-gray-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+           <svg 
+            onClick={() => setShowFilter(true)}
+           width="35" height="36" viewBox="0 0 35 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M17.4974 7.79199L29.1641 7.79199M5.83073 28.2087H10.2057M5.83073 7.79199L11.6641 7.79199M16.0391 28.2087L29.1641 28.2087M24.7891 18.0003H29.1641M5.83073 18.0003L18.9557 18.0003" stroke="#333333" stroke-linecap="round"/>
+<path d="M11.6667 7.79167C11.6667 9.4025 12.9725 10.7083 14.5833 10.7083C16.1942 10.7083 17.5 9.4025 17.5 7.79167C17.5 6.18084 16.1942 4.875 14.5833 4.875C12.9725 4.875 11.6667 6.18084 11.6667 7.79167Z" stroke="#333333" stroke-linecap="round"/>
+<path d="M18.9557 17.9997C18.9557 19.6105 20.2616 20.9163 21.8724 20.9163C23.4832 20.9163 24.7891 19.6105 24.7891 17.9997C24.7891 16.3888 23.4832 15.083 21.8724 15.083C20.2616 15.083 18.9557 16.3888 18.9557 17.9997Z" stroke="#333333" stroke-linecap="round"/>
+<path d="M10.2057 28.2087C10.2057 29.8195 11.5116 31.1253 13.1224 31.1253C14.7332 31.1253 16.0391 29.8195 16.0391 28.2087C16.0391 26.5978 14.7332 25.292 13.1224 25.292C11.5116 25.292 10.2057 26.5978 10.2057 28.2087Z" stroke="#333333" stroke-linecap="round"/>
+</svg>
+
+          </div>
+      {/* <div className="flex items-center bg-white p-3 rounded-full border-gray-500  mb-4 border w-1/2">
         <input
           type="text"
           placeholder="Search by name, room number"
@@ -74,17 +95,18 @@ const TenantRequestTable = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-       <FiFilter
+      <FiFilter
           className="text-gray-600 text-2xl cursor-pointer"
           onClick={() => setShowFilter(true)}
         />
-      </div>
+      </div> */}
+      
 
       {/* Table */}
-      <div className="bg-white p-4 rounded-lg shadow-md overflow-x-auto">
+      <div className=" p-4   overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-gray-100 text-left text-gray-600">
+            <tr className="bg-[#F8F8FF] text-left text-gray-600 border-b border-gray-500">
               <th className="p-3">Tenant Name</th>
               <th className="p-3">Email</th>
               <th className="p-3">Check-in Date</th>
@@ -95,8 +117,8 @@ const TenantRequestTable = () => {
             </tr>
           </thead>
           <tbody>
-            {tenants.map((tenant, index) => (
-              <tr key={tenant.id} className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} border-b`}>
+            {filteredTenants.map((tenant, index) => (
+              <tr key={tenant.id} className={`${index % 2 === 0 ? "bg-[#FFFFFF]" : "bg-[#F8F8FF"} `}>
                 <td className="p-3">{tenant.name}</td>
                 <td className="p-3">{tenant.email}</td>
                 <td className="p-3">{tenant.checkInDate}</td>
@@ -122,6 +144,7 @@ const TenantRequestTable = () => {
             ))}
           </tbody>
         </table>
+      </div>
       </div>
        {/* Filter Modal */}
        {showFilter && <FilterModal onClose={() => setShowFilter(false)} />}
