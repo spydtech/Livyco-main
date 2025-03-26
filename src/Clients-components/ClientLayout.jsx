@@ -21,8 +21,11 @@ import FoodMenu from "./Food Menu/FoodMenu";
 import TenantProfile from "./TenantList/TenantProfile";
 import TenantList from "./TenantList/TenantList";
 import AddTenant from "./TenantList/AddTenant";
+import ConformBooking from "./TenantList/ConformBooking";
+import TanentConfirmbox from "./CheckOutPages/TanentConfirmbox";
 // import TenantFilter from "./TenantList/TenantFilter";
 // import ClientNav from "./Client-Navbar/ClientNav";
+import Main from "./ManageProperties/Main"
 
 
 const ClientLayout = () => {
@@ -43,12 +46,14 @@ const ClientLayout = () => {
         <Route path="/servicerequests/approval/:id" element={<ApprovalPage />} />
         <Route path="/checkoutrequest" element={<TenantCheckoutRequest />} />
         <Route path="/approvecheckout/:id" element={<ApproveCheckout />} />
+        <Route path="/confirm-booking" element={<TanentConfirmbox />} />
         <Route path="/foodmenu" element={<FoodMenu />} />
         <Route path="/tenantlist" element={<TenantList />} />
-        {/* <Route path="/" element={<TenantFilter />} /> */}
+        <Route path="/confirmbooking" element={<ConformBooking />} />
 
         <Route path="/addtenant" element={<AddTenant />} />
         <Route path="/tenantprofile/:id" element={<TenantProfile />} />
+        <Route path="/properties" element={<Main />} />
 
         
 

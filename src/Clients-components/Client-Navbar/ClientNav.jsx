@@ -8,7 +8,7 @@ const ClientNav = () => {
   
   const navLinks = [
     { name: "Home", path: "/client/home" },
-    { name: "Listing", path: "#" },
+    { name: "Listing", path: "/client/properties" },
     { name: "Tenants", path: "/client/tenantlist" },
     { name: "Dashboard", path: "/client/dashboard" },
     { name: "Chat", path: "#" },

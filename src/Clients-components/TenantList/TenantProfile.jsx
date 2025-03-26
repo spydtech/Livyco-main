@@ -13,7 +13,7 @@ const TenantProfile = () => {
   const [showRentOptions, setShowRentOptions] = useState(false);
   const [rentOption, setRentOption] = useState("");
   const [customDate, setCustomDate] = useState("");
-  
+ 
   const [preferencesSaved, setPreferencesSaved] = useState(false);
 
   const handleCheckboxChange = () => {
@@ -54,7 +54,7 @@ const TenantProfile = () => {
   return (
     <div className="bg-[#F8F8FF] min-h-screen">
       {/* Header */}
-      <div className="bg-blue-700 p-4 text-white flex items-center">
+      <div className="bg-[#0827B2] p-4 text-white flex items-center">
         <FaArrowLeft className="text-2xl cursor-pointer" onClick={() => navigate(-1)}/>
         <h1 className="ml-3 text-xl font-semibold">Tenant Profile</h1>
       </div>
@@ -238,8 +238,10 @@ const TenantProfile = () => {
         </div>
 
         {/* Save Button */}
-        <div className="mt-8 flex justify-center">
-          <button className="bg-yellow-400 px-10 py-3 text-lg font-semibold rounded-lg">
+        <div className="mt-8 flex justify-center"
+          onClick={() => navigate("/client/confirmbooking")}
+        >
+          <button className="bg-yellow-400 px-10 py-3 text-lg font-semibold rounded-lg w-1/2">
             Save
           </button>
         </div>
