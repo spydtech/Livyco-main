@@ -1,14 +1,127 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { auth } from "../../firebase/firebase";
+import { Link } from 'react-router-dom';
+// import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 
-const OTPVerification = ({ phoneNumber, onVerifyOTP }) => {
-  const [otp, setOtp] = useState(["", "", "", ""]);
 
-  const handleChange = (index, value) => {
-    if (value.length > 1) return;
-    let newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+
+
+
+import axios from "axios";
+
+
+const API_BASE_URL = "http://localhost:5000/api/auth";
+const OTPVerification = () => {
+   const [otp, setOtp] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const [confirmationResult, setConfirmationResult] = useState(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // const phoneNumber = location.state?.phoneNumber;
+  const [phoneNumber, setPhoneNumber] = useState("");
+  
+  useEffect(() => {
+    if (!window.confirmationResult || !location.state?.phoneNumber) {
+      navigate("/client/client-otpverify");
+    } else {
+      setConfirmationResult(window.confirmationResult);
+      setPhoneNumber(location.state.phoneNumber);
+    }
+  }, [navigate, location]);
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (otp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Verify OTP with Firebase
+      const result = await confirmationResult.confirm(otp);
+      const user = result.user;
+      const token = await user.getIdToken();
+
+      // Get user data from backend using the phone number
+      const response = await axios.post(`${API_BASE_URL}/send-otp`, { 
+        phone: phoneNumber.replace('+91', '') 
+      });
+
+      if (response.data.success) {
+        // Store user data in localStorage
+        localStorage.setItem('clientUser', JSON.stringify({
+          clientId: response.data.clientId,
+          phone: response.data.user.phone,
+          name: response.data.user.name,
+          location: response.data.user.location
+        }));
+
+        navigate("/client/dashboard");
+      } else {
+        throw new Error("Failed to get user data");
+      }
+    } catch (err) {
+      console.error("OTP verification failed", err);
+      setError("Invalid OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+ 
+
+
+
+
+
+  const handleResend = async () => {
+  setError("");
+  setLoading(true);
+
+  try {
+    // Re-initialize Recaptcha
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible',
+      'callback': (response) => {
+        console.log("reCAPTCHA verified on resend");
+      }
+    });
+
+    const appVerifier = window.recaptchaVerifier;
+
+    const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+
+    window.confirmationResult = confirmation;
+    setConfirmationResult(confirmation);
+
+    alert("OTP resent successfully!");
+
+    // Optional: call backend to log the resend
+    await axios.post(`${API_BASE_URL}/resend-otp`, {
+      phone: phoneNumber.replace("+91", "")
+    });
+
+  } catch (err) {
+    console.error("Error resending OTP", err);
+    setError("Failed to resend OTP. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+ 
+
 
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
@@ -41,24 +154,20 @@ const OTPVerification = ({ phoneNumber, onVerifyOTP }) => {
         <div className="bg-white p-8 rounded-lg shadow-lg w-full md:w-1/3 ml-20">
           <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
           <p className="text-gray-700 text-center font-semibold">OTP Verification</p>
-          <p className="text-sm text-gray-500 text-center mb-4">
-            Enter 4-digit OTP sent to <span className="font-semibold">{phoneNumber}</span>
-            <span className="text-blue-500 ml-2 cursor-pointer">✏️</span>
-          </p>
+          <p className="text-gray-700 text-center font-semibold">Enter 6-digit OTP sent to <span className="font-semibold">{phoneNumber}</span></p>
 
-          {/* OTP Input Boxes */}
-          <div className="flex justify-center space-x-2 mb-4">
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleChange(index, e.target.value)}
-                className="w-12 h-12 text-lg text-center border rounded focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
-            ))}
-          </div>
+<form onSubmit={handleVerify} className="space-y-4 mt-4">
+  <input
+    type="text"
+    value={otp}
+    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+    placeholder="Enter OTP"
+    className="w-full p-2 border rounded text-center text-xl tracking-widest"
+  />
+
+ 
+</form>
+          {/* </div> */}
 
           <p className="text-xs text-gray-500 mt-2 text-center">
             By signing up, you agree to our{" "}
@@ -68,11 +177,27 @@ const OTPVerification = ({ phoneNumber, onVerifyOTP }) => {
 
           {/* Verify OTP Button */}
           <button
-            onClick={onVerifyOTP}
+           type="submit"
+            onClick={handleVerify}
             className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 mt-4 rounded"
           >
             Verify OTP
           </button>
+          {/* Resend OTP Button */}
+          <button
+            onClick={handleResend}
+            className="w-full text-blue-500 hover:text-blue-700 font-semibold py-2 mt-4 rounded"
+          >
+            Resend OTP
+          </button>
+          {/* Back to Login Button */}
+          <Link to="/client/client-login">
+            <button className="w-full text-gray-500 hover:text-gray-700 font-semibold py-2 mt-4 rounded">
+              Back to Login
+            </button>
+          </Link>
+          <div id="recaptcha-container" className="hidden"></div>
+
         </div>
       </div>
     </div>

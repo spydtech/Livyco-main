@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaBell } from "react-icons/fa6";
 import { IoIosArrowDown } from "react-icons/io";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
+ // Adjust if needed
 
 const ClientNav = () => {
-  
+   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
   const navLinks = [
     { name: "Home", path: "/client/home" },
     { name: "Listing", path: "/client/properties" },
@@ -14,6 +21,45 @@ const ClientNav = () => {
     { name: "Chat", path: "/client/chat" },
     { name: "Contact Us", path: "/client/supportdashboard" },
   ];
+useEffect(() => {
+   const fetchUser = async () => {
+  const storedUser = localStorage.getItem("clientUser");
+  if (storedUser) {
+    const parsedUser = JSON.parse(storedUser);
+    
+    try {
+      const response = await axios.get(`http://localhost:5000/api/auth/user?clientId=${clientId}`, {
+        params: { clientId: parsedUser.clientId },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('clientToken')}`
+        }
+      });
+
+      if (response.data.success) {
+        setUser(response.data.user);
+      } else {
+        console.warn("Falling back to stored user");
+        setUser(parsedUser);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      // Fall back to stored user if API fails
+      setUser(parsedUser);
+    }
+  }
+};
+
+    fetchUser();
+  }, []);
+ 
+  
+ 
+
+    const handleLogout = () => {
+    localStorage.removeItem("clientUser"); // Clear user info
+    navigate("/client/client-login");
+  };
+
   return (
     <nav className="bg-blue-900 py-4 px-6 flex items-center justify-between">
       {/* Left Section - Logo */}
@@ -60,17 +106,31 @@ const ClientNav = () => {
         <FaBell className="text-white text-xl cursor-pointer hover:text-yellow-400" />
 
         {/* Profile Section */}
-        <div className="flex items-center bg-white px-3 py-2 rounded-lg shadow-md cursor-pointer">
-          <img
-            src="/profile.png"
-            alt="Profile"
-            className="w-8 h-8 rounded-full mr-2"
-          />
-          <div className="text-sm">
-            <p className="font-medium">Jagadeesh</p>
-            <p className="text-gray-500 text-xs">Krazy Deluxe Hostels</p>
+         {/* Profile Section */}
+         <div className="relative">
+          <div
+            className="flex items-center bg-white px-3 py-2 rounded-lg shadow-md cursor-pointer"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
+            <img src="/profile.png" alt="Profile" className="w-8 h-8 rounded-full mr-2" />
+           <div className="text-sm">
+              <p className="font-medium">{user?.name || "Guest"}</p>
+              <p className="text-gray-500 text-xs">{user?.location || "Location"}</p>
+            </div>
+            <IoIosArrowDown className="ml-2 text-gray-500" />
           </div>
-          <IoIosArrowDown className="ml-2 text-gray-500" />
+
+          {/* Dropdown Menu */}
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg">
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

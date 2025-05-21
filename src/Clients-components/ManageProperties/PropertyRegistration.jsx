@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { FaLocationCrosshairs } from "react-icons/fa6";
+import axios from "axios";
+import { auth } from "../../firebase/firebase"; // Adjust path accordingly
+import { getIdToken } from "firebase/auth";
+
+
+
 const PropertyRegistration = ({ nextStep }) => {
   const [formData, setFormData] = useState({
     city: "",
@@ -10,10 +16,18 @@ const PropertyRegistration = ({ nextStep }) => {
     gstNo: "",
     cgstNo: "",
     sgstNo: "",
+    latitude: "",
+    longitude: "",
   });
+ 
+
+   
+ 
 
   const [errors, setErrors] = useState({});
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+
 
   useEffect(() => {
     const savedData = localStorage.getItem("propertyData");
@@ -23,84 +37,133 @@ const PropertyRegistration = ({ nextStep }) => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
   };
 
-  const handleSubmit = () => {
+  const validateForm = () => {
     const newErrors = {};
-    Object.keys(formData).forEach((key) => {
-      if (!formData[key]) {
-        newErrors[key] = "This field is required";
+    const requiredFields = [
+      'city', 'name', 'locality', 'street', 
+      'registrationId', 'gstNo'
+    ];
+
+    requiredFields.forEach(field => {
+      if (!formData[field]) {
+        newErrors[field] = "This field is required";
       }
     });
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    localStorage.setItem("propertyData", JSON.stringify(formData));
-
-    alert("Form data saved successfully!");
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const fetchLocation = () => {
+  const fetchLocation = async () => {
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
       return;
     }
 
     setLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        console.log("Latitude:", latitude, "Longitude:", longitude);
+    setErrors(prev => ({ ...prev, location: "" }));
 
-        try {
-          // Fetch address from OpenStreetMap API
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-          );
-          const data = await response.json();
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
 
-          if (data && data.address) {
-            setFormData({
-              ...formData,
-              city: data.address.city || data.address.town || "",
-              locality: data.address.suburb || data.address.village || "",
-              street:
-                data.address.road ||
-                data.address.neighbourhood ||
-                data.display_name ||
-                "",
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching location:", error);
-        } finally {
-          setLoadingLocation(false);
-        }
-      },
-      (error) => {
-        alert("Unable to retrieve location. Please check your permissions.");
-        console.error(error);
-        setLoadingLocation(false);
+      const { latitude, longitude } = position.coords;
+      
+      setFormData(prev => ({
+        ...prev,
+        latitude: latitude.toString(),
+        longitude: longitude.toString()
+      }));
+
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+      );
+
+      if (response.data && response.data.address) {
+        const { address } = response.data;
+        setFormData(prev => ({
+          ...prev,
+          city: address.city || address.town || address.county || "",
+          locality: address.suburb || address.village || address.neighbourhood || "",
+          street: address.road || address.pedestrian || address.footway || ""
+        }));
       }
-    );
+    } catch (error) {
+      console.error("Location error:", error);
+      setErrors(prev => ({
+        ...prev,
+        location: "Failed to get location. Please enter manually."
+      }));
+    } finally {
+      setLoadingLocation(false);
+    }
   };
 
+ const handleSubmit = async () => {
+  if (!validateForm()) return;
+  setSubmitLoading(true);
+  setErrors({});
+
+  try {
+    const user = auth.currentUser;
+
+    if (!user) {
+      setErrors({ submit: "User not logged in." });
+      setSubmitLoading(false);
+      return;
+    }
+
+    const token = await getIdToken(user, true); // Force refresh optional
+    const response = await axios.post(
+      "http://localhost:5000/api/auth/properties/register",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.status === 201) {
+      localStorage.setItem("propertyData", JSON.stringify(formData));
+      nextStep();
+    }
+  } catch (error) {
+    console.error("Error during submission:", error);
+    setErrors({ submit: "Failed to submit. Please try again." });
+  } finally {
+    setSubmitLoading(false);
+  }
+};
+
   return (
-    <div className="mx-auto p-6">
+    <div className="mx-auto p-6 max-w-4xl">
       <h2 className="text-lg font-semibold mb-6">
         Provide the property address, license number, and required registrations
         for verification.
       </h2>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
           { name: "city", placeholder: "City*" },
-          { name: "name", placeholder: "PG/Hostel Name *" },
-          { name: "locality", placeholder: "Locality *" },
-          { name: "street", placeholder: "Street/Area/Landmark *" },
+          { name: "name", placeholder: "PG/Hostel Name*" },
+          { name: "locality", placeholder: "Locality*" },
+          { name: "street", placeholder: "Street/Area/Landmark*" },
         ].map((field) => (
           <div key={field.name}>
             <input
@@ -109,33 +172,38 @@ const PropertyRegistration = ({ nextStep }) => {
               value={formData[field.name]}
               onChange={handleChange}
               placeholder={field.placeholder}
-              className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
+              className={`w-full p-3 border rounded-md focus:ring-2 ${
+                errors[field.name] ? "border-red-500 focus:ring-red-400" : "focus:ring-blue-400"
+              }`}
             />
             {errors[field.name] && (
-              <p className="text-sm text-red-500">{errors[field.name]}</p>
+              <p className="text-sm text-red-500 mt-1">{errors[field.name]}</p>
             )}
           </div>
         ))}
       </div>
 
-      <div
-        className="flex items-center mt-6 cursor-pointer"
-        onClick={fetchLocation}
-      >
-        <span className="mr-2 text-blue-500">
-          <FaLocationCrosshairs />
-        </span>
-        <label className="text-green-700">
-          {loadingLocation ? "Fetching location..." : "Use Current Location"}
-        </label>
+      <div className="mt-6">
+        <button
+          type="button"
+          onClick={fetchLocation}
+          disabled={loadingLocation}
+          className="flex items-center text-blue-600 hover:text-blue-800 disabled:opacity-50"
+        >
+          <FaLocationCrosshairs className="mr-2" />
+          {loadingLocation ? "Detecting location..." : "Use Current Location"}
+        </button>
+        {errors.location && (
+          <p className="text-sm text-red-500 mt-1">{errors.location}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {[
-          { name: "registrationId", placeholder: "Registration ID *" },
-          { name: "gstNo", placeholder: "GST No *" },
-          { name: "cgstNo", placeholder: "CGST No *" },
-          { name: "sgstNo", placeholder: "SGST No *" },
+          { name: "registrationId", placeholder: "Registration ID*" },
+          { name: "gstNo", placeholder: "GST No*" },
+          { name: "cgstNo", placeholder: "CGST No" },
+          { name: "sgstNo", placeholder: "SGST No" },
         ].map((field) => (
           <div key={field.name}>
             <input
@@ -144,10 +212,12 @@ const PropertyRegistration = ({ nextStep }) => {
               value={formData[field.name]}
               onChange={handleChange}
               placeholder={field.placeholder}
-              className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
+              className={`w-full p-3 border rounded-md focus:ring-2 ${
+                errors[field.name] ? "border-red-500 focus:ring-red-400" : "focus:ring-blue-400"
+              }`}
             />
             {errors[field.name] && (
-              <p className="text-sm text-red-500">{errors[field.name]}</p>
+              <p className="text-sm text-red-500 mt-1">{errors[field.name]}</p>
             )}
             <p className="text-sm text-gray-500 mt-1">
               This will be private to you
@@ -157,13 +227,11 @@ const PropertyRegistration = ({ nextStep }) => {
       </div>
 
       <button
-        onClick={() => {
-          handleSubmit();
-          nextStep();
-        }}
-        className="w-full mt-8 bg-yellow-400 text-black py-3 rounded-lg font-semibold hover:bg-yellow-500 transition"
+        onClick={handleSubmit}
+        disabled={submitLoading}
+        className="w-full mt-8 bg-yellow-400 text-black py-3 rounded-lg font-semibold hover:bg-yellow-500 transition disabled:opacity-50"
       >
-        Save and Continue
+        {submitLoading ? "Processing..." : "Save and Continue"}
       </button>
     </div>
   );

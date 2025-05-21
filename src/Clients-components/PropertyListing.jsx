@@ -1,9 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/client-main/logo.png';
 import bgimage from '../assets/client-main/client-main-bg-image.png';
 import { Link } from 'react-router-dom';
 
+
 const PropertyListing = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    location: ''
+  });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate form data
+    if (!formData.name || !formData.phone || !formData.location) {
+      alert('Please fill all fields');
+      return;
+    }
+  
+    try {
+      // Send registration data to backend
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+  
+      console.log('Registration successful:', data);
+      
+      // Show success message and navigate to login
+      alert('Registration successful! Please login to continue.');
+      navigate('/client/client-login');
+      
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert(error.message || 'An error occurred during registration');
+    }
+  };
   return (
     <div>
     <div className="relative flex min-h-screen bg-blue-900 text-white p-6 md:p-12">
@@ -24,47 +76,65 @@ const PropertyListing = () => {
       </div>
 
       {/* Left Section */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center">
-        <h1 className="text-3xl font-semibold mb-4">For Property Owners</h1>
-        <p className="text-3xl mb-6 md:w-1/2">
-          List out your <span className="text-yellow-400 font-semibold">PG</span> for free with
-          <span className="text-yellow-400 font-semibold"> Livyco</span>
-        </p>
-        <div className="flex bg-blue-950 p-10 text-center w-[400px] rounded-lg ">
-          <div className="mr-6 text-center ">
-            <p className="font-bold text-xl">no 1</p>
-            <p className="text-sm">Trusted platform</p>
+      <div className="text-white md:w-1/2 mt-[10%]">
+        <h1 className="text-4xl font-bold leading-snug">
+          List out your <span className="text-yellow-400">PG</span> for free <br />
+          with <span className="text-yellow-400">Livyco</span>
+        </h1>
+
+        {/* Stats Box */}
+        <div className="bg-[#000367FA] text-white mt-6 p-6 rounded-xl flex justify-around shadow-lg">
+          <div className="text-center">
+            <p className="text-xl font-semibold">no 1</p>
+            <p className="text-sm text-gray-400">Trusted platform</p>
           </div>
-          <div className="mr-6">
-            <p className="font-bold text-xl">n+</p>
-            <p className="text-sm">Owners</p>
+          <div className="text-center">
+            <p className="text-xl font-semibold">n+</p>
+            <p className="text-sm text-gray-400">Owners</p>
           </div>
-          <div>
-            <p className="font-bold text-xl">n+</p>
-            <p className="text-sm">Tenants</p>
+          <div className="text-center">
+            <p className="text-xl font-semibold">n+</p>
+            <p className="text-sm text-gray-400">Tenants</p>
           </div>
         </div>
+
+        {/* Call to Action Button */}
+        <button className="mt-6 bg-yellow-400 text-black font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-yellow-500">
+          List property now
+        </button>
       </div>
 
       {/* Right Section */}
       <div className="w-full md:w-1/2 flex justify-center items-center">
         <div className="bg-white text-black p-8 rounded-lg shadow-lg w-full max-w-md">
           <h2 className="text-xl font-semibold mb-4">Let’s set things up!</h2>
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               placeholder="Name"
               className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              required
             />
             <input
-              type="text"
-              placeholder="Mobile Number"
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Enter your mobile number"
               className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              required
             />
             <input
               type="text"
+              name="location"
               placeholder="Location"
+              value={formData.location}
+              onChange={handleChange}
               className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              required
             />
             <p className="text-sm text-gray-600">
               Are you a registered user?{' '}
@@ -72,7 +142,9 @@ const PropertyListing = () => {
               <span className="text-blue-600 cursor-pointer hover:underline">Login</span>
               </Link>
             </p>
-            <button className="w-full bg-yellow-400 text-black p-3 rounded-md font-semibold hover:bg-yellow-500 transition-all">
+            <button 
+            type="submit"
+            className="w-full bg-yellow-400 text-black p-3 rounded-md font-semibold hover:bg-yellow-500 transition-all">
               Continue
             </button>
           </form>

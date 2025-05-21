@@ -1,8 +1,87 @@
-import React, { useState } from "react";
-import { FcGoogle } from "react-icons/fc";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
+import { FcGoogle } from 'react-icons/fc';
+import { auth } from "../../firebase/firebase";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
-const ClientLogin = ({ onSendOTP }) => {
-  const [input, setInput] = useState("");
+
+
+import axios from "axios";
+
+
+const API_BASE_URL = "http://localhost:5000/api/auth";
+
+
+const ClientLogin = () => {
+
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+   const setupRecaptcha = () => {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+          console.log("reCAPTCHA verified");
+
+        },
+        'expired-callback': () => {
+          console.log("reCAPTCHA expired");
+
+        }
+      });
+    };
+
+   const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!phone || phone.length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 1. Check with backend if phone exists
+      const response = await axios.post(`${API_BASE_URL}/send-otp`, { phone }
+      , {
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("clientUser")}`, // Assuming you have a token stored in localStorage
+          
+        },
+      }
+      );
+      
+      if (!response.data.success) {
+        
+        setError("Phone number not registered. Please register first.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Setup Firebase Recaptcha and send OTP
+      const phoneNumber = "+91" + phone;
+      setupRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      window.confirmationResult = confirmation;
+
+      alert("OTP sent successfully!");
+      navigate("/client/client-otpverify", { state: { phoneNumber } });
+
+    } catch (err) {
+      console.error("Error:", err.response?.data?.message || err.message);
+      setError(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+ 
 
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
@@ -373,31 +452,38 @@ const ClientLogin = ({ onSendOTP }) => {
 
 
         </div>
-
-        {/* Right Side Form */}
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full md:w-1/3 ">
+    {/* Right Side Form */}
+    <div className="bg-white p-8 rounded-lg shadow-lg w-full md:w-1/3">
           <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
-          <label className="text-sm text-gray-700">Email / Mobile Number</label>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter your email or phone"
-            className="w-full p-2 border rounded mt-1"
-          />
-          <p className="text-xs text-gray-500 mt-2">
-            By signing up, you agree to our{" "}
-            <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
-            <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
-          </p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+         
+            
+            <label className="text-sm text-gray-700">Mobile Number</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+              placeholder="Enter your 10-digit mobile number"
+              className="w-full p-2 border rounded mt-1"
+              maxLength={10}
+            />
+            
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            
+            <p className="text-xs text-gray-500 mt-2">
+              By signing up, you agree to our{" "}
+              <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
+              <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
+            </p>
 
-          {/* Send OTP Button */}
-          <button
-            onClick={onSendOTP}
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 mt-4 rounded"
-          >
-            SEND OTP
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 mt-4 rounded disabled:opacity-50"
+            >
+              {loading ? 'Sending...' : 'SEND OTP'}
+            </button>
+          </form>
 
           <div className="flex items-center my-4">
             <hr className="flex-grow border-gray-300" />
@@ -405,11 +491,12 @@ const ClientLogin = ({ onSendOTP }) => {
             <hr className="flex-grow border-gray-300" />
           </div>
 
-          {/* Google Sign-in */}
           <button className="w-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-black font-semibold py-2 rounded">
             <FcGoogle className="text-2xl mr-2" />
             Sign up with Google
           </button>
+           <div id="recaptcha-container" className="hidden"></div>
+
         </div>
       </div>
     </div>

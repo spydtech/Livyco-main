@@ -6,7 +6,7 @@ import { Routes, Route } from "react-router-dom";
 // import NotFound from "../pages/NotFound";
 // import PropertyListing from "./PropertyListing"
 import Clientmain from "./Clientmain";
-import ClientLogin from "./Client-Login/ClientLogin";
+
 import OTPVerification from "./Client-Login/OTPVerification ";
 import ClientHomePage from "./Client-Home/ClientHomePage";
 import ClientDashboard from "./Client-Dashboard/ClientDashboard";
@@ -28,6 +28,7 @@ import TanentConfirmbox from "./CheckOutPages/TanentConfirmbox";
 import Main from "./ManageProperties/Main"
 import SupportDashboard from "./Support Dashboard/SupportDashboard";
 import ChatApp from "./Chat/ChatApp";
+import ClientLogin from "./Client-Login/ClientLogin";
 
 
 const ClientLayout = () => {

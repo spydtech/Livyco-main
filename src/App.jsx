@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ClientLayout from "./Clients-components/ClientLayout";   
+import AdminLayout from "./Admin/AdminLayout";
 
 
 function App() {
@@ -10,7 +11,7 @@ function App() {
         {/* Client Routes */}
         <Route path="/client/*" element={<ClientLayout />} />
         {/* Admin Routes */}
-        {/* <Route path="/admin/*" element={<AdminLayout />} /> */}
+        <Route path="/admin/*" element={<AdminLayout />} />
       </Routes>
     </Router>
   );
