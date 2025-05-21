@@ -26,6 +26,8 @@ import TanentConfirmbox from "./CheckOutPages/TanentConfirmbox";
 // import TenantFilter from "./TenantList/TenantFilter";
 // import ClientNav from "./Client-Navbar/ClientNav";
 import Main from "./ManageProperties/Main"
+import SupportDashboard from "./Support Dashboard/SupportDashboard";
+import ChatApp from "./Chat/ChatApp";
 
 
 const ClientLayout = () => {
@@ -54,6 +56,10 @@ const ClientLayout = () => {
         <Route path="/addtenant" element={<AddTenant />} />
         <Route path="/tenantprofile/:id" element={<TenantProfile />} />
         <Route path="/properties" element={<Main />} />
+
+        <Route path="/supportdashboard" element={<SupportDashboard />} />
+        <Route path="/chat" element={<ChatApp />} />
+
 
         
 

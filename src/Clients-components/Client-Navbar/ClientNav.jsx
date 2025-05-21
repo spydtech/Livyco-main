@@ -11,8 +11,8 @@ const ClientNav = () => {
     { name: "Listing", path: "/client/properties" },
     { name: "Tenants", path: "/client/tenantlist" },
     { name: "Dashboard", path: "/client/dashboard" },
-    { name: "Chat", path: "#" },
-    { name: "Contact Us", path: "#" },
+    { name: "Chat", path: "/client/chat" },
+    { name: "Contact Us", path: "/client/supportdashboard" },
   ];
   return (
     <nav className="bg-blue-900 py-4 px-6 flex items-center justify-between">
