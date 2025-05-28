@@ -1,170 +1,149 @@
-// import { useState } from "react";
-// import HostelRoomSelection from "./HostelRoomSelection";
-
-// const RoomSelection = ({ nextStep }) => {
-//   const [selectedRooms, setSelectedRooms] = useState([]);
-//   const [proceed, setProceed] = useState(false);
-
-//   const rooms = [
-//     { id: 1, label: "Single Room", blocks: 1 },
-//     { id: 2, label: "Double Sharing", blocks: 2 },
-//     { id: 3, label: "Triple Sharing", blocks: 3 },
-//     { id: 4, label: "Four Sharing", blocks: 4 },
-//     { id: 5, label: "Five Sharing", blocks: 5 },
-//     { id: 6, label: "Six Sharing", blocks: 6 },
-//   ];
-
-//   const toggleSelection = (id) => {
-//     setSelectedRooms((prev) =>
-//       prev.includes(id) ? prev.filter((roomId) => roomId !== id) : [...prev, id]
-//     );
-//   };
-
-//   const handleContinue = () => {
-//     if (selectedRooms.length > 0) {
-//       setProceed(true);
-//     } else {
-//       alert("Please select at least one room type before continuing.");
-//     }
-//   };
-
-//   return (
-//     <div className="mx-auto p-6 rounded-lg">
-//       {proceed ? (
-//         <HostelRoomSelection
-//           nextStep={nextStep}
-//           selectedRooms={selectedRooms}
-//         />
-//       ) : (
-//         <>
-//           <h2 className="text-xl font-semibold mb-4">
-//             Select types of room available
-//           </h2>
-//           <div className="grid grid-cols-3 gap-4">
-//             {rooms.map((room) => (
-//               <div
-//                 key={room.id}
-//                 className={`border rounded-lg p-4 flex flex-col items-center cursor-pointer ${
-//                   selectedRooms.includes(room.id) ? "bg-yellow-200" : ""
-//                 }`}
-//                 onClick={() => toggleSelection(room.id)}
-//               >
-//                 <div className="grid grid-cols-2 gap-1 w-16 h-16 bg-yellow-100">
-//                   {[...Array(room.blocks)].map((_, index) => (
-//                     <div
-//                       key={index}
-//                       className="bg-yellow-400 w-full h-full"
-//                     ></div>
-//                   ))}
-//                 </div>
-//                 <p className="mt-2 text-sm">{room.label}</p>
-//                 <input
-//                   type="checkbox"
-//                   checked={selectedRooms.includes(room.id)}
-//                   readOnly
-//                   className="mt-2"
-//                 />
-//               </div>
-//             ))}
-//           </div>
-//           <button
-//             onClick={handleContinue}
-//             className="w-full bg-yellow-400 text-black py-2 mt-6 rounded-lg font-semibold"
-//           >
-//             Continue
-//           </button>
-//         </>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default RoomSelection;
 import { useState, useEffect } from "react";
+import { roomAPI } from "../PropertyController";
 import HostelRoomSelection from "./HostelRoomSelection";
 
 const RoomSelection = ({ nextStep }) => {
   const [selectedRooms, setSelectedRooms] = useState(() => {
-    // Retrieve selected rooms from local storage or default to an empty array
     const storedRooms = localStorage.getItem("selectedRooms");
     return storedRooms ? JSON.parse(storedRooms) : [];
   });
+   const [proceed, setProceed] = useState(false);
+  const [roomTypes, setRoomTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  useEffect(() => {
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await roomAPI.getRoomTypes();
+        setRoomTypes(response.data.roomTypes);
+      } catch (err) {
+        setError("Failed to load room types");
+        setRoomTypes([
+          { type: "single", label: "Single Room", capacity: 1 },
+          { type: "double", label: "Double Sharing", capacity: 2 },
+          { type: "triple", label: "Triple Sharing", capacity: 3 },
+          { type: "quad", label: "Four Sharing", capacity: 4 },
+          { type: "quint", label: "Five Sharing", capacity: 5 },
+          { type: "hex", label: "Six Sharing", capacity: 6 }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRoomTypes();
+  }, []);
 
-  const [proceed, setProceed] = useState(false);
+  const saveRoomSelection = async () => {
+    setIsSaving(true);
+    try {
+      const selectedRoomTypes = roomTypes
+        .filter(room => selectedRooms.includes(room.type))
+        .map(room => ({
+          ...room,
+          availableCount: room.availableCount || 0,
+          price: room.price || 0,
+          amenities: room.amenities || []
+        }));
 
-  const rooms = [
-    { id: 1, label: "Single Room", blocks: 1 },
-    { id: 2, label: "Double Sharing", blocks: 2 },
-    { id: 3, label: "Triple Sharing", blocks: 3 },
-    { id: 4, label: "Four Sharing", blocks: 4 },
-    { id: 5, label: "Five Sharing", blocks: 5 },
-    { id: 6, label: "Six Sharing", blocks: 6 },
-  ];
+      await roomAPI.createRoomTypes(selectedRoomTypes);
+    } catch (err) {
+      console.error("Error saving room types:", err);
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-  // Save selected rooms to local storage whenever the selection changes
+
+  const toggleSelection = (type) => {
+    setSelectedRooms(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
+  const handleContinue = async () => {
+    if (selectedRooms.length > 0) {
+      try {
+        await saveRoomSelection();
+        setProceed(true);
+      } catch (err) {
+        alert(err.response?.data?.message || "Failed to save selection");
+      }
+    } else {
+      alert("Please select at least one room type");
+    }
+  };
+
+
   useEffect(() => {
     localStorage.setItem("selectedRooms", JSON.stringify(selectedRooms));
   }, [selectedRooms]);
 
-  const toggleSelection = (id) => {
-    setSelectedRooms((prev) =>
-      prev.includes(id) ? prev.filter((roomId) => roomId !== id) : [...prev, id]
-    );
-  };
-
-  const handleContinue = () => {
-    if (selectedRooms.length > 0) {
-      setProceed(true);
-    } else {
-      alert("Please select at least one room type before continuing.");
-    }
-  };
+  if (loading) return <div className="text-center p-8">Loading...</div>;
+  if (error) return <div className="text-center p-8 text-red-500">{error}</div>;
 
   return (
-    <div className="mx-auto p-6 rounded-lg">
+    <div className="mx-auto p-6 rounded-lg max-w-4xl">
       {proceed ? (
         <HostelRoomSelection
           nextStep={nextStep}
           selectedRooms={selectedRooms}
+          roomTypes={roomTypes}
         />
       ) : (
         <>
-          <h2 className="text-xl font-semibold mb-4">
-            Select types of room available
+          <h2 className="text-xl font-semibold mb-6 text-center">
+            Select room types
           </h2>
-          <div className="grid grid-cols-3 gap-4">
-            {rooms.map((room) => (
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {roomTypes.map(room => (
               <div
-                key={room.id}
-                className={`border rounded-lg p-4 flex flex-col items-center cursor-pointer ${
-                  selectedRooms.includes(room.id) ? "bg-yellow-200" : ""
+                key={room.type}
+                className={`border rounded-lg p-4 flex flex-col items-center cursor-pointer transition-all ${
+                  selectedRooms.includes(room.type) 
+                    ? "bg-yellow-100 border-yellow-400 shadow-md" 
+                    : "hover:bg-gray-50"
                 }`}
-                onClick={() => toggleSelection(room.id)}
+                onClick={() => toggleSelection(room.type)}
               >
-                <div className="grid grid-cols-2 gap-1 w-16 h-16 bg-yellow-100">
-                  {[...Array(room.blocks)].map((_, index) => (
+                <div className={`grid grid-cols-2 gap-1 w-16 h-16 ${
+                  selectedRooms.includes(room.type) ? "bg-yellow-200" : "bg-gray-100"
+                } rounded-md p-1`}>
+                  {[...Array(room.capacity)].map((_, i) => (
                     <div
-                      key={index}
-                      className="bg-yellow-400 w-full h-full"
-                    ></div>
+                      key={i}
+                      className={`${
+                        selectedRooms.includes(room.type) ? "bg-yellow-500" : "bg-gray-300"
+                      } w-full h-full rounded-sm`}
+                    />
                   ))}
                 </div>
-                <p className="mt-2 text-sm">{room.label}</p>
-                <input
-                  type="checkbox"
-                  checked={selectedRooms.includes(room.id)}
-                  readOnly
-                  className="mt-2"
-                />
+                <p className="mt-3 font-medium">{room.label}</p>
+                <p className="text-sm text-gray-500">
+                  Capacity: {room.capacity} person{room.capacity > 1 ? 's' : ''}
+                </p>
+                <div className="mt-2 w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center">
+                  {selectedRooms.includes(room.type) && (
+                    <div className="w-3 h-3 bg-yellow-500 rounded-sm" />
+                  )}
+                </div>
               </div>
             ))}
           </div>
-          <button
-            onClick={handleContinue}
-            className="w-full bg-yellow-400 text-black py-2 mt-6 rounded-lg font-semibold"
-          >
-            Continue
-          </button>
+
+         <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleContinue}
+              className={`bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-8 rounded-lg transition-colors ${
+                selectedRooms.length === 0 || isSaving ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              disabled={selectedRooms.length === 0 || isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Continue'}
+            </button>
+          </div>  
         </>
       )}
     </div>

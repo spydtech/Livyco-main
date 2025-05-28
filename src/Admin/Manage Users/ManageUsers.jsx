@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaSearch, FaEllipsisV } from "react-icons/fa";
 import { BiSort, BiFilter } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
@@ -12,24 +12,28 @@ const metrics = [
   { label: "Rejected/On hold", value: "1,00,000", change: "+8% from yesterday", color: "bg-red-100", icon: "❌" },
 ];
 
+import axios from "axios";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 // Expanded mock data for pagination demonstration
-const allListings = [
-  { id: "L1234", owner: "Alice Writing", contact: "36003", email: "natus tempora a...", date: "01/01/2023", status: "Active", role: "User" },
-  { id: "L1235", owner: "Bob Smith", contact: "36004", email: "lorem ipsum...", date: "02/01/2023", status: "Active", role: "Owner" },
-  { id: "L1236", owner: "Charlie Brown", contact: "36005", email: "dolor sit amet...", date: "03/01/2023", status: "Inactive", role: "User" },
-  { id: "L1237", owner: "David Wilson", contact: "36006", property: "consectetur...", date: "04/01/2023", status: "Active", role: "Owner" },
-  { id: "L1238", owner: "Eve Johnson", contact: "36007", email: "adipiscing elit...", date: "05/01/2023", status: "Inactive", role: "User" },
-  { id: "L1239", owner: "Frank Miller", contact: "36008", email: "sed do eiusmod...", date: "06/01/2023", status: "Active", role: "Owner" },
-  { id: "L1240", owner: "Grace Lee", contact: "36009", email: "tempor incididunt...", date: "07/01/2023", status: "Inactive", role: "Owner" },
-  { id: "L1241", owner: "Henry Davis", contact: "36010", email: "ut labore...", date: "08/01/2023", status: "Active", role: "Owner" },
-  { id: "L1242", owner: "Ivy Wilson", contact: "36011", email: "et dolore...", date: "09/01/2023", status: "Inactive", role: "Owner" },
-  { id: "L1243", owner: "Jack Brown", contact: "36012", email: "magna aliqua...", date: "10/01/2023", status: "Active", role: "User" },
-  { id: "L1244", owner: "Karen White", contact: "36013", email: "quis nostrud...", date: "11/01/2023", status: "Inactive", role: "User" },
-  { id: "L1245", owner: "Leo Garcia", contact: "36014", email: "exercitation...", date: "12/01/2023", status: "Active", role: "User" },
-  { id: "L1246", owner: "Mia Martinez", contact: "36015", email: "ullamco laboris...", date: "13/01/2023", status: "Inactive", role: "User" },
-  { id: "L1247", owner: "Noah Rodriguez", contact: "36016", email: "nisi ut...", date: "14/01/2023", status: "Active", role: "User" },
-  { id: "L1248", owner: "Olivia Lopez", contact: "36017", email: "aliquip ex...", date: "15/01/2023", status: "Inactive", role: "User" },
-];
+
+// const allListings = [
+//   { id: "L1234", owner: "Alice Writing", contact: "36003", email: "natus tempora a...", date: "01/01/2023", status: "Active", role: "User" },
+//   { id: "L1235", owner: "Bob Smith", contact: "36004", email: "lorem ipsum...", date: "02/01/2023", status: "Active", role: "Owner" },
+//   { id: "L1236", owner: "Charlie Brown", contact: "36005", email: "dolor sit amet...", date: "03/01/2023", status: "Inactive", role: "User" },
+//   { id: "L1237", owner: "David Wilson", contact: "36006", property: "consectetur...", date: "04/01/2023", status: "Active", role: "Owner" },
+//   { id: "L1238", owner: "Eve Johnson", contact: "36007", email: "adipiscing elit...", date: "05/01/2023", status: "Inactive", role: "User" },
+//   { id: "L1239", owner: "Frank Miller", contact: "36008", email: "sed do eiusmod...", date: "06/01/2023", status: "Active", role: "Owner" },
+//   { id: "L1240", owner: "Grace Lee", contact: "36009", email: "tempor incididunt...", date: "07/01/2023", status: "Inactive", role: "Owner" },
+//   { id: "L1241", owner: "Henry Davis", contact: "36010", email: "ut labore...", date: "08/01/2023", status: "Active", role: "Owner" },
+//   { id: "L1242", owner: "Ivy Wilson", contact: "36011", email: "et dolore...", date: "09/01/2023", status: "Inactive", role: "Owner" },
+//   { id: "L1243", owner: "Jack Brown", contact: "36012", email: "magna aliqua...", date: "10/01/2023", status: "Active", role: "User" },
+//   { id: "L1244", owner: "Karen White", contact: "36013", email: "quis nostrud...", date: "11/01/2023", status: "Inactive", role: "User" },
+//   { id: "L1245", owner: "Leo Garcia", contact: "36014", email: "exercitation...", date: "12/01/2023", status: "Active", role: "User" },
+//   { id: "L1246", owner: "Mia Martinez", contact: "36015", email: "ullamco laboris...", date: "13/01/2023", status: "Inactive", role: "User" },
+//   { id: "L1247", owner: "Noah Rodriguez", contact: "36016", email: "nisi ut...", date: "14/01/2023", status: "Active", role: "User" },
+//   { id: "L1248", owner: "Olivia Lopez", contact: "36017", email: "aliquip ex...", date: "15/01/2023", status: "Inactive", role: "User" },
+// ];
 
 const ITEMS_PER_PAGE = 5;
 
@@ -51,8 +55,42 @@ const ManageUsers = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
    // Function to toggle menu for each row
    const [openDropdown, setOpenDropdown] = useState(null); // Track which row has an open menu
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
    const navigate = useNavigate(); // For navigation
+
+   useEffect(() => {
+     const fetchUserData = async () => {
+       try {
+         const token = localStorage.getItem('token');
+         if (!token) {
+           throw new Error('No token found');
+         }
+   
+         const response = await axios.get(`${API_BASE_URL}/user`, {
+           headers: {
+             'Authorization': `Bearer ${token}`
+           }
+         });
+   
+         if (response.data.success) {
+           setUser(response.data.user);
+         } else {
+           throw new Error(response.data.message || 'Failed to fetch user');
+         }
+       } catch (error) {
+         console.error('Error fetching user:', error);
+         setError(error.message);
+       
+       } finally {
+         setLoading(false);
+       }
+     };
+   
+     fetchUserData();
+   }, []);
 
    const toggleDropdown = (id) => {
     setOpenDropdown((prev) => (prev === id ? null : id));
@@ -61,7 +99,7 @@ const ManageUsers = () => {
   // Filter listings based on search term
   const filteredListings = allListings.filter(listing => 
     listing.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    listing.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    listing.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     listing.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     listing.location.toLowerCase().includes(searchTerm.toLowerCase())
   );

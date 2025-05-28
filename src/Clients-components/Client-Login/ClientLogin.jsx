@@ -20,18 +20,19 @@ const ClientLogin = () => {
   const navigate = useNavigate();
 
    const setupRecaptcha = () => {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response) => {
-          console.log("reCAPTCHA verified");
+  if (!window.recaptchaVerifier) {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible',
+      'callback': (response) => {
+        console.log("reCAPTCHA verified");
+      },
+      'expired-callback': () => {
+        console.log("reCAPTCHA expired");
+      }
+    });
+  }
+};
 
-        },
-        'expired-callback': () => {
-          console.log("reCAPTCHA expired");
-
-        }
-      });
-    };
 
    const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,21 +47,10 @@ const ClientLogin = () => {
       setLoading(true);
 
       // 1. Check with backend if phone exists
-      const response = await axios.post(`${API_BASE_URL}/send-otp`, { phone }
-      , {
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("clientUser")}`, // Assuming you have a token stored in localStorage
-          
-        },
-      }
-      );
+      const response = await axios.post(`${API_BASE_URL}/send-otp`, { phone });
       
       if (!response.data.success) {
-        
-        setError("Phone number not registered. Please register first.");
-        setLoading(false);
+        setError(response.data.message || "Phone number not registered. Please register first.");
         return;
       }
 
@@ -71,17 +61,21 @@ const ClientLogin = () => {
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmation;
 
-      alert("OTP sent successfully!");
-      navigate("/client/client-otpverify", { state: { phoneNumber } });
+      // Store minimal data in sessionStorage for OTP verification
+      sessionStorage.setItem('otpVerificationData', JSON.stringify({
+        phone,
+        userData: response.data.user
+      }));
+
+      navigate("/client/client-otpverify");
 
     } catch (err) {
-      console.error("Error:", err.response?.data?.message || err.message);
-      setError(err.response?.data?.message || "Failed to send OTP");
+      console.error("Error:", err);
+      setError(err.response?.data?.message || "Failed to send OTP. Please try again.");
     } finally {
       setLoading(false);
     }
   };
- 
 
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { pgAPI } from "../PropertyController"; // Adjust the import path as necessary
 
 const PGForm = ({ nextStep }) => {
   const initialFormData = JSON.parse(localStorage.getItem("pgFormData")) || {
@@ -51,9 +52,21 @@ const PGForm = ({ nextStep }) => {
     });
   };
 
-  const handleSubmit = () => {
-    alert("Form data saved!");
-  };
+ // In your PGForm component
+const handleSubmit = async () => {
+  try {
+    const response = await pgAPI.savePGProperty(formData);
+    if (response.data.success) {
+      alert("PG details saved successfully!");
+      nextStep();
+    } else {
+      alert("Failed to save PG details");
+    }
+  } catch (error) {
+    console.error("Error saving PG details:", error);
+    alert("An error occurred while saving PG details");
+  }
+};
 
   return (
     <div className="text-black min-h-screen p-6">

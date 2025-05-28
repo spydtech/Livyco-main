@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { connectAuthEmulator, getAuth,  } from "firebase/auth";
+import { connectAuthEmulator, getAuth, RecaptchaVerifier, signInWithPhoneNumber  } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBxKGVr5ffZ5q_KglebLOQPKCjdoCzdpMY",
@@ -17,7 +17,7 @@ const auth = getAuth(app);
 if (window.location.hostname === 'localhost') {
   connectAuthEmulator(auth, 'http://localhost:9099');
 }
-export { auth };
+export { auth, RecaptchaVerifier, signInWithPhoneNumber  };
 
 console.log("AUTH:", auth); // should NOT be undefined
 console.log("FIREBASE APP:", app); // should NOT be undefined

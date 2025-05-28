@@ -1,125 +1,113 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { auth } from "../../firebase/firebase";
-import { Link } from 'react-router-dom';
-// import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
-
-
-
-
-
 import axios from "axios";
 
-
 const API_BASE_URL = "http://localhost:5000/api/auth";
+
 const OTPVerification = () => {
-   const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  const [confirmationResult, setConfirmationResult] = useState(null);
-
-  const location = useLocation();
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
-  // const phoneNumber = location.state?.phoneNumber;
-  const [phoneNumber, setPhoneNumber] = useState("");
-  
   useEffect(() => {
-    if (!window.confirmationResult || !location.state?.phoneNumber) {
-      navigate("/client/client-otpverify");
-    } else {
-      setConfirmationResult(window.confirmationResult);
-      setPhoneNumber(location.state.phoneNumber);
-    }
-  }, [navigate, location]);
+  const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
+  if (!otpData || !otpData.phone || !window.confirmationResult) {
+    navigate("/client/client-login");
+    return;
+  }
+  
+  setPhoneNumber(`+91${otpData.phone}`);
+  setUserData(otpData.userData || {}); // Ensure userData is at least an empty object
+}, [navigate]);
 
   const handleVerify = async (e) => {
-    e.preventDefault();
-    setError("");
-
-    if (otp.length !== 6) {
-      setError("Please enter a valid 6-digit OTP.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Verify OTP with Firebase
-      const result = await confirmationResult.confirm(otp);
-      const user = result.user;
-      const token = await user.getIdToken();
-
-      // Get user data from backend using the phone number
-      const response = await axios.post(`${API_BASE_URL}/send-otp`, { 
-        phone: phoneNumber.replace('+91', '') 
-      });
-
-      if (response.data.success) {
-        // Store user data in localStorage
-        localStorage.setItem('clientUser', JSON.stringify({
-          clientId: response.data.clientId,
-          phone: response.data.user.phone,
-          name: response.data.user.name,
-          location: response.data.user.location
-        }));
-
-        navigate("/client/dashboard");
-      } else {
-        throw new Error("Failed to get user data");
-      }
-    } catch (err) {
-      console.error("OTP verification failed", err);
-      setError("Invalid OTP. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
- 
-
-
-
-
-
-  const handleResend = async () => {
+  e.preventDefault();
   setError("");
-  setLoading(true);
+
+  if (!otp || otp.length !== 6) {
+    setError("Please enter a valid 6-digit OTP.");
+    return;
+  }
 
   try {
-    // Re-initialize Recaptcha
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'invisible',
-      'callback': (response) => {
-        console.log("reCAPTCHA verified on resend");
-      }
+    setLoading(true);
+    
+    // 1. Verify OTP with Firebase
+    const result = await window.confirmationResult.confirm(otp);
+    const firebaseUser = result.user;
+    
+    // 2. Get Firebase token
+    const firebaseToken = await firebaseUser.getIdToken();
+
+    // 3. Verify with backend
+    const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
+      phone: phoneNumber.replace('+91', ''), // Use the phone number directly
+      firebaseUid: firebaseUser.uid,
+      firebaseToken
     });
 
-    const appVerifier = window.recaptchaVerifier;
+    if (!response.data.success) {
+      throw new Error(response.data.message || "OTP verification failed");
+    }
+    // Check if user has client role
+    if (response.data.user.role !== 'client') {
+      throw new Error("Access denied. Client login only.");
+    }
 
-    const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+    // 4. Store tokens and user data
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
 
-    window.confirmationResult = confirmation;
-    setConfirmationResult(confirmation);
+    // 5. Clear OTP verification data
+    sessionStorage.removeItem('otpVerificationData');
+    delete window.confirmationResult;
 
-    alert("OTP resent successfully!");
-
-    // Optional: call backend to log the resend
-    await axios.post(`${API_BASE_URL}/resend-otp`, {
-      phone: phoneNumber.replace("+91", "")
-    });
+    // 6. Redirect to dashboard
+    navigate("/client/dashboard");
 
   } catch (err) {
-    console.error("Error resending OTP", err);
-    setError("Failed to resend OTP. Please try again.");
+    console.error("OTP verification failed", err);
+    setError(err.response?.data?.message || err.message || "Invalid OTP. Please try again.");
   } finally {
     setLoading(false);
   }
 };
 
+  const handleResend = async () => {
+    setError("");
+    setLoading(true);
 
+    try {
+      if (!phoneNumber) {
+        throw new Error("Phone number not found.");
+      }
 
+      // Reset recaptcha
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible'
+      });
+
+      const appVerifier = window.recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+
+      window.confirmationResult = confirmation;
+      setError(""); // Clear any previous errors
+      alert("OTP resent successfully!");
+    } catch (err) {
+      console.error("Error resending OTP", err);
+      setError(err.message || "Failed to resend OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!phoneNumber) {
+    return <div className="h-screen flex items-center justify-center bg-blue-900">Loading...</div>;
+  }
  
 
 

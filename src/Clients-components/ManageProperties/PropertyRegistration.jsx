@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { propertyAPI, handleApiError } from "../PropertyController";
 import { FaLocationCrosshairs } from "react-icons/fa6";
-import axios from "axios";
-import { auth } from "../../firebase/firebase"; // Adjust path accordingly
-import { getIdToken } from "firebase/auth";
-
-
 
 const PropertyRegistration = ({ nextStep }) => {
   const [formData, setFormData] = useState({
@@ -19,21 +16,41 @@ const PropertyRegistration = ({ nextStep }) => {
     latitude: "",
     longitude: "",
   });
- 
 
-   
- 
-
+  const [existingProperty, setExistingProperty] = useState(null);
   const [errors, setErrors] = useState({});
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const navigate = useNavigate();
 
+  const fetchProperty = async () => {
+    try {
+      const response = await propertyAPI.getProperty();
+      if (response.data.success) {
+        setExistingProperty(response.data.property);
+        // Pre-fill form if property exists
+        if (response.data.property) {
+          setFormData({
+            city: response.data.property.city || "",
+            name: response.data.property.name || "",
+            locality: response.data.property.locality || "",
+            street: response.data.property.street || "",
+            registrationId: response.data.property.registrationId || "",
+            gstNo: response.data.property.gstNo || "",
+            cgstNo: response.data.property.cgstNo || "",
+            sgstNo: response.data.property.sgstNo || "",
+            latitude: response.data.property.location?.coordinates[1]?.toString() || "",
+            longitude: response.data.property.location?.coordinates[0]?.toString() || "",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching property:", error);
+    }
+  };
 
   useEffect(() => {
-    const savedData = localStorage.getItem("propertyData");
-    if (savedData) {
-      setFormData(JSON.parse(savedData));
-    }
+    fetchProperty();
   }, []);
 
   const handleChange = (e) => {
@@ -63,6 +80,15 @@ const PropertyRegistration = ({ nextStep }) => {
       }
     });
 
+    if (formData.latitude || formData.longitude) {
+      if (!formData.latitude || isNaN(formData.latitude)) {
+        newErrors.latitude = "Invalid latitude";
+      }
+      if (!formData.longitude || isNaN(formData.longitude)) {
+        newErrors.longitude = "Invalid longitude";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -89,12 +115,13 @@ const PropertyRegistration = ({ nextStep }) => {
         longitude: longitude.toString()
       }));
 
-      const response = await axios.get(
+      const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
       );
+      const data = await response.json();
 
-      if (response.data && response.data.address) {
-        const { address } = response.data;
+      if (data && data.address) {
+        const { address } = data;
         setFormData(prev => ({
           ...prev,
           city: address.city || address.town || address.county || "",
@@ -113,43 +140,61 @@ const PropertyRegistration = ({ nextStep }) => {
     }
   };
 
- const handleSubmit = async () => {
-  if (!validateForm()) return;
-  setSubmitLoading(true);
-  setErrors({});
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
-  try {
-    const user = auth.currentUser;
+    setSubmitLoading(true);
+    setErrors({});
 
-    if (!user) {
-      setErrors({ submit: "User not logged in." });
-      setSubmitLoading(false);
-      return;
-    }
+    try {
+      const submissionData = {
+        city: formData.city,
+        name: formData.name,
+        locality: formData.locality,
+        street: formData.street,
+        registrationId: formData.registrationId,
+        gstNo: formData.gstNo,
+        cgstNo: formData.cgstNo,
+        sgstNo: formData.sgstNo
+      };
 
-    const token = await getIdToken(user, true); // Force refresh optional
-    const response = await axios.post(
-      "http://localhost:5000/api/auth/properties/register",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      if (formData.latitude && formData.longitude) {
+        submissionData.location = {
+          type: "Point",
+          coordinates: [
+            parseFloat(formData.longitude),
+            parseFloat(formData.latitude)
+          ]
+        };
       }
-    );
 
-    if (response.status === 201) {
-      localStorage.setItem("propertyData", JSON.stringify(formData));
-      nextStep();
+      let response;
+      if (existingProperty) {
+        response = await propertyAPI.updateProperty(submissionData);
+      } else {
+        response = await propertyAPI.registerProperty(submissionData);
+      }
+
+      if (response.data.success) {
+        localStorage.setItem("propertyData", JSON.stringify(formData));
+        nextStep();
+      }
+    } catch (error) {
+      const apiError = handleApiError(error);
+      if (error.response?.status === 409) {
+        setErrors({
+          submit: "You already have a registered property. Updating instead."
+        });
+        await fetchProperty(); // Fetch the existing property
+      } else {
+        setErrors({
+          submit: apiError.message || "Failed to register property"
+        });
+      }
+    } finally {
+      setSubmitLoading(false);
     }
-  } catch (error) {
-    console.error("Error during submission:", error);
-    setErrors({ submit: "Failed to submit. Please try again." });
-  } finally {
-    setSubmitLoading(false);
-  }
-};
+  };
 
   return (
     <div className="mx-auto p-6 max-w-4xl">
@@ -219,11 +264,14 @@ const PropertyRegistration = ({ nextStep }) => {
             {errors[field.name] && (
               <p className="text-sm text-red-500 mt-1">{errors[field.name]}</p>
             )}
-            <p className="text-sm text-gray-500 mt-1">
-              This will be private to you
-            </p>
           </div>
         ))}
+      </div>
+
+      {/* Hidden coordinate fields for debugging */}
+      <div className="hidden">
+        <input name="latitude" value={formData.latitude} readOnly />
+        <input name="longitude" value={formData.longitude} readOnly />
       </div>
 
       <button
@@ -233,6 +281,9 @@ const PropertyRegistration = ({ nextStep }) => {
       >
         {submitLoading ? "Processing..." : "Save and Continue"}
       </button>
+      {errors.submit && (
+        <p className="text-sm text-red-500 mt-2 text-center">{errors.submit}</p>
+      )}
     </div>
   );
 };

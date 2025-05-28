@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import { roomAPI } from "../PropertyController";
 
-export default function HostelRoomSelection({ selectedRooms, nextStep }) {
+export default function HostelRoomSelection({ selectedRooms, nextStep, roomTypes }) {
   const [floors, setFloors] = useState(0);
   const [currentFloor, setCurrentFloor] = useState(1);
   const [floorData, setFloorData] = useState(() => {
@@ -9,6 +10,7 @@ export default function HostelRoomSelection({ selectedRooms, nextStep }) {
   });
   const [roomNumbers, setRoomNumbers] = useState({});
   const [showRoomRent, setShowRoomRent] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("hostelRoomData", JSON.stringify(floorData));
@@ -17,42 +19,97 @@ export default function HostelRoomSelection({ selectedRooms, nextStep }) {
   const handleRoomNumberChange = (roomType, value) => {
     setRoomNumbers((prev) => ({ ...prev, [roomType]: value }));
   };
+
   const rooms = [
-    { id: 1, label: "Single Room", blocks: 1 },
-    { id: 2, label: "Double Sharing", blocks: 2 },
-    { id: 3, label: "Triple Sharing", blocks: 3 },
-    { id: 4, label: "Four Sharing", blocks: 4 },
-    { id: 5, label: "Five Sharing", blocks: 5 },
-    { id: 6, label: "Six Sharing", blocks: 6 },
+    { id: "single", label: "Single Room", blocks: 1 },
+    { id: "double", label: "Double Sharing", blocks: 2 },
+    { id: "triple", label: "Triple Sharing", blocks: 3 },
+    { id: "quad", label: "Four Sharing", blocks: 4 },
+    { id: "quint", label: "Five Sharing", blocks: 5 },
+    { id: "hex", label: "Six Sharing", blocks: 6 },
   ];
 
   const saveFloorData = () => {
-    setFloorData((prev) => ({
-      ...prev,
-      [currentFloor]: roomNumbers,
-    }));
+    if (Object.keys(roomNumbers).length > 0) {
+      setFloorData(prev => ({
+        ...prev,
+        [currentFloor]: roomNumbers
+      }));
+    }
   };
 
   const handleSaveFloor = () => {
     saveFloorData();
-    setRoomNumbers({}); // Clears input for next floor
+    setRoomNumbers({});
     if (currentFloor < floors) {
       setCurrentFloor((prev) => prev + 1);
     }
   };
 
-  const handleFinalSave = () => {
-    saveFloorData();
-    setShowRoomRent(true);
-  };
 
-  const filteredRooms = rooms.filter((room) => selectedRooms.includes(room.id));
+const filteredRooms = rooms.filter(room => selectedRooms.includes(room.id));
+
+
+  const handleFinalSave = async () => {
+    setIsSaving(true);
+    saveFloorData(); // Save current floor before final submission
+    
+    try {
+      if (!selectedRooms || selectedRooms.length === 0) {
+        throw new Error("Please select at least one room type");
+      }
+
+      // Transform data for API
+      // Filter out any non-string values and ensure they match the enum
+    const validSelectedRooms = selectedRooms.filter(room => 
+      ['single', 'double', 'triple', 'quad', 'quint', 'hex'].includes(room)
+    );
+      const floorsData = Object.entries(floorData).map(([floorNum, rooms]) => ({
+        floor: parseInt(floorNum),
+        rooms: {
+          'Single Room': rooms['Single Room'] || '',
+          'Double Sharing': rooms['Double Sharing'] || '',
+          'Triple Sharing': rooms['Triple Sharing'] || '',
+          'Four Sharing': rooms['Four Sharing'] || '',
+          'Five Sharing': rooms['Five Sharing'] || '',
+          'Six Sharing': rooms['Six Sharing'] || ''
+        }
+      }));
+
+      console.log("Sending floor data:", {
+        selectedRooms: validSelectedRooms,
+        floors: floorsData
+      });
+
+      const response = await roomAPI.saveFloorData({
+        selectedRooms: validSelectedRooms,
+        floors: floorsData
+      });
+
+      if (response.data.success) {
+        localStorage.removeItem("hostelRoomData"); // Clear saved data
+        setShowRoomRent(true);
+      } else {
+        throw new Error(response.data.message || "Failed to save floor data");
+      }
+    } catch (error) {
+      console.error("Floor data save error:", {
+        error: error.message,
+        response: error.response?.data,
+        stack: error.stack
+      });
+      alert(`Error: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (showRoomRent) {
     return (
       <RoomRent
         nextStep={nextStep}
-        selectedRooms={filteredRooms.map((room) => room.label)}
+        selectedRooms={filteredRooms.map(room => room.label)}
+        roomTypes={roomTypes}
       />
     );
   }
@@ -129,121 +186,171 @@ export default function HostelRoomSelection({ selectedRooms, nextStep }) {
           </button>
         )}
         <button
-          className="border py-2 px-6 rounded-md"
+          className={`border py-2 px-6 rounded-md ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={handleFinalSave}
+          disabled={isSaving}
         >
-          Save & Continue
+          {isSaving ? 'Saving...' : 'Save & Continue'}
         </button>
       </div>
     </div>
   );
 }
 
-function RoomRent({ selectedRooms, nextStep }) {
+function RoomRent({ selectedRooms, nextStep, roomTypes }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [roomData, setRoomData] = useState(() => {
-    return JSON.parse(localStorage.getItem("roomRentData")) || {};
+    const savedData = JSON.parse(localStorage.getItem("roomRentData")) || {};
+    const initializedData = {};
+    
+    selectedRooms.forEach(roomLabel => {
+      const roomType = roomTypes.find(r => r.label === roomLabel);
+      initializedData[roomLabel] = {
+        price: roomType?.price || 0,
+        deposit: 0,
+        availableCount: roomType?.availableCount || 0,
+        amenities: {},
+        ...savedData[roomLabel]
+      };
+    });
+    
+    return initializedData;
   });
+
+
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("roomRentData", JSON.stringify(roomData));
   }, [roomData]);
 
   const currentRoom = selectedRooms[currentIndex];
+  const currentData = roomData[currentRoom] || {};
 
   const handleChange = (field, value) => {
-    setRoomData((prev) => ({
+    setRoomData(prev => ({
       ...prev,
-      [currentRoom]: { ...prev[currentRoom], [field]: value },
+      [currentRoom]: {
+        ...prev[currentRoom],
+        [field]: value
+      }
     }));
   };
 
   const handleCheckboxChange = (amenity) => {
-    setRoomData((prev) => ({
+    setRoomData(prev => ({
       ...prev,
       [currentRoom]: {
         ...prev[currentRoom],
         amenities: {
           ...prev[currentRoom]?.amenities,
-          [amenity]: !prev[currentRoom]?.amenities?.[amenity] || false,
-        },
-      },
+          [amenity]: !prev[currentRoom]?.amenities?.[amenity]
+        }
+      }
     }));
   };
 
   const nextRoom = () => {
-    setCurrentIndex((prev) => (prev + 1) % selectedRooms.length);
+    setCurrentIndex(prev => (prev + 1) % selectedRooms.length);
   };
 
   const prevRoom = () => {
-    setCurrentIndex((prev) =>
-      prev === 0 ? selectedRooms.length - 1 : prev - 1
-    );
+    setCurrentIndex(prev => prev === 0 ? selectedRooms.length - 1 : prev - 1);
   };
 
-  const handleSave = () => {
-    localStorage.setItem("roomRentData", JSON.stringify(roomData));
-    alert("Rent details saved!");
-  };
+   const handleSave = async () => {
+  setIsSaving(true);
+  try {
+    const rentData = Object.entries(roomData).map(([roomLabel, data]) => {
+      const roomType = roomTypes.find(r => r.label === roomLabel);
+      return {
+        roomType: roomType?.type,
+        price: data.price,
+        deposit: data.deposit,
+        availableCount: data.availableCount,
+        amenities: Object.keys(data.amenities || {})
+          .filter(key => data.amenities[key])
+      };
+    });
 
+    console.log("Prepared rentData:", rentData); // Debug log
+
+    const response = await roomAPI.saveRoomRentData(rentData); // Send array directly
+      
+    if (response.data.success) {
+      localStorage.setItem("roomRentData", JSON.stringify(roomData));
+      alert("Rent details saved successfully!");
+      nextStep();
+    } else {
+      alert("Failed to save rent details: " + (response.data.message || "Unknown error"));
+    }
+  } catch (error) {
+    console.error("Detailed error saving rent:", {
+      error: error.message,
+      response: error.response?.data,
+      config: error.config
+    });
+    alert(`Failed to save rent details: ${error.response?.data?.message || error.message}`);
+  } finally {
+    setIsSaving(false);
+  }
+};
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md w-full  mx-auto">
+    <div className="p-6 bg-white rounded-lg shadow-md w-full mx-auto">
       <h2 className="text-lg font-semibold text-center mb-4">
         Configure Rent & Amenities
       </h2>
 
-      <div className="flex items-center justify-between">
-        <button
-          onClick={prevRoom}
-          className="p-2 rounded-full hover:bg-gray-200"
-        >
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={prevRoom} className="p-2 rounded-full hover:bg-gray-200">
           <ChevronLeft size={24} />
         </button>
-
         <h3 className="text-xl font-bold">{currentRoom}</h3>
-
-        <button
-          onClick={nextRoom}
-          className="p-2 rounded-full hover:bg-gray-200"
-        >
+        <button onClick={nextRoom} className="p-2 rounded-full hover:bg-gray-200">
           <ChevronRight size={24} />
         </button>
       </div>
 
-      <div className="mt-4">
-        <div className="mb-3">
-          <label className="block text-sm font-medium">
-            Rent for Single Bed*
-          </label>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Rent (₹)*</label>
           <input
             type="number"
             className="w-full p-2 border rounded-md"
-            placeholder="₹"
-            value={roomData[currentRoom]?.rent || ""}
-            onChange={(e) => handleChange("rent", e.target.value)}
+            value={currentData.price || 0}
+            onChange={(e) => handleChange("price", Number(e.target.value))}
           />
         </div>
 
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Deposit*</label>
+        <div>
+          <label className="block text-sm font-medium mb-1">Deposit (₹)*</label>
           <input
             type="number"
             className="w-full p-2 border rounded-md"
-            placeholder="₹"
-            value={roomData[currentRoom]?.deposit || ""}
-            onChange={(e) => handleChange("deposit", e.target.value)}
+            value={currentData.deposit || 0}
+            onChange={(e) => handleChange("deposit", Number(e.target.value))}
           />
         </div>
 
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Amenities</label>
-          <div className="flex space-x-4">
-            {["A.C", "Iron", "Wi-Fi", "Laundry"].map((amenity) => (
+        <div>
+          <label className="block text-sm font-medium mb-1">Available Rooms*</label>
+          <input
+            type="number"
+            className="w-full p-2 border rounded-md"
+            value={currentData.availableCount || 0}
+            onChange={(e) => handleChange("availableCount", Number(e.target.value))}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Amenities</label>
+          <div className="grid grid-cols-2 gap-2">
+            {["A.C", "Wi-Fi", "Laundry", "Iron", "TV", "Geyser"].map((amenity) => (
               <label key={amenity} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  className="w-4 h-4"
-                  checked={roomData[currentRoom]?.amenities?.[amenity] || false}
+                  className="w-4 h-4 accent-yellow-500"
+                  checked={currentData.amenities?.[amenity] || false}
                   onChange={() => handleCheckboxChange(amenity)}
                 />
                 <span>{amenity}</span>
@@ -253,15 +360,12 @@ function RoomRent({ selectedRooms, nextStep }) {
         </div>
       </div>
 
-      <button
-        className="w-full mt-4 py-2 bg-yellow-400 text-black font-semibold rounded-md hover:bg-yellow-500"
-        // onClick={handleSave}
-        onClick={() => {
-          handleSave();
-          nextStep();
-        }}
+     <button
+        className={`w-full mt-6 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-md transition-colors ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={handleSave}
+        disabled={isSaving}
       >
-        Save and Continue
+        {isSaving ? 'Saving...' : 'Save and Continue'}
       </button>
     </div>
   );

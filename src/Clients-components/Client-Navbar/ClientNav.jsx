@@ -5,13 +5,17 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
  // Adjust if needed
+ const API_BASE_URL = "http://localhost:5000/api/auth";
 
 const ClientNav = () => {
    const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const clientId = user ? user.clientId : null; // Get clientId from user state
+  const idToken = user ? user.token : null; // Get token from user state
   const navigate = useNavigate();
+
 
   const navLinks = [
     { name: "Home", path: "/client/home" },
@@ -21,45 +25,78 @@ const ClientNav = () => {
     { name: "Chat", path: "/client/chat" },
     { name: "Contact Us", path: "/client/supportdashboard" },
   ];
+  // ClientNav.js (updated useEffect and logout)
 useEffect(() => {
-   const fetchUser = async () => {
-  const storedUser = localStorage.getItem("clientUser");
-  if (storedUser) {
-    const parsedUser = JSON.parse(storedUser);
-    
+  const fetchUserData = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/auth/user?clientId=${clientId}`, {
-        params: { clientId: parsedUser.clientId },
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/user`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('clientToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
       if (response.data.success) {
         setUser(response.data.user);
       } else {
-        console.warn("Falling back to stored user");
-        setUser(parsedUser);
+        throw new Error(response.data.message || 'Failed to fetch user');
       }
     } catch (error) {
-      console.error("Error fetching user:", error);
-      // Fall back to stored user if API fails
-      setUser(parsedUser);
+      console.error('Error fetching user:', error);
+      setError(error.message);
+      // Optionally redirect to login if token is invalid
+      if (error.response?.status === 401) {
+        navigate('/client/client-login');
+      }
+    } finally {
+      setLoading(false);
     }
-  }
-};
-
-    fetchUser();
-  }, []);
- 
-  
- 
-
-    const handleLogout = () => {
-    localStorage.removeItem("clientUser"); // Clear user info
-    navigate("/client/client-login");
   };
 
+  fetchUserData();
+}, []);
+
+const handleLogout = () => {
+  localStorage.removeItem('token');
+  navigate('/client/client-login');
+};
+  const handleDropdownToggle = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+  const handleDropdownClose = () => {
+    setDropdownOpen(false);
+  };
+  const handleLinkClick = () => {
+    setDropdownOpen(false);
+  };
+  const handleNotificationClick = () => {
+    // Handle notification click
+    console.log("Notification clicked");
+  };
+  const handleProfileClick = () => {
+    // Handle profile click
+    console.log("Profile clicked");
+  };
+
+  // const handleLogout = () => {
+  //   localStorage.removeItem('clientUser');
+  //   localStorage.removeItem('token');
+  //   navigate('/client/client-login');
+  // };
+
+  if (loading) {
+    return <div className="bg-blue-900 py-4 px-6">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="bg-blue-900 py-4 px-6 text-white">Error: {error}</div>;
+  }
+
+   
   return (
     <nav className="bg-blue-900 py-4 px-6 flex items-center justify-between">
       {/* Left Section - Logo */}

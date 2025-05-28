@@ -62,16 +62,17 @@ const HostelListing = ({ setShowTracker }) => {
       ) : (
         <p className="text-gray-400">No hostel listing available.</p>
       )}
+        <h3 className="text-lg font-semibold mt-4">
+          Pick Up where you left (1)
+        </h3>
 
       {/* Inactive Hostel Listing */}
       <div>
         <button className="flex items-center text-gray-400">
           <span className="text-xl mr-2">➕</span> Add a new branch
         </button>
-        <h3 className="text-lg font-semibold mt-4">
-          Pick Up where you left (1)
-        </h3>
-        <div className="border border-gray-700 rounded-lg p-4 mt-2">
+      
+        {/* <div className="border border-gray-700 rounded-lg p-4 mt-2">
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-lg font-semibold">Abc Boys Hostel</h2>
@@ -87,7 +88,7 @@ const HostelListing = ({ setShowTracker }) => {
             EDIT
           </button>
           <div className="mt-3 text-gray-400">● Inactive</div>
-        </div>
+        </div> */}
       </div>
 
       {/* Success Popup */}
