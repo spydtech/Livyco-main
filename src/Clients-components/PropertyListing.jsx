@@ -10,7 +10,8 @@ const PropertyListing = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    location: ''
+    location: '',
+    role: 'client'
   });
   const handleChange = (e) => {
     const { name, value } = e.target;

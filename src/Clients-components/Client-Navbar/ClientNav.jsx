@@ -40,30 +40,34 @@ useEffect(() => {
         }
       });
 
-      if (response.data.success) {
-        setUser(response.data.user);
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch user');
+       if (response.data.success) {
+          setUser(response.data.user);
+          
+          // If user is a client, you can fetch additional client data here
+          if (response.data.user.role === 'client') {
+            // Example: fetchClientData(response.data.user.clientId);
+          }
+        } else {
+          throw new Error(response.data.message || 'Failed to fetch user');
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setError(error.message);
+        if (error.response?.status === 401) {
+          navigate('/client/client-login');
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      setError(error.message);
-      // Optionally redirect to login if token is invalid
-      if (error.response?.status === 401) {
-        navigate('/client/client-login');
-      }
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchUserData();
+  }, [navigate]);
+
+ const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/client/client-login');
   };
-
-  fetchUserData();
-}, []);
-
-const handleLogout = () => {
-  localStorage.removeItem('token');
-  navigate('/client/client-login');
-};
   const handleDropdownToggle = () => {
     setDropdownOpen(!dropdownOpen);
   };

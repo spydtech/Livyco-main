@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect  } from "react";
 import { FaSearch, FaEllipsisV } from "react-icons/fa";
 import { BiSort, BiFilter } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
@@ -16,19 +16,19 @@ const metrics = [
 const allListings = [
   { id: "L1234", owner: "Alice Writing", contact: "36003", property: "natus tempora a...", date: "01/01/2023", status: "Active", location: "Hyderabad" },
   { id: "L1235", owner: "Bob Smith", contact: "36004", property: "lorem ipsum...", date: "02/01/2023", status: "Active", location: "Bangalore" },
-  { id: "L1236", owner: "Charlie Brown", contact: "36005", property: "dolor sit amet...", date: "03/01/2023", status: "Inactive", location: "Mumbai" },
-  { id: "L1237", owner: "David Wilson", contact: "36006", property: "consectetur...", date: "04/01/2023", status: "Active", location: "Delhi" },
-  { id: "L1238", owner: "Eve Johnson", contact: "36007", property: "adipiscing elit...", date: "05/01/2023", status: "Inactive", location: "Chennai" },
-  { id: "L1239", owner: "Frank Miller", contact: "36008", property: "sed do eiusmod...", date: "06/01/2023", status: "Active", location: "Kolkata" },
-  { id: "L1240", owner: "Grace Lee", contact: "36009", property: "tempor incididunt...", date: "07/01/2023", status: "Inactive", location: "Pune" },
-  { id: "L1241", owner: "Henry Davis", contact: "36010", property: "ut labore...", date: "08/01/2023", status: "Active", location: "Ahmedabad" },
-  { id: "L1242", owner: "Ivy Wilson", contact: "36011", property: "et dolore...", date: "09/01/2023", status: "Inactive", location: "Jaipur" },
-  { id: "L1243", owner: "Jack Brown", contact: "36012", property: "magna aliqua...", date: "10/01/2023", status: "Active", location: "Surat" },
-  { id: "L1244", owner: "Karen White", contact: "36013", property: "quis nostrud...", date: "11/01/2023", status: "Inactive", location: "Lucknow" },
-  { id: "L1245", owner: "Leo Garcia", contact: "36014", property: "exercitation...", date: "12/01/2023", status: "Active", location: "Kanpur" },
-  { id: "L1246", owner: "Mia Martinez", contact: "36015", property: "ullamco laboris...", date: "13/01/2023", status: "Inactive", location: "Nagpur" },
-  { id: "L1247", owner: "Noah Rodriguez", contact: "36016", property: "nisi ut...", date: "14/01/2023", status: "Active", location: "Indore" },
-  { id: "L1248", owner: "Olivia Lopez", contact: "36017", property: "aliquip ex...", date: "15/01/2023", status: "Inactive", location: "Thane" },
+  // { id: "L1236", owner: "Charlie Brown", contact: "36005", property: "dolor sit amet...", date: "03/01/2023", status: "Inactive", location: "Mumbai" },
+  // { id: "L1237", owner: "David Wilson", contact: "36006", property: "consectetur...", date: "04/01/2023", status: "Active", location: "Delhi" },
+  // { id: "L1238", owner: "Eve Johnson", contact: "36007", property: "adipiscing elit...", date: "05/01/2023", status: "Inactive", location: "Chennai" },
+  // { id: "L1239", owner: "Frank Miller", contact: "36008", property: "sed do eiusmod...", date: "06/01/2023", status: "Active", location: "Kolkata" },
+  // { id: "L1240", owner: "Grace Lee", contact: "36009", property: "tempor incididunt...", date: "07/01/2023", status: "Inactive", location: "Pune" },
+  // { id: "L1241", owner: "Henry Davis", contact: "36010", property: "ut labore...", date: "08/01/2023", status: "Active", location: "Ahmedabad" },
+  // { id: "L1242", owner: "Ivy Wilson", contact: "36011", property: "et dolore...", date: "09/01/2023", status: "Inactive", location: "Jaipur" },
+  // { id: "L1243", owner: "Jack Brown", contact: "36012", property: "magna aliqua...", date: "10/01/2023", status: "Active", location: "Surat" },
+  // { id: "L1244", owner: "Karen White", contact: "36013", property: "quis nostrud...", date: "11/01/2023", status: "Inactive", location: "Lucknow" },
+  // { id: "L1245", owner: "Leo Garcia", contact: "36014", property: "exercitation...", date: "12/01/2023", status: "Active", location: "Kanpur" },
+  // { id: "L1246", owner: "Mia Martinez", contact: "36015", property: "ullamco laboris...", date: "13/01/2023", status: "Inactive", location: "Nagpur" },
+  // { id: "L1247", owner: "Noah Rodriguez", contact: "36016", property: "nisi ut...", date: "14/01/2023", status: "Active", location: "Indore" },
+  // { id: "L1248", owner: "Olivia Lopez", contact: "36017", property: "aliquip ex...", date: "15/01/2023", status: "Inactive", location: "Thane" },
 ];
 
 const ITEMS_PER_PAGE = 5;
@@ -51,6 +51,18 @@ const PropertyListings = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
    // Function to toggle menu for each row
    const [openDropdown, setOpenDropdown] = useState(null); // Track which row has an open menu
+
+    useEffect(() => {
+     const handleClickOutside = (event) => {
+       if (!event.target.closest(".dropdown-parent")) {
+         setOpenDropdown(null);
+       }
+     };
+     document.addEventListener("mousedown", handleClickOutside);
+     return () => {
+       document.removeEventListener("mousedown", handleClickOutside);
+     };
+   }, []);
 
    const navigate = useNavigate(); // For navigation
 
@@ -180,7 +192,7 @@ const PropertyListings = () => {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden border">
+      <div className="relative bg-white rounded-lg shadow-sm overflow-hidden border">
         <table className="w-full text-left">
           <thead className="bg-gray-50 text-gray-600 text-sm">
             <tr className="border-b">
@@ -215,7 +227,7 @@ const PropertyListings = () => {
                     onClick={() => toggleDropdown(item.id)}
                   />
                   {openDropdown === item.id && (
-                    <div className="absolute text-center right-0 mt-2 w-40 bg-[#AFD1FF] border rounded-lg shadow-lg z-10">
+                    <div className="absolute dropdown-parent text-center  justify-center items-center right-0 -mt-10 w-40 bg-[#AFD1FF] border rounded-lg shadow-lg overflow-y-auto z-10">
                       <ul className="py-2 text-gray-700">
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b">Approve</li>
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b">Reject</li>
