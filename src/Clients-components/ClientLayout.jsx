@@ -29,6 +29,7 @@ import Main from "./ManageProperties/Main"
 import SupportDashboard from "./Support Dashboard/SupportDashboard";
 import ChatApp from "./Chat/ChatApp";
 import ClientLogin from "./Client-Login/ClientLogin";
+import ProfilePage from "./Client-Home/ProfilePage";
 
 
 const ClientLayout = () => {
@@ -40,6 +41,7 @@ const ClientLayout = () => {
         
         <Route path="/client-login" element={<ClientLogin />} />
         <Route path="/client-otpverify" element={<OTPVerification />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/home" element={<ClientHomePage />} />
         <Route path="/dashboard" element={<ClientDashboard />} />
         <Route path="/tenantrequest" element={<TenantRequestTable />} />

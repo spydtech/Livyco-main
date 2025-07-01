@@ -164,6 +164,17 @@ useEffect(() => {
           {/* Dropdown Menu */}
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg">
+            <div className="py-2">
+              <Link 
+                to="/client/profile"
+                className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              >
+                Profile
+              </Link>
+              </div>
+
+
+
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"

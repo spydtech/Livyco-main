@@ -545,7 +545,7 @@ const ManageUsers = () => {
       </div>
 
       {/* Data Table */}
-      <div className="relative bg-white rounded-lg shadow-sm overflow-hidden border">
+      <div className="relative bg-white rounded-lg shadow-sm overflow-hidden border h-[500px]">
         <table className="relative  w-full text-left">
           <thead className="bg-gray-50 text-gray-600 text-sm">
             <tr className="border-b">

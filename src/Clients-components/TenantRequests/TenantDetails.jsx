@@ -4,10 +4,22 @@ import { FiMessageCircle, FiPhone } from "react-icons/fi";
 import ClientNav from "../Client-Navbar/ClientNav";
 
 const TenantDetails = () => {
-  const location = useLocation();
+ const location = useLocation();
   const navigate = useNavigate();
-  const tenant = location.state || {}; // Ensure tenant data is passed
+  const tenant = location.state || {};
 
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN'); // Format for India
+  };
+
+  // Helper function to format currency
+  const formatCurrency = (amount) => {
+    if (amount === undefined || amount === null) return "₹0.00";
+    return `₹${amount.toLocaleString('en-IN')}`;
+  };
   return (
     <>
     <ClientNav />
@@ -22,26 +34,43 @@ const TenantDetails = () => {
       </div>
 
       {/* Tenant Profile Section */}
-      <div className="bg-white p-6  flex items-center space-x-6 mb-6 justify-between">
-       
-        <div className="flex gap-4 items-center">
-        <img src={tenant.profileImage} alt="Profile" className="w-16 h-16 rounded-full border" />
-        <div>
-        <h2 className="text-xl font-semibold">{tenant.name}</h2>
-        <p className="text-gray-500">{tenant.tenantId}</p>
+      <div className="bg-white p-6 rounded-xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+          <div className="flex items-center space-x-4 mb-4 md:mb-0">
+            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border border-gray-300">
+              {tenant.user?.profileImage ? (
+                <img 
+                  src={tenant.user.profileImage} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-gray-500 text-xl font-medium">
+                  {tenant.user?.name?.charAt(0)?.toUpperCase() || 'T'}
+                </span>
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {tenant.user?.name || "Tenant Name"}
+              </h2>
+              <p className="text-gray-500 text-sm">
+                ID: {tenant.user?.clientId || "N/A"}
+              </p>
+            </div>
+          </div>
+          
+          {/* Contact Buttons */}
+          <div className="flex space-x-3">
+            <button className="p-3 bg-yellow-400 rounded-full flex items-center justify-center shadow-md hover:bg-yellow-500 transition">
+              <FiMessageCircle className="text-gray-800 text-lg" />
+            </button>
+            <button className="p-3 bg-yellow-400 rounded-full flex items-center justify-center shadow-md hover:bg-yellow-500 transition">
+              <FiPhone className="text-gray-800 text-lg" />
+            </button>
+          </div>
         </div>
-         
-        </div>
-         {/* Contact Buttons */}
-         <div className="flex space-x-4 items-end justify-end ml-auto">
-          <button className="p-3 bg-yellow-400 rounded-full flex items-center justify-center shadow-md">
-            <FiMessageCircle className="text-black text-lg" />
-          </button>
-          <button className="p-3 bg-yellow-400 rounded-full flex items-center justify-center shadow-md">
-            <FiPhone className="text-black text-lg" />
-          </button>
-        </div>
-      </div>
+        
+
 
 
       <div className="ml-[30%]  bg-white ">
@@ -52,11 +81,12 @@ const TenantDetails = () => {
         <div className="bg-white p-6 rounded-lg  md:w-[600px]  border-2">
           <h3 className="font-semibold text-gray-700 mb-4">Basic Details</h3>
           <div className="space-y-2 text-gray-600">
-            <p><strong>Email ID:</strong> {tenant.email}</p>
-            <p><strong>Date of Birth:</strong> {tenant.dob}</p>
-            <p><strong>Aadhar Number:</strong> {tenant.aadhar}</p>
-            <p><strong>Emergency Contact:</strong> {tenant.emergencyContact} ({tenant.emergencyName})</p>
-            <p><strong>Address:</strong> {tenant.address}</p>
+            <p><strong>Email ID:</strong> {tenant.user?.email || "N/A"}</p>
+            <p><strong>Date of Birth:</strong>  {formatDate(tenant.user?.dob)}</p>
+            <p><strong>Aadhar Number:</strong>{tenant.user?.aadharNumber || "N/A"} </p>
+            <p><strong>Emergency Contact:</strong> {tenant.user?.emergencyContact?.number || "N/A"} 
+                    {tenant.user?.emergencyContact?.name && ` (${tenant.user.emergencyContact.name})`}</p>
+            <p><strong>Address:</strong> {tenant.user?.address || "N/A"}</p>
           </div>
         </div>
 
@@ -64,11 +94,13 @@ const TenantDetails = () => {
         <div className="bg-white p-6 rounded-lg border-2 md:w-[600px]">
           <h3 className="font-semibold text-gray-700 mb-4">Stay Details</h3>
           <div className="space-y-2 text-gray-600">
-            <p className="font-semibold">{tenant.hostelName}</p>
-            <p className="text-gray-500">{tenant.hostelAddress}</p>
-            <p><strong>Check-in Date:</strong> {tenant.checkInDate}</p>
-            <p><strong>Check-out Date:</strong> {tenant.checkOutDate}</p>
-            <p><strong>Details:</strong> {tenant.roomDetails}</p>
+            <p className="font-semibold">{tenant.property?.name || "N/A"}</p>
+            <p className="text-gray-500">{tenant.property?.address || "N/A"}</p>
+            <p><strong>Check-in Date:</strong> {formatDate(tenant.bookingDetails?.moveInDate)}</p>
+            <p><strong>Check-out Date:</strong> {formatDate(tenant.bookingDetails?.moveOutDate)}</p>
+            <p><strong>Details:</strong> {tenant.bookingDetails?.roomType || "N/A"}</p>
+            <p><strong>Room Number:</strong> {tenant.bookingDetails?.roomNumber || "N/A"}</p>
+            <p><strong>Booking Status:</strong> {tenant.bookingDetails?.status || "N/A"}</p>
           </div>
         </div>
       </div>
@@ -77,9 +109,26 @@ const TenantDetails = () => {
       <div className="bg-white p-6 rounded-lg border-2 mt-6 md:w-[600px]">
         <h3 className="font-semibold text-gray-700 mb-4">Payment Details</h3>
         <div className="space-y-2 text-gray-600">
-          <p><strong>Advance Paid:</strong> {tenant.advancePaid}</p>
-          <p><strong>Rent per month:</strong> {tenant.rentPerMonth}</p>
+          <p><strong>Advance Paid:</strong> {formatCurrency(tenant.pricing?.advance)}</p>
+          <p><strong>Rent per month:</strong> {formatCurrency(tenant.pricing?.monthlyRent)}</p>
+          <p><strong>Deposit:</strong> {formatCurrency(tenant.pricing?.securityDeposit)}</p>
+          <p><strong>Total Amount:</strong> {formatCurrency(tenant.pricing?.total)}</p>
+          <p><strong>Payment Status:</strong> 
+
+           <span 
+                    className={`inline-block px-3 py-1 rounded-md text-sm font-medium ${
+                      tenant.bookingDetails?.paymentStatus === 'confirmed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : tenant.bookingDetails?.paymentStatus === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {tenant.bookingDetails?.paymentStatus?.toUpperCase() || "N/A"}
+                  </span>
+                  </p>
         </div>
+        
       </div>
       </div>
 

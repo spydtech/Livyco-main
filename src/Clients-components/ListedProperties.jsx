@@ -1,108 +1,197 @@
-import React from "react";
-import { FaHeart, FaRegHeart, FaStar, FaShareAlt } from "react-icons/fa";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import img1 from "../assets/client-main/client-main-carousal-1.png";
-import img2 from "../assets/client-main/client-main-carousal-2.png";
-import img3 from "../assets/client-main/client-main-carousal-3.png";
+// import React, { useState, useEffect } from "react";
+// import { FaHeart, FaRegHeart, FaStar, FaShareAlt } from "react-icons/fa";
+// import { propertyAPI } from "./PropertyController";
 
-const properties = [
-  {
-    id: 1,
-    image: img1,
-    title: "Hic doloremque odit sunt nulla et sed.",
-    address: "Address Hic doloremque odit sunt...",
-    price: "₹4,599",
-    rating: 4,
-    amenities: 5,
-  },
-  {
-    id: 2,
-    image: img2,
-    title: "Hic doloremque odit sunt nulla et sed.",
-    address: "Address Hic doloremque odit sunt...",
-    price: "₹4,599",
-    rating: 4,
-    amenities: 5,
-  },
-  {
-    id: 3,
-    image: img3,
-    title: "Hic doloremque odit sunt nulla et sed.",
-    address: "Address Hic doloremque odit sunt...",
-    price: "₹4,599",
-    rating: 4,
-    amenities: 5,
-  },
-];
+// const ListedProperties = ({ property }) => {
+//   const {
+//     image = "",
+//     name = "Property Title",
+//     street = "Street Address",
+//     price = "₹0",
+//     rating = 0,
+//     amenities = 0,
+//   } = property;
 
-const ListedProperties = ({ property }) => {
-  return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden w-80">
-      <div className="relative p-6">
-        <img src={property.image} alt={property.title} className="w-full h-48 object-cover py-4 mt-10" />
-        <div className="absolute top-2 right-2 flex space-x-2 text-gray-600 cursor-pointer p-4 space-x-4">
-          <FaShareAlt className="text-xl hover:text-blue-500" />
-          <FaRegHeart className="text-xl hover:text-red-500" />
-        </div>
-      </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-800">{property.title}</h3>
-        <p className="text-gray-500 text-sm">{property.address}</p>
-        <p className="text-gray-700 font-semibold mt-2">Starting from <span className="font-bold">{property.price}</span></p>
-        <div className="flex items-center text-yellow-500 mt-2">
-          {[...Array(5)].map((_, index) => (
-            <FaStar key={index} className={index < property.rating ? "text-yellow-500" : "text-gray-300"} />
-          ))}
-        </div>
-        <p className="text-gray-600 mt-2">Amenities</p>
-        <div className="flex items-center space-x-2 mt-1">
-          {[...Array(3)].map((_, index) => (
-            <div key={index} className="w-4 h-4 border rounded-full"></div>
-          ))}
-          <span className="text-gray-500">+{property.amenities} more</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div className="bg-white rounded-lg shadow-lg overflow-hidden w-full justify-center">
+//       <div className="relative">
+//         <img
+//           src={image || "/fallback-image.png"}
+//           alt={name}
+//           className="w-full h-48 object-cover"
+//           onError={(e) => (e.target.src = "/fallback-image.png")}
+//         />
+//         <div className="absolute top-2 right-2 flex gap-3 p-2 text-gray-600">
+//           <FaShareAlt className="text-xl hover:text-blue-500 cursor-pointer" />
+//           <FaRegHeart className="text-xl hover:text-red-500 cursor-pointer" />
+//         </div>
+//       </div>
+//       <div className="p-4">
+//         <h3 className="font-semibold text-gray-800">{name}</h3>
+//         <p className="text-gray-500 text-sm">{street}</p>
+//         <p className="text-gray-700 font-semibold mt-2">
+//           Starting from <span className="font-bold">{price}</span>
+//         </p>
+//         <div className="flex items-center mt-2">
+//           {[...Array(5)].map((_, i) => (
+//             <FaStar
+//               key={i}
+//               className={`text-lg ${i < rating ? "text-yellow-500" : "text-gray-300"}`}
+//             />
+//           ))}
+//         </div>
+//         <p className="text-gray-600 mt-2">Amenities</p>
+//         <div className="flex items-center space-x-2 mt-1">
+//           <span className="text-gray-500">+{amenities} more</span>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// const RecentlyListedProperties = () => {
+//   const [properties, setProperties] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+
+//   useEffect(() => {
+//     const fetchProperties = async () => {
+//       try {
+//         const response = await propertyAPI.getCompletePropertyData();
+//         const data = response?.data;
+
+//         if (data?.success && Array.isArray(data.property)) {
+//           setProperties(data.property);
+//         } else if (data?.success && data.property) {
+//           setProperties([data.property]);
+//         } else {
+//           setProperties([]);
+//         }
+//       } catch (err) {
+//         setError(err.message || "Failed to fetch properties.");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchProperties();
+//   }, []);
+
+//   if (loading) return <div className="text-center text-gray-500">Loading properties...</div>;
+//   if (error) return <div className="text-center text-red-500">Error: {error}</div>;
+//   if (!properties.length) return <div className="text-center text-gray-500">No properties available.</div>;
+
+//   return (
+//     <div className="bg-[#333333] py-10 px-5">
+//       <h2 className="text-white text-2xl font-semibold text-center mb-6">Recently listed properties</h2>
+//       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center">
+//         {properties.map((property, idx) => (
+//           <ListedProperties key={idx} property={property} />
+//         ))}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default RecentlyListedProperties;
+
+
+
+import React, { useState, useEffect } from "react";
+import { propertyAPI } from "./PropertyController";
+import PropertyCard from "./PropertyCard";
+import PropertyCardSkeleton from "./PropertyCardSkeleton";
 
 const RecentlyListedProperties = () => {
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 1,
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        },
-      },
-    ],
-  };
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        const response = await propertyAPI.getCompletePropertyData();
+        const data = response?.data;
+
+        if (data?.success) {
+          // Transform API data to match our frontend needs
+          const transformedProperty = {
+            ...data.data.property,
+            images: data.data.media?.images || [],
+            videos: data.data.media?.videos || [],
+            startingPrice: data.data.pgProperty?.startingPrice || "0",
+            amenities: data.data.pgProperty?.amenities || [],
+            rating: data.data.property.rating || 0
+          };
+          setProperties([transformedProperty]);
+        } else {
+          setProperties([]);
+        }
+      } catch (err) {
+        setError(err.message || "Failed to fetch properties.");
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-[#333333] py-10 px-5">
+        <h2 className="text-white text-2xl font-semibold text-center mb-6">
+          Recently listed properties
+        </h2>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center">
+          {[...Array(3)].map((_, idx) => (
+            <PropertyCardSkeleton key={idx} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-[#333333] py-10 px-5 text-center">
+        <h2 className="text-white text-2xl font-semibold mb-4">
+          Recently listed properties
+        </h2>
+        <div className="text-red-400 mb-4">{error}</div>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!properties.length) {
+    return (
+      <div className="bg-[#333333] py-10 px-5 text-center">
+        <h2 className="text-white text-2xl font-semibold mb-4">
+          Recently listed properties
+        </h2>
+        <p className="text-gray-300">No properties available at the moment.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#333333] py-10 px-5">
-      <h2 className="text-white text-2xl font-semibold text-center mb-6">Recently listed properties</h2>
-      <Slider {...settings} className="max-w-6xl mx-auto">
-        {properties.map((property) => (
-          <div key={property.id} className="px-2">
-            <ListedProperties property={property} />
-          </div>
+      <h2 className="text-white text-2xl font-semibold text-center mb-6">
+        Recently listed properties
+      </h2>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center">
+        {properties.map((property, idx) => (
+          <PropertyCard key={idx} property={property} />
         ))}
-      </Slider>
+      </div>
     </div>
   );
 };

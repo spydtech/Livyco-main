@@ -59,9 +59,83 @@ api.interceptors.response.use(
 
 export const propertyAPI = {
   registerProperty: (propertyData) => api.post('/api/auth/properties/register', propertyData),
-  getProperty: () => api.get('/api/auth/properties'),
-  updateProperty: (updates) => api.put('/api/auth/properties', updates),
-  deleteProperty: () => api.delete('/api/auth/properties'),
+  reverseGeocode: (lat, lon) => api.get(`/api/auth/properties/geocode?lat=${lat}&lon=${lon}`),
+  getProperty: () => api.get(`/api/auth/properties`),
+  updateProperty: (propertyId, updates) => api.put(`/api/auth/properties/${propertyId}`, updates),
+  deleteProperty: (propertyId) => api.delete(`/api/auth/properties/${propertyId}`),
+  
+  getCompletePropertyData: () => 
+    api.get('/api/auth/properties/complete')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Invalid response format');
+        }
+        return response;
+      }),
+  
+   toggleFavorite: (propertyId) => 
+    api.post('/api/auth/properties/favorite', { propertyId }),
+   
+   //admin side 
+    getAllClientProperties: (params = {}) =>
+    api.get('/api/auth/properties/client-all', { params }) // Corrected URL path
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Invalid response format');
+        }
+        return response;
+      }),
+};
+
+
+export const userAPI = {
+// registerByClient: (userData) => {
+//   // ... existing code ...
+//   return api.post('/client/register', formData, {
+//     headers: {
+//       'Content-Type': 'multipart/form-data',
+//     }
+//   });
+// }
+updateUser: (data) => api.put('/api/auth/user/profile', data),
+getUser: () => api.get('/api/auth/user'),
+addTenantByClient: (formData) => {
+  return api.post('/api/auth/client/register-by-client', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    });
+}
+};
+export const bookingAPI = {
+  /**
+   * Fetches all bookings from the backend.
+   * Requires client role on the backend for this endpoint.
+   * @returns {Promise<AxiosResponse>} A promise that resolves to the API response.
+   */
+  getAllBookings: () => api.get('/api/auth/bookings')
+    .then(response => {
+      // Basic success check for the response structure
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Invalid response format for fetching bookings');
+      }
+      return response;
+    }),
+
+  /**
+   * Creates a new booking.
+   * @param {object} bookingData - The booking details (propertyId, roomTypeId, roomId, moveInDate, moveOutDate).
+   * @returns {Promise<AxiosResponse>} A promise that resolves to the API response.
+   */
+  createBooking: (bookingData) => api.post('/api/auth/bookings', bookingData)
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Invalid response format for creating booking');
+      }
+      return response;
+    }),
+
+ 
 };
 
 export const mediaAPI = {
@@ -73,24 +147,88 @@ export const mediaAPI = {
   }),
   getMedia: () => api.get('/api/auth/media'),
   deleteMediaItem: (type, mediaId) => api.delete(`/api/auth/media/${type}/${mediaId}`),
+  editMediaItem: (type, mediaId, updates) =>
+    api.put(`/api/auth/media/${type}/${mediaId}`, updates),
 };
+
+// export const roomAPI = {
+//   getRoomTypes: () => api.get('/api/auth/rooms'),
+//   createRoomTypes: (roomTypes, propertyId) => api.post(`/api/auth/rooms/${propertyId}`, { roomTypes }),
+//   updateRoomAvailability: (roomType, count) => 
+//     api.patch('/api/auth/rooms/availability', { roomType, count }),
+//   getRoomAvailability: () => api.get('/api/rooms/auth/availability'),
+//   saveFloorData: (data) => api.post('/api/auth/rooms/floor', data),
+//   saveRoomRentData: (rentData) => api.post('/api/auth/rooms/rent', rentData),
+//   deleteRoomType: (roomTypeId) =>
+//     api.delete(`/api/auth/rooms/${roomTypeId}`),
+//   updateRoomType: ( propertyId, updates) =>
+//     api.put(`/api/auth/rooms/${propertyId}`, updates),
+// };
 
 export const roomAPI = {
-  getRoomTypes: () => api.get('/api/auth/rooms'),
-  createRoomTypes: (roomTypes) => api.post('/api/auth/rooms', { roomTypes }),
-  updateRoomAvailability: (roomType, count) => 
-    api.patch('/api/auth/rooms/availability', { roomType, count }),
-  getRoomAvailability: () => api.get('/api/rooms/auth/availability'),
-  saveFloorData: (data) => api.post('/api/auth/rooms/floor', data),
-   saveRoomRentData: (rentData) => api.post('/api/auth/rooms/rent', rentData)
+  // Create or update room types
+  createRoomTypes: (propertyId, data) => 
+    api.post(`/api/auth/${propertyId}/rooms`, data),
+  
+  // Get room types
+  getRoomTypes: (propertyId) => 
+    api.get(`/api/auth/${propertyId}/rooms`),
+  
+  // Get floor data
+  getFloorData: (propertyId) => 
+    api.get(`/api/auth/${propertyId}/rooms/floor`),
+  
+  // Save floor data
+  saveFloorData: (propertyId, data) => 
+    api.post(`/api/auth/${propertyId}/rooms/floor`, data),
+  
+  // Get room rent data
+  getRoomRentData: (propertyId) => 
+    api.get(`/api/auth/${propertyId}/rooms/rent`),
+  
+  // Save room rent data
+  saveRoomRentData: (propertyId, data) => 
+    api.post(`/api/auth/${propertyId}/rooms/rent`, data),
+  
+  // Delete room type
+  deleteRoomType: (propertyId, roomTypeId) =>
+    api.delete(`/api/auth/${propertyId}/rooms/${roomTypeId}`),
+  
+  // Update room type
+  updateRoomType: (propertyId, roomTypeId, data) =>
+    api.put(`/api/auth/${propertyId}/rooms/${roomTypeId}`, data),
 };
 
+
+
+
+
+
 // In your PropertyController.jsx or api configuration
-export const pgAPI = {
-  savePGProperty: (formData) => api.post('/api/auth/pg', formData),
-  getPGProperty: () => api.get('/api/auth/pg'),
+// export const pgAPI = {
+//   savePGProperty: (formData) => api.post('/api/auth/pg', formData),
+//   getPGProperty: () => api.get('/api/auth/pg'),
+//   updatePGProperty: (propertyId, formData) => 
+//     api.put('/api/auth/pg', { ...formData, propertyId }),
   
+//   deletePGProperty: (propertyId) => 
+//     api.delete(`/api/auth/pg/${propertyId}`),
+  
+// };
+
+export const pgAPI = {
+  savePGProperty: (propertyId, formData) => 
+    propertyId
+      ? api.put(`/api/auth/pg/${propertyId}`, formData)
+      : api.post('/api/auth/pg', formData),
+  
+  getPGProperty: (propertyId) => 
+    api.get(`/api/auth/pg/${propertyId}`),
+  
+  deletePGProperty: (propertyId) => 
+    api.delete(`/api/auth/pg/${propertyId}`),
 };
+
 export const handleApiError = (error) => {
   const errorResponse = {
     success: false,

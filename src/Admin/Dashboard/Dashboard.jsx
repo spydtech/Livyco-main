@@ -11,13 +11,14 @@ import PropertyListings from "../PropertyListings/PropertyListings";
 import PropertyDetails from "../PropertyListings/PropertyDetails";
 import ManageUsers from "../Manage Users/ManageUsers";
 import UserDetails from "../Manage Users/UserDetails";
+import RoleActivityForm from "../FinancialReport/FinancialReport";
 import axios from "axios";
 
 const menuItems = [
   { name: "Dashboard", icon: HiOutlineViewGrid, path: "/admin/dashboard" },
   { name: "Property Listings", icon: HiUsers, path: "/admin/dashboard/propertylistings" },
   { name: "Manage Users", icon: HiUsers, path: "/admin/dashboard/manageusers" },
-  { name: "Financial Reports", icon: BiMoney, path: "/admin/reports" },
+  { name: "Financial Reports", icon: BiMoney, path: "/admin/dashboard/finacialReport" },
   { name: "Support Tickets", icon: BiSupport, path: "/admin/support" },
   { name: "Settings", icon: HiChartPie, path: "/admin/settings" },
   { name: "Sign Out", icon: HiLogout, path: "/admin/admin-login" },
@@ -42,7 +43,7 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error("Failed to fetch admin profile:", error);
-        navigate("/admin/login");
+        navigate("/admin/admin_login");
       }
     };
 
@@ -104,6 +105,7 @@ const Dashboard = () => {
           <Route path="/property/:id" element={<PropertyDetails />} />
           <Route path="/manageusers" element={<ManageUsers />} />
           <Route path="/manageusers/:id" element={<UserDetails />} />
+          <Route path="/finacialReport" element={<RoleActivityForm />} />
         </Routes>
       </main>
     </div>
