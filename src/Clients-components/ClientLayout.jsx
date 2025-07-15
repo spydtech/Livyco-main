@@ -12,7 +12,7 @@ import ClientHomePage from "./Client-Home/ClientHomePage";
 import ClientDashboard from "./Client-Dashboard/ClientDashboard";
 import TenantRequestTable from "./TenantRequests/TenantRequestTable";
 import TenantDetails from "./TenantRequests/TenantDetails";
-import ServiceRequests from "./ServiceRequest/serviceRequests";
+import ServiceRequests from "./ServiceRequest/ServiceRequests";
 import ApprovalPage from "./ServiceRequest/ApprovalPage";
 import CancelRequestPage from "./ServiceRequest/CancelRequestPage";
 import TenantCheckoutRequest from "./CheckOutPages/TenantCheckoutRequest";
