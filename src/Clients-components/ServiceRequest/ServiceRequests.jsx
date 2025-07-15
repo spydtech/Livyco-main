@@ -2,7 +2,11 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientNav from "../Client-Navbar/ClientNav";
 
-const serviceRequests = [
+
+
+const ServiceRequests = () => {
+  const navigate = useNavigate();
+  const serviceRequests = [
   {
     id: "HH000000-000-01",
     tenantName: " K",
@@ -14,9 +18,6 @@ const serviceRequests = [
       "The current bed is uncomfortable and needs to be replaced for better support and rest.",
   },
 ];
-
-const ServiceRequests = () => {
-  const navigate = useNavigate();
 
   return (
     <>
