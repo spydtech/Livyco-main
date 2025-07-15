@@ -5,7 +5,7 @@ import ClientNav from "../Client-Navbar/ClientNav";
 const serviceRequests = [
   {
     id: "HH000000-000-01",
-    tenantName: "Jagadeesh K",
+    tenantName: " K",
     roomDetails: "Room 101 - Bed B",
     sharingType: "2 Sharing",
     requestType: "Bed Change",
