@@ -43,13 +43,15 @@ const TenantProfile = () => {
   const handleCloseSuccessPopup = () => {
     setShowSuccessPopup(false); // Close success popup
   };
-  const location = useLocation(); 
+  const location = useLocation();
   const navigate = useNavigate();
-  const tenant = location.state; // Get the passed tenant data
+  const tenant = location.state;
 
-  if (!tenant) {
-    return <p>No tenant data found.</p>; // Handle missing data case
-  }
+  if (!tenant) return <p>No tenant data found.</p>;
+
+  const formatDate = (date) =>
+    date ? new Date(date).toLocaleDateString("en-IN") : "N/A";
+
 
   return (
     <div className="bg-[#F8F8FF] min-h-screen">
@@ -66,8 +68,8 @@ const TenantProfile = () => {
                <div className="flex gap-4 items-center">
                <img src={tenant.profileImage} alt="Profile" className="w-16 h-16 rounded-full border" />
                <div>
-               <h2 className="text-xl font-semibold">{tenant.name}</h2>
-               <p className="text-gray-500">{tenant.tenantId}</p>
+               <h2 className="text-xl font-semibold">{tenant.userName}</h2>
+               <p className="text-gray-500">{tenant.clientId}</p>
                </div>
                 
                </div>
@@ -111,16 +113,16 @@ const TenantProfile = () => {
               <h3 className="text-lg font-semibold mb-3">Stay Details</h3>
               <div className="grid grid-cols-2 gap-y-2">
                 <p className="font-semibold">Hostel:</p>
-                <p>{}</p>
+                <p>{tenant.property?.name || "N/A"}</p>
 
                 <p className="font-semibold">Check-in Date:</p>
-                <p>{tenant.checkInDate}</p>
+                <p>{formatDate(tenant.moveInDate)}</p>
 
                 <p className="font-semibold">Check-out Date:</p>
-                <p>DD/MM/YYYY</p>
+                <p>{formatDate(tenant.moveOutDate)}</p>
 
                 <p className="font-semibold">Room:</p>
-                <p>{tenant.roomDetails}</p>
+                <p>{tenant.roomNumber || "N/A"} ({tenant.roomType || "N/A"})</p>
               </div>
             </div>
 
@@ -129,10 +131,10 @@ const TenantProfile = () => {
               <h3 className="text-lg font-semibold mb-3">Payment Details</h3>
               <div className="grid grid-cols-2 gap-y-2">
                 <p className="font-semibold">Advance Paid:</p>
-                <p>₹0000.00</p>
+               <p>₹{tenant.pricing?.securityDeposit || 0}</p>
 
                 <p className="font-semibold">Rent per Month:</p>
-                <p>₹{tenant.rent}</p>
+                 <p>₹{tenant.pricing?.monthlyRent || 0}</p>
 
                 <p className="font-semibold">Total Rent Paid (Months):</p>
                 <p>24 months</p>

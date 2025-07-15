@@ -1363,55 +1363,146 @@ const PropertyRegistration = ({ nextStep, isEditMode, propertyId, propertyData }
     return Object.keys(newErrors).length === 0;
   };
 
-  const fetchLocation = async () => {
+  // const fetchLocation = async () => {
+  //   if (!navigator.geolocation) {
+  //     setErrors(prev => ({ ...prev, location: "Geolocation not supported" }));
+  //     return;
+  //   }
+
+  //   setLoadingLocation(true);
+  //   setErrors(prev => ({ ...prev, location: "" }));
+
+  //   try {
+  //     const position = await new Promise((resolve, reject) =>
+  //       navigator.geolocation.getCurrentPosition(resolve, reject, {
+  //         enableHighAccuracy: true,
+  //         timeout: 10000,
+  //       })
+  //     );
+
+  //     const { latitude, longitude } = position.coords;
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       latitude: latitude.toString(),
+  //       longitude: longitude.toString()
+  //     }));
+
+  //     const response = await fetch(
+  //       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+  //     );
+  //     const data = await response.json();
+
+  //     if (data?.address) {
+  //       const address = data.address;
+  //       setFormData(prev => ({
+  //         ...prev,
+  //         city: address.city || address.town || "",
+  //         locality: address.suburb || address.village || "",
+  //         street: address.road || ""
+  //       }));
+  //     }
+  //   } catch (error) {
+  //     setErrors(prev => ({
+  //       ...prev,
+  //       location: "Failed to get location. Please enter manually."
+  //     }));
+  //   } finally {
+  //     setLoadingLocation(false);
+  //   }
+  // };
+
+  const fetchLocation = () => {
     if (!navigator.geolocation) {
-      setErrors(prev => ({ ...prev, location: "Geolocation not supported" }));
+      alert("Geolocation is not supported.");
       return;
     }
 
     setLoadingLocation(true);
-    setErrors(prev => ({ ...prev, location: "" }));
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const { latitude, longitude } = coords;
+          const res = await fetch(
+            `https://us1.locationiq.com/v1/reverse.php?key=pk.d9ded81b098baab4433252bccb34a41e&lat=${latitude}&lon=${longitude}&format=json`
+          );
+          const data = await res.json();
 
-    try {
-      const position = await new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-        })
-      );
-
-      const { latitude, longitude } = position.coords;
-      setFormData(prev => ({
-        ...prev,
-        latitude: latitude.toString(),
-        longitude: longitude.toString()
-      }));
-
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-      );
-      const data = await response.json();
-
-      if (data?.address) {
-        const address = data.address;
-        setFormData(prev => ({
-          ...prev,
-          city: address.city || address.town || "",
-          locality: address.suburb || address.village || "",
-          street: address.road || ""
-        }));
+          setFormData((prev) => ({
+            ...prev,
+            city: data.address.city || data.address.town || data.address.county || "",
+            locality: data.address.suburb || data.address.village || data.address.neighbourhood || "",
+            street: data.address.road || data.display_name || "",
+            location: {
+              type: "Point",
+              coordinates: [longitude, latitude],
+            },
+          }));
+        } catch (err) {
+          console.error("Reverse geocoding failed", err);
+          alert("Failed to get address.");
+        } finally {
+          setLoadingLocation(false);
+        }
+      },
+      (err) => {
+        console.error("Location fetch failed", err);
+        alert("Location permission denied.");
+        setLoadingLocation(false);
       }
-    } catch (error) {
-      setErrors(prev => ({
-        ...prev,
-        location: "Failed to get location. Please enter manually."
-      }));
-    } finally {
-      setLoadingLocation(false);
-    }
+    );
   };
+  // const handleSubmit = async () => {
+  //   if (!validateForm()) return;
 
-  const handleSubmit = async () => {
+  //   setSubmitLoading(true);
+  //   setErrors({});
+
+  //   try {
+  //     const submissionData = {
+  //       city: formData.city,
+  //       name: formData.name,
+  //       locality: formData.locality,
+  //       street: formData.street,
+  //       registrationId: formData.registrationId,
+  //       gstNo: formData.gstNo,
+  //       cgstNo: formData.cgstNo,
+  //       sgstNo: formData.sgstNo,
+  //       location: formData.latitude && formData.longitude ? {
+  //         type: "Point",
+  //         coordinates: [
+  //           parseFloat(formData.longitude),
+  //           parseFloat(formData.latitude)
+  //         ]
+  //       } : undefined
+  //     };
+
+  //     let response;
+  //     if (isEditMode) {
+  //       response = await propertyAPI.updateProperty(propertyId, submissionData);
+  //     } else {
+  //       response = await propertyAPI.registerProperty(submissionData);
+  //     }
+
+  //     if (!response.data?.success) {
+  //       throw new Error(response.data?.message || "Operation failed");
+  //     }
+
+  //     const updatedProperty = response.data.property;
+  //     const existingData = JSON.parse(localStorage.getItem('editPropertyData') || "{}");
+  //     localStorage.setItem('editPropertyData', JSON.stringify({
+  //       ...existingData,
+  //       property: updatedProperty 
+  //     }));
+
+  //     nextStep();
+  //   } catch (error) {
+  //     const apiError = handleApiError(error);
+  //     setErrors({ submit: apiError.message });
+  //   } finally {
+  //     setSubmitLoading(false);
+  //   }
+  // };
+   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     setSubmitLoading(true);
@@ -1427,13 +1518,16 @@ const PropertyRegistration = ({ nextStep, isEditMode, propertyId, propertyData }
         gstNo: formData.gstNo,
         cgstNo: formData.cgstNo,
         sgstNo: formData.sgstNo,
-        location: formData.latitude && formData.longitude ? {
-          type: "Point",
-          coordinates: [
-            parseFloat(formData.longitude),
-            parseFloat(formData.latitude)
-          ]
-        } : undefined
+        location:
+          formData.latitude && formData.longitude
+            ? {
+                type: "Point",
+                coordinates: [
+                  parseFloat(formData.longitude),
+                  parseFloat(formData.latitude),
+                ],
+              }
+            : undefined,
       };
 
       let response;
@@ -1447,12 +1541,10 @@ const PropertyRegistration = ({ nextStep, isEditMode, propertyId, propertyData }
         throw new Error(response.data?.message || "Operation failed");
       }
 
-      const updatedProperty = response.data.property;
-      const existingData = JSON.parse(localStorage.getItem('editPropertyData') || "{}");
-      localStorage.setItem('editPropertyData', JSON.stringify({
-        ...existingData,
-        property: updatedProperty 
-      }));
+      localStorage.setItem(
+        "editPropertyData",
+        JSON.stringify({ property: response.data.property })
+      );
 
       nextStep();
     } catch (error) {

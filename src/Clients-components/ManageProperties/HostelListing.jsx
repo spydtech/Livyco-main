@@ -878,7 +878,7 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
           try {
             console.log(`Fetching details for property ${property._id}`);
             const [mediaRes, roomRes, pgRes] = await Promise.all([
-              mediaAPI.getMedia(property._id).catch(e => {
+              mediaAPI.getMediaByProperty(property._id).catch(e => {
                 console.error(`Media API error for ${property._id}:`, e);
                 return { data: { media: null } };
               }),
@@ -977,29 +977,56 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
     setShowTracker(true);
   };
 
-  const handleDelete = async (propertyId) => {
+  // const handleDelete = async (propertyId) => {
+  //   try {
+  //     setLoading(true);
+  //     console.log("Deleting property:", propertyId);
+      
+  //     await Promise.all([
+  //       mediaAPI.deleteMediaItem(propertyId).catch(e => console.error("Media delete error:", e)),
+  //       roomAPI.deleteRoomType(propertyId).catch(e => console.error("Rooms delete error:", e)),
+  //       pgAPI.deletePGProperty(propertyId).catch(e => console.error("PG delete error:", e))
+  //     ]);
+      
+  //     await propertyAPI.deleteProperty(propertyId);
+      
+  //     await fetchAllProperties();
+  //   } catch (err) {
+  //     console.error("Error deleting property:", err);
+  //     setError("Failed to delete property. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //     setShowDeletePopup(false);
+  //     setPropertyToDelete(null);
+  //   }
+  // };
+
+
+ const handleDelete = async (propertyId) => {
     try {
-      setLoading(true);
-      console.log("Deleting property:", propertyId);
-      
-      await Promise.all([
-        mediaAPI.deleteMediaItem(propertyId).catch(e => console.error("Media delete error:", e)),
-        roomAPI.deleteRoomType(propertyId).catch(e => console.error("Rooms delete error:", e)),
-        pgAPI.deletePGProperty(propertyId).catch(e => console.error("PG delete error:", e))
-      ]);
-      
-      await propertyAPI.deleteProperty(propertyId);
-      
-      await fetchAllProperties();
+        setLoading(true);
+        console.log("Deleting property:", propertyId);
+
+        await Promise.all([
+            pgAPI.deletePGProperty(propertyId).catch(e => console.error("PG delete error:", e)),
+            roomAPI.deleteRoomTypes(propertyId).catch(e => console.error("Rooms delete error:", e)),
+            mediaAPI.deleteMedia(propertyId).catch(e => console.error("Media delete error:", e))
+        ]);
+
+        await propertyAPI.deleteProperty(propertyId);
+
+        await fetchAllProperties();
     } catch (err) {
-      console.error("Error deleting property:", err);
-      setError("Failed to delete property. Please try again.");
+        console.error("Error deleting property:", err);
+        setError("Failed to delete property. Please try again.");
     } finally {
-      setLoading(false);
-      setShowDeletePopup(false);
-      setPropertyToDelete(null);
+        setLoading(false);
+        setShowDeletePopup(false);
+        setPropertyToDelete(null);
     }
-  };
+};
+
+
 
   const handleNewProperty = () => {
     setPropertyId(null);

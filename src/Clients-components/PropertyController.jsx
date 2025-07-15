@@ -107,17 +107,51 @@ addTenantByClient: (formData) => {
     });
 }
 };
+
 export const bookingAPI = {
   /**
    * Fetches all bookings from the backend.
    * Requires client role on the backend for this endpoint.
    * @returns {Promise<AxiosResponse>} A promise that resolves to the API response.
    */
+  getBookingDetails: (bookingId) => api.get(`/api/auth/bookings/${bookingId}`)
+    .then(response => {
+      // Basic success check for the response structure
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Invalid response format for fetching booking details');
+      }
+      return response;
+    }),
+
+  approveBooking: (bookingId) => api.patch(`/api/auth/bookings/${bookingId}/approve`)
+  .then(response => {
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || 'Booking approval failed');
+    }
+    return response;
+  }),
+
+  rejectBooking: (bookingId, reason) => api.post(`/api/auth/bookings/${bookingId}/reject`, { reason })
+    .then(response => {
+      // Basic success check for the response structure
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Invalid response format for rejecting booking');
+      }
+      return response;
+    }),
   getAllBookings: () => api.get('/api/auth/bookings')
     .then(response => {
       // Basic success check for the response structure
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Invalid response format for fetching bookings');
+      }
+      return response;
+    }),
+  getBookingsByProperty: () => api.get('/api/auth/bookings/property')
+    .then(response => {
+      // Basic success check for the response structure
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Invalid response format for fetching bookings by property');
       }
       return response;
     }),
@@ -146,9 +180,10 @@ export const mediaAPI = {
     timeout: 30000,
   }),
   getMedia: () => api.get('/api/auth/media'),
-  deleteMediaItem: (type, mediaId) => api.delete(`/api/auth/media/${type}/${mediaId}`),
+  deleteMediaItem: (propertyId) => api.delete(`/api/auth/media/${propertyId}`),
   editMediaItem: (type, mediaId, updates) =>
     api.put(`/api/auth/media/${type}/${mediaId}`, updates),
+  getMediaByProperty: (propertyId) => api.get(`/api/auth/media/property/${propertyId}`),
 };
 
 // export const roomAPI = {

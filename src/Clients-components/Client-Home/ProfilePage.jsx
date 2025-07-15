@@ -14,9 +14,17 @@ const ProfilePage = () => {
   });
 
   const menuItems = [
+    // { label: "My Profile", hasArrow: false },
+      { label: "Theme", hasArrow: false },
     { label: "Account Info", hasArrow: false },
-    { label: "Theme", hasArrow: false },
-    { label: "Payment history", hasArrow: true },
+  
+    { label: "Manage Properties", hasArrow: true },
+    { label: "Booking Dashboard", hasArrow: true },
+    
+    
+    { label: "Payment Management", hasArrow: true },
+    { label: "Tenant List", hasArrow: true },
+    
     { label: "My wallet", hasArrow: true },
     { label: "Help & support", hasArrow: true },
     { label: "Term & policy", hasArrow: true }

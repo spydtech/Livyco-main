@@ -1463,32 +1463,25 @@ const HostelRoomSelection = ({
         setInitialLoad(false);
         return;
       }
-      
       try {
         setIsSaving(true);
         const response = await roomAPI.getRoomTypes(propertyId);
         const roomConfig = response.data?.roomConfig || {};
         const floorConfig = roomConfig.floorConfig || {};
-        
-        // Initialize floor data
+
         const floorsData = {};
         if (floorConfig.floors && Array.isArray(floorConfig.floors)) {
           floorConfig.floors.forEach(floor => {
-            // Ensure rooms is always an object with proper room numbers
             const rooms = {};
             Object.entries(floor.rooms || {}).forEach(([roomType, roomNumbers]) => {
               rooms[roomType] = roomNumbers.split(',').map(num => num.trim()).join(', ');
             });
             floorsData[floor.floor] = rooms;
           });
-          
-          // Set number of floors based on what's in the database
           setFloors(floorConfig.floors.length);
         }
-        
+
         setFloorData(floorsData);
-        
-        // Initialize with first floor data if available
         setRoomNumbers(floorsData[1] || {});
       } catch (err) {
         console.error("Failed to load floor data:", err);
@@ -1498,27 +1491,20 @@ const HostelRoomSelection = ({
         setInitialLoad(false);
       }
     };
-
     loadFloorData();
   }, [propertyId]);
 
   const handleRoomNumberChange = (roomType, value) => {
-    setRoomNumbers(prev => ({ 
-      ...prev, 
-      [roomType]: value 
-    }));
+    setRoomNumbers(prev => ({ ...prev, [roomType]: value }));
   };
 
   const saveCurrentFloor = () => {
     const processedRooms = {};
-    
-    // Ensure we maintain the existing room numbers structure
     Object.entries(roomNumbers).forEach(([roomType, roomNumbersStr]) => {
       if (roomNumbersStr) {
-         processedRooms[roomType] = roomNumbersStr.split(',').map(num => num.trim()).join(', ');
+        processedRooms[roomType] = roomNumbersStr.split(',').map(num => num.trim()).join(', ');
       }
     });
-
     setFloorData(prev => ({
       ...prev,
       [currentFloor]: processedRooms
@@ -1527,7 +1513,6 @@ const HostelRoomSelection = ({
 
   const handleFloorChange = (newFloor) => {
     saveCurrentFloor();
-    // Ensure we properly initialize room numbers for the new floor
     setRoomNumbers(floorData[newFloor] || {});
     setCurrentFloor(newFloor);
   };
@@ -1536,9 +1521,7 @@ const HostelRoomSelection = ({
     setIsSaving(true);
     setError(null);
     saveCurrentFloor();
-
     try {
-      // Verify all required room numbers are entered
       filteredRooms.forEach(room => {
         for (let i = 1; i <= floors; i++) {
           if (!floorData[i]?.[room.type]) {
@@ -1547,14 +1530,25 @@ const HostelRoomSelection = ({
         }
       });
 
-      // Prepare floors data for API
       const floorsToSave = [];
-      
+
       for (let i = 1; i <= floors; i++) {
-        floorsToSave.push({
+        const floorObj = {
           floor: i,
-          rooms: floorData[i] || {}
+          rooms: []
+        };
+        filteredRooms.forEach(room => {
+          const roomNumbers = floorData[i]?.[room.type]?.split(",").map(num => num.trim());
+          if (roomNumbers && roomNumbers.length > 0) {
+            roomNumbers.forEach((roomNumber) => {
+              floorObj.rooms.push({
+                roomNumber,
+                type: room.type
+              });
+            });
+          }
         });
+        floorsToSave.push(floorObj);
       }
 
       if (propertyId) {
@@ -1562,7 +1556,6 @@ const HostelRoomSelection = ({
           selectedRooms: filteredRooms.map(room => room.type),
           floors: floorsToSave
         });
-
         if (!response.data.success) {
           throw new Error(response.data.message || "Failed to save floor configuration");
         }

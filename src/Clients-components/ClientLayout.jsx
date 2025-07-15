@@ -30,6 +30,7 @@ import SupportDashboard from "./Support Dashboard/SupportDashboard";
 import ChatApp from "./Chat/ChatApp";
 import ClientLogin from "./Client-Login/ClientLogin";
 import ProfilePage from "./Client-Home/ProfilePage";
+import HostelInfrastructure from "./TenantList/HostelInfrastructure";
 
 
 const ClientLayout = () => {
@@ -41,6 +42,7 @@ const ClientLayout = () => {
         
         <Route path="/client-login" element={<ClientLogin />} />
         <Route path="/client-otpverify" element={<OTPVerification />} />
+        <Route path="/property/structure" element={<HostelInfrastructure />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/home" element={<ClientHomePage />} />
         <Route path="/dashboard" element={<ClientDashboard />} />

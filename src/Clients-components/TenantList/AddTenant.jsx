@@ -511,7 +511,7 @@ const AddTenant = () => {
       console.log('Allocation response:', allocationResponse); // Debug log
 
       if (allocationResponse.data.success) {
-        navigate('/client/tenants', { 
+        navigate('/client/property/structure', { 
           state: { 
             success: 'Tenant added and room allocated successfully',
             newTenant: tenantResponse.data.tenant
