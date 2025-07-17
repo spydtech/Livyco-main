@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { auth } from "../../firebase/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { API_BASE_URL } from "../PropertyController";
 
 
 
 import axios from "axios";
 
 
-const API_BASE_URL = "http://localhost:5000/api/auth";
+// const API_BASE_URL = "http://localhost:5000/api/auth";
 
 
 const ClientLogin = () => {
@@ -47,7 +48,7 @@ const ClientLogin = () => {
       setLoading(true);
 
       // 1. Check with backend if phone exists
-      const response = await axios.post(`${API_BASE_URL}/send-otp`, { phone });
+      const response = await axios.post(`${API_BASE_URL}/api/auth/send-otp`, { phone });
       
       if (!response.data.success) {
         setError(response.data.message || "Phone number not registered. Please register first.");

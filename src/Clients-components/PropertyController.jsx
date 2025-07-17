@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://livyco.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -227,7 +227,7 @@ export const roomAPI = {
   
   // Delete room type
   deleteRoomType: (propertyId, roomTypeId) =>
-    api.delete(`/api/auth/${propertyId}/rooms/${roomTypeId}`),
+    api.delete(`/api/auth/rooms/${propertyId}/${roomTypeId}`),
   
   // Update room type
   updateRoomType: (propertyId, roomTypeId, data) =>

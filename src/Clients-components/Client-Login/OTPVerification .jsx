@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth } from "../../firebase/firebase";
 import axios from "axios";
+import { API_BASE_URL } from "../PropertyController";
 
-const API_BASE_URL = "http://localhost:5000/api/auth";
+// const API_BASE_URL = "http://localhost:5000/api/auth";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState("");
@@ -44,7 +45,7 @@ const OTPVerification = () => {
     const firebaseToken = await firebaseUser.getIdToken();
 
     // 3. Verify with backend
-    const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
+    const response = await axios.post(`${API_BASE_URL}/api/auth/verify-otp`, {
       phone: phoneNumber.replace('+91', ''), // Use the phone number directly
       firebaseUid: firebaseUser.uid,
       firebaseToken

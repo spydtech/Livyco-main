@@ -1002,17 +1002,29 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
   // };
 
 
- const handleDelete = async (propertyId) => {
+const handleDelete = async (propertyId) => {
     try {
         setLoading(true);
         console.log("Deleting property:", propertyId);
 
+        // 1️⃣ Fetch all room types for this property
+        const roomRes = await roomAPI.getRoomTypes(propertyId);
+        const roomTypes = roomRes.data?.roomTypes || [];
+
+        // 2️⃣ Delete each room type individually
+        await Promise.all(
+            roomTypes.map(room =>
+                roomAPI.deleteRoomType(propertyId, room._id).catch(e => console.error("Rooms delete error:", e))
+            )
+        );
+
+        // 3️⃣ Proceed to delete PG & Media
         await Promise.all([
             pgAPI.deletePGProperty(propertyId).catch(e => console.error("PG delete error:", e)),
-            roomAPI.deleteRoomTypes(propertyId).catch(e => console.error("Rooms delete error:", e)),
-            mediaAPI.deleteMedia(propertyId).catch(e => console.error("Media delete error:", e))
+            mediaAPI.deleteMediaItem(propertyId).catch(e => console.error("Media delete error:", e))
         ]);
 
+        // 4️⃣ Finally, delete the property itself
         await propertyAPI.deleteProperty(propertyId);
 
         await fetchAllProperties();
@@ -1025,6 +1037,7 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
         setPropertyToDelete(null);
     }
 };
+
 
 
 

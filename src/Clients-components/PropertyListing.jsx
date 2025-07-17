@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import logo from '../assets/client-main/logo.png';
 import bgimage from '../assets/client-main/client-main-bg-image.png';
 import { Link } from 'react-router-dom';
-
+import { API_BASE_URL } from "./PropertyController";
 
 const PropertyListing = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ const PropertyListing = () => {
   
     try {
       // Send registration data to backend
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
