@@ -22,7 +22,7 @@ const ClientLogin = () => {
 
    const setupRecaptcha = () => {
   if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
       'size': 'invisible',
       'callback': (response) => {
         console.log("reCAPTCHA verified");
@@ -30,7 +30,7 @@ const ClientLogin = () => {
       'expired-callback': () => {
         console.log("reCAPTCHA expired");
       }
-    });
+    }, auth);
   }
 };
 
