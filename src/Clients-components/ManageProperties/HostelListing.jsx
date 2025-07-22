@@ -1000,43 +1000,47 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
   //     setPropertyToDelete(null);
   //   }
   // };
-
-
-const handleDelete = async (propertyId) => {
+ const handleDelete = async (propertyId) => {
     try {
-        setLoading(true);
-        console.log("Deleting property:", propertyId);
+      setLoading(true);
+      
+      // First delete dependent records
+      const [mediaRes, roomRes, pgRes] = await Promise.all([
+        mediaAPI.deleteMediaItem(propertyId).catch(e => ({ data: { success: false } })),
+        roomAPI.deleteRoomType(propertyId).catch(e => ({ data: { success: false } })),
+        pgAPI.deletePGProperty(propertyId).catch(e => ({ data: { success: false } }))
+      ]);
 
-        // 1️⃣ Fetch all room types for this property
-        const roomRes = await roomAPI.getRoomTypes(propertyId);
-        const roomTypes = roomRes.data?.roomTypes || [];
+      // Check if all dependencies were deleted successfully
+      if (!mediaRes.data?.success || !roomRes.data?.success || !pgRes.data?.success) {
+        console.warn("Some dependent records couldn't be deleted, proceeding with property deletion");
+      }
 
-        // 2️⃣ Delete each room type individually
-        await Promise.all(
-            roomTypes.map(room =>
-                roomAPI.deleteRoomType(propertyId, room._id).catch(e => console.error("Rooms delete error:", e))
-            )
-        );
+      // Then delete the property itself
+      const deleteRes = await propertyAPI.deleteProperty(propertyId);
+      
+      if (!deleteRes.data?.success) {
+        throw new Error(deleteRes.data?.message || "Failed to delete property");
+      }
 
-        // 3️⃣ Proceed to delete PG & Media
-        await Promise.all([
-            pgAPI.deletePGProperty(propertyId).catch(e => console.error("PG delete error:", e)),
-            mediaAPI.deleteMediaItem(propertyId).catch(e => console.error("Media delete error:", e))
-        ]);
-
-        // 4️⃣ Finally, delete the property itself
-        await propertyAPI.deleteProperty(propertyId);
-
-        await fetchAllProperties();
+      // Update UI state
+      setProperties(prev => prev.filter(p => p._id !== propertyId));
+      localStorage.removeItem('propertyCompleteData');
+      
     } catch (err) {
-        console.error("Error deleting property:", err);
-        setError("Failed to delete property. Please try again.");
+      console.error("Delete failed:", err);
+      setError(err.response?.data?.message || err.message || "Failed to delete property. Please try again.");
     } finally {
-        setLoading(false);
-        setShowDeletePopup(false);
-        setPropertyToDelete(null);
+      setLoading(false);
+      setShowDeletePopup(false);
+      setPropertyToDelete(null);
     }
-};
+  };
+
+
+
+  
+
 
 
 

@@ -180,7 +180,7 @@ export const mediaAPI = {
     timeout: 30000,
   }),
   getMedia: () => api.get('/api/auth/media'),
-  deleteMediaItem: (propertyId) => api.delete(`/api/auth/media/${propertyId}`),
+  deleteMediaItem: (mediaId) => api.delete(`/api/auth/media/${mediaId}`),
   editMediaItem: (type, mediaId, updates) =>
     api.put(`/api/auth/media/${type}/${mediaId}`, updates),
   getMediaByProperty: (propertyId) => api.get(`/api/auth/media/property/${propertyId}`),
@@ -260,8 +260,8 @@ export const pgAPI = {
   getPGProperty: (propertyId) => 
     api.get(`/api/auth/pg/${propertyId}`),
   
-  deletePGProperty: (propertyId) => 
-    api.delete(`/api/auth/pg/${propertyId}`),
+  deletePGProperty: (pgId) => 
+    api.delete(`/api/auth/pg/${pgId}`),
 };
 
 export const handleApiError = (error) => {
