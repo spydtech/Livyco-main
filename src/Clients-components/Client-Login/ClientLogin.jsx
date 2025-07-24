@@ -59,7 +59,7 @@ const ClientLogin = () => {
       const phoneNumber = "+91" + phone;
       setupRecaptcha();
       const appVerifier = window.recaptchaVerifier;
-      const confirmation = await signInWithPhoneNumber(phoneNumber, window.appVerifier);
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmation;
 
       // Store minimal data in sessionStorage for OTP verification
