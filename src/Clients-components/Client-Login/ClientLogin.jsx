@@ -22,7 +22,7 @@ const ClientLogin = () => {
 
    const setupRecaptcha = () => {
   if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth,'recaptcha-container', {
       'size': 'invisible',
       'callback': (response) => {
         console.log("reCAPTCHA verified", response);
@@ -59,7 +59,7 @@ const ClientLogin = () => {
       const phoneNumber = "+91" + phone;
       setupRecaptcha();
       const appVerifier = window.recaptchaVerifier;
-      const confirmation = await auth.signInWithPhoneNumber(phoneNumber, appVerifier);
+      const confirmation = await signInWithPhoneNumber(phoneNumber, window.appVerifier);
       window.confirmationResult = confirmation;
 
       // Store minimal data in sessionStorage for OTP verification
