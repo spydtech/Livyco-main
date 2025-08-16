@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// Create a separate axios instance without interceptors for token refresh
+const refreshApi = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,18 +32,33 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor with token refresh
+// Response interceptor with token refresh and navigation handling
 api.interceptors.response.use(
   response => response,
-  async error => {
+  async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle network errors
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED') {
+        return Promise.reject({ message: 'Request timeout. Please try again.' });
+      }
+      
+      // Redirect to appropriate login page based on user role
+      const user = JSON.parse(localStorage.getItem('user'));
+      const loginPath = user?.role === 'client' ? '/client/client-login' : '/user/login';
+      window.location.href = loginPath;
+      return Promise.reject({ message: 'Network error. Please check your connection.' });
+    }
+
+    // Handle 401 Unauthorized (token expired)
+    if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
-        const refreshResponse = await axios.post(
-          `${API_BASE_URL}/api/auth/refresh-token`, 
+        // Attempt to refresh token
+        const refreshResponse = await refreshApi.post(
+          '/api/auth/refresh-token',
           {},
           { withCredentials: true }
         );
@@ -44,16 +66,32 @@ api.interceptors.response.use(
         const newToken = refreshResponse.data.token;
         localStorage.setItem('token', newToken);
         
+        // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         console.error('Refresh token failed:', refreshError);
-        window.location.href = '/client/client-login'; // Redirect to login page
+        
+        // Clear user data and redirect to appropriate login page
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        const loginPath = refreshError.response?.data?.userType === 'client' 
+          ? '/client/client-login' 
+          : '/user/login';
+        window.location.href = loginPath;
+        
         return Promise.reject(refreshError);
       }
     }
-    
-    return Promise.reject(error);
+
+    // Handle other error statuses
+    if (error.response.status === 403) {
+      // Forbidden - redirect to home or appropriate page
+      window.location.href = '/';
+    }
+
+    return Promise.reject(error.response.data || error);
   }
 );
 
@@ -88,6 +126,88 @@ export const propertyAPI = {
 };
 
 
+
+export const chatAPI = {
+  getConversations: async () => {
+    try {
+      const response = await api.get('/api/chat/conversations');
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Invalid response format');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      throw error;
+    }
+  },
+    
+  getMessages: async (recipientId, propertyId) => {
+    try {
+      if (!recipientId || !propertyId) {
+        console.error('Missing parameters:', { recipientId, propertyId });
+        throw new Error('Recipient ID and Property ID are required');
+      }
+      
+      const response = await api.get(`/api/chat/messages/${recipientId}/${propertyId}`);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Invalid response format');
+      }
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching messages for ${recipientId}/${propertyId}:`, error);
+      throw error;
+    }
+  },
+      
+  sendMessage: async (messageData) => {
+    try {
+      const requiredFields = ['recipientId', 'propertyId', 'content'];
+      const missingFields = requiredFields.filter(field => !messageData[field]);
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+      }
+
+      const response = await api.post('/api/chat/messages', messageData);
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to send message');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  },
+  
+  getUnreadCount: async () => {
+    try {
+      const response = await api.get('/api/chat/messages/unread');
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to get unread count');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error getting unread count:', error);
+      throw error;
+    }
+  },
+  
+  markAsRead: async (messageIds) => {
+    try {
+      if (!messageIds || messageIds.length === 0) {
+        throw new Error('Message IDs are required');
+      }
+      const response = await api.patch('/api/chat/messages/read', { messageIds });
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to mark messages as read');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      throw error;
+    }
+  }
+};
 export const userAPI = {
 // registerByClient: (userData) => {
 //   // ... existing code ...

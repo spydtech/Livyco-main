@@ -1,15 +1,16 @@
 // import { useState } from "react";
 // import { FaPhoneAlt } from "react-icons/fa";
 // import { IoSend } from "react-icons/io5";
-// import ClientNav from "../Client-Navbar/ClientNav";
+// // import ClientNav from "../Client-Navbar/ClientNav";
+// import Header from "../Header";
 
 // const users = [
-//   { id: 1, name: "Tenant Name 1", image: "/avatar1.jpg", status: "online" },
-//   { id: 2, name: "Tenant Name 2", image: "/avatar2.jpg", status: "away" },
-//   { id: 3, name: "Tenant Name 3", image: "/avatar3.jpg", status: "online" },
+//   { id: 1, name: "owner Name 1", image: "/avatar1.jpg", status: "online" },
+//   { id: 2, name: "owner Name 2", image: "/avatar2.jpg", status: "away" },
+//   { id: 3, name: "owner Name 3", image: "/avatar3.jpg", status: "online" },
 // ];
 
-// const ChatApp = () => {
+// const UserChat = () => {
 //   const [selectedUser, setSelectedUser] = useState(users[0]);
 //   const [messages, setMessages] = useState({
 //     1: [{ text: "Hello!", sender: "other" }, { text: "How are you?", sender: "self" }],
@@ -31,8 +32,8 @@
 
 //   return (
 //     <>
-//     <ClientNav />
-//     <div className="flex h-screen bg-[#F8F8FF]">
+//     <Header />
+//     <div className="flex h-screen bg-[#F8F8FF] py-20">
 //       {/* Sidebar */}
 //       <div className="w-1/3 bg-white p-4 border-r border-[#727070]">
 //         {users.map((user) => (
@@ -104,22 +105,39 @@
 //   );
 // };
 
-// export default ChatApp;
+// export default UserChat;
 
 
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
 import { FaPhoneAlt } from 'react-icons/fa';
 import { IoSend } from 'react-icons/io5';
-import ClientNav from '../Client-Navbar/ClientNav';
-import { chatAPI } from '../PropertyController';
+import Header from '../Header';
+import { chatAPI } from '../../Clients-components/PropertyController';
 
-const ClientChat = () => {
+const UserChat = () => {
   const { user, selectedChat, setSelectedChat, messages, setMessages, socket } = useChat();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [error, setError] = useState(null);
+  const location = useLocation();
+  
+
+  // Initialize chat from location state if available
+  useEffect(() => {
+    if (location.state?.recipientId) {
+      setSelectedChat({
+        recipientId: location.state.recipientId,
+        recipientName: location.state.recipientName,
+        propertyId: location.state.propertyId,
+        propertyName: location.state.propertyName,
+        clientId: location.state.clientId
+      });
+      console.log('Chat initialized from location state:', location.state);
+    }
+  }, [location.state, setSelectedChat]);
 
   // Fetch conversations
   useEffect(() => {
@@ -201,7 +219,6 @@ const ClientChat = () => {
       const response = await chatAPI.sendMessage({
         recipientId: selectedChat.recipientId,
         propertyId: selectedChat.propertyId,
-        clientId: selectedChat.clientId,
         content: input
       });
 
@@ -225,8 +242,8 @@ const ClientChat = () => {
 
   return (
     <>
-      <ClientNav />
-      <div className="flex h-screen bg-[#F8F8FF]">
+      <Header />
+      <div className="flex h-screen bg-[#F8F8FF] py-20">
         {/* Sidebar */}
         <div className="w-1/3 bg-white p-4 border-r border-[#727070] overflow-y-auto">
           <h2 className="text-lg font-semibold mb-4">Conversations</h2>
@@ -250,8 +267,7 @@ const ClientChat = () => {
                   recipientId: conversation.user._id,
                   recipientName: conversation.user.name,
                   propertyId: conversation.property._id,
-                  propertyName: conversation.property.name,
-                  clientId: conversation.user.clientId
+                  propertyName: conversation.property.name
                 });
               }}
             >
@@ -299,7 +315,7 @@ const ClientChat = () => {
                   <div>
                     <h3 className="font-bold">{selectedChat.recipientName}</h3>
                     <p className="text-sm text-gray-500">
-                      {selectedChat.propertyName}
+                      {selectedChat.clientId}
                     </p>
                   </div>
                 </div>
@@ -377,147 +393,586 @@ const ClientChat = () => {
   );
 };
 
-export default ClientChat;
+export default UserChat;
 
-// import { useState, useEffect, useRef } from "react";
+// import { useState, useEffect, useRef, useCallback } from "react";
+// import { FaPhoneAlt, FaPaperclip } from "react-icons/fa";
+// import { IoSend } from "react-icons/io5";
+// import Header from "../Header";
+// import { useParams, useLocation, useNavigate } from "react-router-dom";
+// import { chatAPI } from "../../Clients-components/PropertyController";
+
+// const UserChat = () => {
+//   const { chatId } = useParams();
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const messagesEndRef = useRef(null);
+//   const fileInputRef = useRef(null);
+  
+//   const [recipient, setRecipient] = useState(location.state?.recipient || null);
+//   const [messages, setMessages] = useState([]);
+//   const [input, setInput] = useState("");
+//   const [attachments, setAttachments] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [isTyping, setIsTyping] = useState(false);
+
+//   const user = JSON.parse(localStorage.getItem('user'));
+
+//   const fetchChatData = useCallback(async () => {
+//     try {
+//       setLoading(true);
+//       setError(null);
+      
+//       // Fetch conversation data if recipient isn't available
+//       if (!recipient) {
+//         const convResponse = await chatAPI.getUserConversations();
+//         const currentConv = convResponse.data.conversations.find(
+//           conv => conv._id === chatId
+//         );
+        
+//         if (!currentConv) {
+//           throw new Error("Conversation not found");
+//         }
+        
+//         // Find the other participant (not the current user)
+//         const otherUser = currentConv.participants.find(
+//           p => p._id !== user._id
+//         );
+        
+//         if (!otherUser) {
+//           throw new Error("Could not find chat participant");
+//         }
+        
+//         setRecipient(otherUser);
+//       }
+
+//       // Fetch messages
+//       const msgResponse = await chatAPI.getMessages(chatId);
+//       const formattedMessages = (msgResponse.data?.messages || []).map(msg => ({
+//         ...msg,
+//         text: msg.content || msg.text || "", // Handle both content and text fields
+//         sender: msg.sender?._id || msg.sender // Handle nested sender object
+//       }));
+      
+//       setMessages(formattedMessages);
+      
+//       // Mark messages as read
+//       try {
+//         await chatAPI.markAsRead(chatId);
+//       } catch (readError) {
+//         console.warn("Could not mark as read:", readError);
+//       }
+//     } catch (err) {
+//       console.error("Error fetching chat data:", err);
+//       setError(err.message || "Failed to load chat. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, [chatId, user, recipient]);
+
+//   useEffect(() => {
+//     if (!user) {
+//       navigate("/user/login", { 
+//         state: { from: `/user/chat/${chatId}`, message: "Please login to continue chatting" }
+//       });
+//       return;
+//     }
+
+//     if (!chatId) {
+//       setError("Invalid chat ID");
+//       setLoading(false);
+//       return;
+//     }
+
+//     fetchChatData();
+
+//     // Set up polling for new messages
+//     const pollInterval = setInterval(fetchChatData, 15000);
+//     return () => clearInterval(pollInterval);
+//   }, [chatId, user, navigate, fetchChatData]);
+
+//   useEffect(() => {
+//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+//   }, [messages]);
+
+//   const handleFileChange = (e) => {
+//     setAttachments([...e.target.files]);
+//   };
+
+//   const sendMessage = async () => {
+//     const messageText = input.trim();
+//     if (!messageText && attachments.length === 0) return;
+
+//     try {
+//       const tempId = Date.now().toString();
+//       const newMessage = {
+//         content: messageText,
+//         text: messageText, // Include both for consistency
+//         sender: user._id,
+//         conversationId: chatId,
+//         _id: tempId,
+//         createdAt: new Date().toISOString(),
+//         ...(attachments.length > 0 && { 
+//           attachments: attachments.map(file => ({
+//             url: URL.createObjectURL(file),
+//             type: file.type.split('/')[0],
+//             name: file.name
+//           }))
+//         })
+//       };
+
+//       // Optimistic update
+//       setMessages(prev => [...prev, newMessage]);
+//       setInput("");
+//       setAttachments([]);
+//       if (fileInputRef.current) fileInputRef.current.value = "";
+
+//       // Send to server
+//       const response = await chatAPI.sendMessage({
+//         conversationId: chatId,
+//         content: messageText,
+//         attachments
+//       });
+      
+//       // Replace temp message with server response
+//       if (response.data?.message) {
+//         setMessages(prev => [
+//           ...prev.filter(m => m._id !== tempId),
+//           {
+//             ...response.data.message,
+//             text: response.data.message.content || response.data.message.text
+//           }
+//         ]);
+//       }
+//     } catch (err) {
+//       console.error("Error sending message:", err);
+//       alert(err.message || "Failed to send message. Please try again.");
+//       setMessages(prev => prev.filter(m => m._id !== tempId));
+//     }
+//   };
+
+//   const handlePhoneClick = () => {
+//     if (recipient?.phone) {
+//       window.location.href = `tel:${recipient.phone}`;
+//     } else {
+//       alert("Phone number not available");
+//     }
+//   };
+
+//   if (loading) {
+//     return (
+//       <>
+//         <Header />
+//         <div className="flex justify-center items-center h-screen">
+//           <div className="animate-pulse text-lg">Loading chat...</div>
+//         </div>
+//       </>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <>
+//         <Header />
+//         <div className="flex flex-col justify-center items-center h-screen p-4">
+//           <div className="max-w-md w-full bg-white p-6 rounded-lg shadow-md">
+//             <h2 className="text-xl font-bold text-red-600 mb-4">Error Loading Chat</h2>
+//             <p className="text-gray-700 mb-4">{error}</p>
+//             <div className="flex space-x-3">
+//               <button 
+//                 onClick={() => window.location.reload()}
+//                 className="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
+//               >
+//                 Retry
+//               </button>
+//               <button 
+//                 onClick={() => navigate('/user/chats')}
+//                 className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition"
+//               >
+//                 Back to Chats
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   }
+
+//   if (!recipient) {
+//     return (
+//       <>
+//         <Header />
+//         <div className="flex justify-center items-center h-screen">
+//           <div className="text-gray-500">Chat participant not found</div>
+//         </div>
+//       </>
+//     );
+//   }
+
+//   return (
+//     <>
+//       <Header />
+//       <div className="flex flex-col h-screen bg-gray-100 pt-16">
+//         {/* Chat Header */}
+//         <div className="flex items-center justify-between p-4 bg-white border-b shadow-sm">
+//           <div className="flex items-center">
+//             <img 
+//               src={recipient.profileImage || "/default-avatar.jpg"} 
+//               alt={recipient.name} 
+//               className="w-10 h-10 rounded-full mr-3 object-cover"
+//               onError={(e) => {
+//                 e.target.src = "/default-avatar.jpg";
+//               }}
+//             />
+//             <div>
+//               <h3 className="font-bold">{recipient.name}</h3>
+//               <p className="text-xs text-gray-500">
+//                 {recipient.online ? (
+//                   <span className="flex items-center">
+//                     <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+//                     Online
+//                   </span>
+//                 ) : "Offline"}
+//                 {isTyping && (
+//                   <span className="ml-2 text-blue-500">typing...</span>
+//                 )}
+//               </p>
+//             </div>
+//           </div>
+//           <button 
+//             onClick={handlePhoneClick}
+//             className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+//             title="Call"
+//           >
+//             <FaPhoneAlt size={18} />
+//           </button>
+//         </div>
+
+//         {/* Messages */}
+//         <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+//           {messages.length === 0 ? (
+//             <div className="flex flex-col justify-center items-center h-full text-gray-500">
+//               <p>No messages yet</p>
+//               <p className="text-sm">Start the conversation!</p>
+//             </div>
+//           ) : (
+//             messages.map((msg) => (
+//               <div
+//                 key={msg._id || msg.id}
+//                 className={`mb-3 flex ${
+//                   msg.sender === user._id ? "justify-end" : "justify-start"
+//                 }`}
+//               >
+//                 <div
+//                   className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+//                     msg.sender === user._id
+//                       ? "bg-blue-500 text-white"
+//                       : "bg-white border border-gray-200"
+//                   }`}
+//                 >
+//                   <p>{msg.content || msg.text}</p>
+                  
+//                   {/* Display attachments if any */}
+//                   {msg.attachments?.map((attachment, idx) => (
+//                     <div key={idx} className="mt-2">
+//                       {attachment.type === 'image' ? (
+//                         <img 
+//                           src={attachment.url} 
+//                           alt={attachment.name} 
+//                           className="max-w-full h-auto rounded"
+//                           onError={(e) => {
+//                             e.target.src = "/file-placeholder.png";
+//                           }}
+//                         />
+//                       ) : (
+//                         <a 
+//                           href={attachment.url} 
+//                           target="_blank" 
+//                           rel="noopener noreferrer"
+//                           className="text-blue-500 hover:underline flex items-center"
+//                         >
+//                           <span className="truncate">{attachment.name}</span>
+//                         </a>
+//                       )}
+//                     </div>
+//                   ))}
+                  
+//                   <p className={`text-xs mt-1 ${
+//                     msg.sender === user._id ? "text-blue-100" : "text-gray-500"
+//                   }`}>
+//                     {new Date(msg.createdAt).toLocaleTimeString([], { 
+//                       hour: '2-digit', 
+//                       minute: '2-digit',
+//                       hour12: true 
+//                     })}
+//                   </p>
+//                 </div>
+//               </div>
+//             ))
+//           )}
+//           <div ref={messagesEndRef} />
+//         </div>
+
+//         {/* Message Input */}
+//         <div className="p-4 bg-white border-t">
+//           {/* Show selected files */}
+//           {attachments.length > 0 && (
+//             <div className="flex flex-wrap gap-2 mb-2">
+//               {attachments.map((file, idx) => (
+//                 <div key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded flex items-center">
+//                   <span className="truncate max-w-xs">{file.name}</span>
+//                   <button 
+//                     onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+//                     className="ml-1 text-red-500"
+//                   >
+//                     ×
+//                   </button>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
+          
+//           <div className="flex items-center">
+//             <button 
+//               onClick={() => fileInputRef.current?.click()}
+//               className="p-2 text-gray-500 hover:text-blue-500 transition-colors"
+//               title="Attach file"
+//             >
+//               <FaPaperclip size={18} />
+//               <input
+//                 type="file"
+//                 ref={fileInputRef}
+//                 onChange={handleFileChange}
+//                 multiple
+//                 className="hidden"
+//               />
+//             </button>
+            
+//             <input
+//               type="text"
+//               className="flex-1 p-2 border rounded-l-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+//               placeholder="Type a message..."
+//               value={input}
+//               onChange={(e) => setInput(e.target.value)}
+//               onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+//               disabled={loading}
+//             />
+            
+//             <button 
+//               onClick={sendMessage}
+//               disabled={(!input.trim() && attachments.length === 0) || loading}
+//               className={`p-2 px-4 rounded-r-lg transition-colors ${
+//                 (input.trim() || attachments.length > 0)
+//                   ? "bg-blue-500 text-white hover:bg-blue-600" 
+//                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
+//               }`}
+//             >
+//               <IoSend size={18} />
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </>
+//   );
+// };
+
+// export default UserChat;
+
+// import { useState, useEffect, useRef } from 'react';
+// import { useParams, useLocation, useNavigate } from 'react-router-dom';
 // import { FaPhoneAlt } from "react-icons/fa";
 // import { IoSend } from "react-icons/io5";
-// import ClientNav from "../Client-Navbar/ClientNav";
-// import { chatAPI } from "../PropertyController";
-// import { initializeSocket, getSocket, joinConversation, sendMessageViaSocket } from "../../soket/socket";
+// import Header from "../Header";
+// import { chatAPI } from "../../Clients-components/PropertyController";
 // import { useAuth } from "../../context/AuthContext";
+// import io from 'socket.io-client';
 
-// const ChatApp = () => {
+// const UserChat = () => {
 //   const { user } = useAuth();
+//   const { conversationId } = useParams();
+//   const location = useLocation();
+//   const navigate = useNavigate();
+  
 //   const [conversations, setConversations] = useState([]);
-//   const [selectedConversation, setSelectedConversation] = useState(null);
 //   const [messages, setMessages] = useState([]);
 //   const [input, setInput] = useState("");
 //   const [isTyping, setIsTyping] = useState(false);
-//   const [typingUser, setTypingUser] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [socketError, setSocketError] = useState(null);
 //   const messagesEndRef = useRef(null);
 //   const socketRef = useRef(null);
 
-//   // Initialize socket and load conversations
-//   useEffect(() => {
-//     const token = localStorage.getItem('token');
-//     socketRef.current = initializeSocket(token);
-
-//     // Load conversations
-//     const loadConversations = async () => {
-//       try {
-//         const response = await chatAPI.getUserConversations();
-//         setConversations(response.data.conversations);
-//         if (response.data.conversations.length > 0) {
-//           setSelectedConversation(response.data.conversations[0]);
-//         }
-//       } catch (error) {
-//         console.error('Failed to load conversations:', error);
-//       }
-//     };
-
-//     loadConversations();
-
-//     // Setup socket listeners
-//     const socket = socketRef.current;
-//     socket.on('newMessage', handleNewMessage);
-//     socket.on('typing', handleTyping);
-//     socket.on('stopTyping', handleStopTyping);
-
-//     return () => {
-//       socket.off('newMessage', handleNewMessage);
-//       socket.off('typing', handleTyping);
-//       socket.off('stopTyping', handleStopTyping);
-//       disconnectSocket();
-//     };
-//   }, []);
-
-//   // Load messages when conversation changes
-//   useEffect(() => {
-//     if (selectedConversation) {
-//       loadMessages(selectedConversation._id);
-//       joinConversation(selectedConversation._id, user._id);
-//     }
-//   }, [selectedConversation]);
+//   // Get recipient from location state or find in conversation
+//   const recipient = location.state?.recipient || 
+//     conversations.find(c => c._id === conversationId)?.participants?.find(p => p._id !== user?._id);
 
 //   // Scroll to bottom when messages change
 //   useEffect(() => {
 //     scrollToBottom();
 //   }, [messages]);
 
-//   const loadMessages = async (conversationId) => {
-//     try {
-//       const response = await chatAPI.getConversationMessages(conversationId);
-//       setMessages(response.data.messages);
-//     } catch (error) {
-//       console.error('Failed to load messages:', error);
-//     }
-//   };
-
-//   const handleNewMessage = (message) => {
-//     if (message.conversation === selectedConversation?._id) {
-//       setMessages(prev => [...prev, message]);
-//     }
-//   };
-
-//   const handleTyping = (userId) => {
-//     if (userId !== user._id) {
-//       const typingUser = selectedConversation?.participants.find(p => p._id === userId);
-//       if (typingUser) {
-//         setIsTyping(true);
-//         setTypingUser(typingUser);
-//       }
-//     }
-//   };
-
-//   const handleStopTyping = () => {
-//     setIsTyping(false);
-//     setTypingUser(null);
-//   };
-
 //   const scrollToBottom = () => {
 //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 //   };
 
+//   // Initialize socket and load data
+//   useEffect(() => {
+//     if (!user) {
+//       navigate('/user/login');
+//       return;
+//     }
+
+//     const token = localStorage.getItem('token');
+//     if (!token) {
+//       navigate('/user/login');
+//       return;
+//     }
+
+//     const socketUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    
+//     try {
+//       console.log('Initializing socket connection...');
+//       socketRef.current = io(socketUrl, {
+//         auth: { token },
+//         transports: ['websocket', 'polling'],
+//         reconnection: true,
+//         reconnectionAttempts: Infinity,
+//         reconnectionDelay: 1000,
+//         reconnectionDelayMax: 5000,
+//         randomizationFactor: 0.5,
+//       });
+
+//       socketRef.current.on('connect', () => {
+//         console.log('Socket.IO connected successfully');
+//         setSocketError(null);
+//       });
+
+//       socketRef.current.on('connect_error', (err) => {
+//         console.error('Socket.IO connection error:', err);
+//         setSocketError('Failed to connect to chat server. Please refresh the page.');
+//       });
+
+//       socketRef.current.on('disconnect', (reason) => {
+//         console.log('Disconnected:', reason);
+//         if (reason === 'io server disconnect') {
+//           socketRef.current.connect();
+//         }
+//       });
+
+//       socketRef.current.on('reconnect_attempt', (attempt) => {
+//         console.log('Reconnection attempt:', attempt);
+//       });
+
+//       socketRef.current.on('reconnect_error', (error) => {
+//         console.log('Reconnection error:', error);
+//       });
+
+//       socketRef.current.on('reconnect_failed', () => {
+//         console.log('Reconnection failed');
+//         setSocketError('Failed to reconnect to chat server. Please refresh the page.');
+//       });
+
+//       const loadData = async () => {
+//         try {
+//           const [convRes, msgRes] = await Promise.all([
+//             chatAPI.getUserConversations(),
+//             conversationId ? chatAPI.getConversationMessages(conversationId) : null
+//           ]);
+          
+//           setConversations(convRes.data.conversations || []);
+//           if (msgRes) setMessages(msgRes.data.messages || []);
+//         } catch (error) {
+//           console.error("Failed to load chat data:", error);
+//         } finally {
+//           setLoading(false);
+//         }
+//       };
+
+//       loadData();
+
+//       // Message handlers
+//       socketRef.current.on('newMessage', handleNewMessage);
+//       socketRef.current.on('typing', () => setIsTyping(true));
+//       socketRef.current.on('stopTyping', () => setIsTyping(false));
+
+//     } catch (err) {
+//       console.error("Socket initialization error:", err);
+//       setSocketError('Failed to initialize chat connection');
+//     }
+
+//     return () => {
+//       console.log('Cleaning up socket...');
+//       if (socketRef.current) {
+//         socketRef.current.off('connect');
+//         socketRef.current.off('connect_error');
+//         socketRef.current.off('disconnect');
+//         socketRef.current.off('reconnect_attempt');
+//         socketRef.current.off('reconnect_error');
+//         socketRef.current.off('reconnect_failed');
+//         socketRef.current.off('newMessage');
+//         socketRef.current.off('typing');
+//         socketRef.current.off('stopTyping');
+//         socketRef.current.disconnect();
+//         console.log('Socket disconnected during cleanup');
+//       }
+//     };
+//   }, [conversationId, user, navigate]);
+
+//   const handleNewMessage = (message) => {
+//     if (message.conversation === conversationId) {
+//       setMessages(prev => [...prev, message]);
+//       scrollToBottom();
+//     }
+//     setConversations(prev => prev.map(c => 
+//       c._id === message.conversation ? {...c, lastMessage: message} : c
+//     ));
+//   };
+
 //   const sendMessage = async () => {
-//     if (!input.trim() || !selectedConversation) return;
+//     if (!input.trim() || !conversationId) return;
+    
+//     if (!socketRef.current?.connected) {
+//       console.log('Attempting to reconnect...');
+//       socketRef.current.connect();
+//       return;
+//     }
+
+//     const tempId = Date.now().toString();
+//     const tempMessage = {
+//       _id: tempId,
+//       content: input,
+//       sender: user,
+//       createdAt: new Date(),
+//       read: false
+//     };
+
+//     setMessages(prev => [...prev, tempMessage]);
+//     setInput("");
+//     socketRef.current.emit('stopTyping', { conversationId });
 
 //     try {
-//       const messageData = {
-//         conversationId: selectedConversation._id,
+//       socketRef.current.emit('sendMessage', {
+//         conversationId,
 //         content: input,
 //         sender: user._id
-//       };
+//       });
 
-//       // Optimistic UI update
-//       const tempId = Date.now().toString();
-//       const optimisticMessage = {
-//         _id: tempId,
-//         conversation: selectedConversation._id,
-//         sender: { _id: user._id, name: user.name, profileImage: user.profileImage },
-//         content: input,
-//         createdAt: new Date(),
-//         read: false
-//       };
-
-//       setMessages(prev => [...prev, optimisticMessage]);
-//       setInput("");
-
-//       // Send via socket for real-time
-//       sendMessageViaSocket(messageData);
-
-//       // Persist to database via API
-//       await chatAPI.sendTextMessage(selectedConversation._id, input);
-
-//       // Replace optimistic message with real one when response comes
-//       setMessages(prev => prev.map(msg => 
-//         msg._id === tempId ? { ...msg, _id: response.data.message._id } : msg
-//       ));
-
+//       const res = await chatAPI.sendTextMessage(conversationId, input);
+//       setMessages(prev => prev.map(m => m._id === tempId ? res.data.message : m));
 //     } catch (error) {
-//       console.error('Failed to send message:', error);
-//       // Remove optimistic message if failed
-//       setMessages(prev => prev.filter(msg => msg._id !== tempId));
+//       console.error("Failed to send message:", error);
+//       setMessages(prev => prev.filter(m => m._id !== tempId));
+//     }
+//   };
+
+//   const handleTyping = () => {
+//     if (!socketRef.current?.connected) return;
+    
+//     if (input.trim()) {
+//       socketRef.current.emit('typing', { conversationId });
+//     } else {
+//       socketRef.current.emit('stopTyping', { conversationId });
 //     }
 //   };
 
@@ -528,166 +983,213 @@ export default ClientChat;
 //     }
 //   };
 
-//   const getOtherParticipant = (conversation) => {
-//     return conversation.participants.find(p => p._id !== user._id);
-//   };
+//   if (loading) {
+//     return (
+//       <>
+//         <Header />
+//         <div className="flex justify-center items-center h-screen">
+//           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+//         </div>
+//       </>
+//     );
+//   }
+
+//   if (socketError) {
+//     return (
+//       <>
+//         <Header />
+//         <div className="flex justify-center items-center h-screen">
+//           <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md mx-4">
+//             <h3 className="text-xl font-semibold text-red-600 mb-2">Connection Error</h3>
+//             <p className="text-gray-700 mb-4">{socketError}</p>
+//             <button
+//               onClick={() => window.location.reload()}
+//               className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+//             >
+//               Refresh Page
+//             </button>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   }
 
 //   return (
 //     <>
-//       <ClientNav />
-//       <div className="flex h-screen bg-[#F8F8FF]">
-//         {/* Sidebar */}
-//         <div className="w-1/3 bg-white p-4 border-r border-[#727070] overflow-y-auto">
-//           <h2 className="text-xl font-bold mb-4 text-gray-800">Tenant Conversations</h2>
-//           {conversations.map((conversation) => {
-//             const otherParticipant = getOtherParticipant(conversation);
-//             const lastMessage = conversation.lastMessage;
-            
-//             return (
-//               <div
-//                 key={conversation._id}
-//                 className={`flex items-center p-3 rounded cursor-pointer mb-2 ${
-//                   selectedConversation?._id === conversation._id 
-//                     ? "bg-[#FEE123]" 
-//                     : "hover:bg-gray-200"
-//                 }`}
-//                 onClick={() => setSelectedConversation(conversation)}
-//               >
-//                 <img 
-//                   src={otherParticipant?.profileImage || '/default-avatar.jpg'} 
-//                   alt={otherParticipant?.name} 
-//                   className="w-12 h-12 rounded-full mr-3 object-cover"
-//                 />
-//                 <div className="flex-1 min-w-0">
-//                   <h3 className="font-bold truncate">{otherParticipant?.name}</h3>
-//                   <p className="text-sm text-gray-500 truncate">
-//                     {lastMessage?.content || "No messages yet"}
-//                   </p>
-//                 </div>
-//                 {conversation.unreadCount > 0 && (
-//                   <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-//                     {conversation.unreadCount}
-//                   </span>
-//                 )}
-//               </div>
-//             );
-//           })}
-//         </div>
-
-//         {/* Chat Window */}
-//         <div className="w-2/3 flex flex-col">
-//           {selectedConversation ? (
-//             <>
-//               {/* Chat Header */}
-//               <div className="flex items-center justify-between p-4 bg-white border-b border-[#727070] shadow-b-lg">
-//                 <div className="flex items-center">
-//                   <img 
-//                     src={getOtherParticipant(selectedConversation)?.profileImage || '/default-avatar.jpg'} 
-//                     alt={getOtherParticipant(selectedConversation)?.name} 
-//                     className="w-10 h-10 rounded-full mr-3 object-cover"
-//                   />
-//                   <div>
-//                     <h3 className="font-bold">{getOtherParticipant(selectedConversation)?.name}</h3>
-//                     <p className="text-xs text-gray-500">
-//                       {getOtherParticipant(selectedConversation)?.online 
-//                         ? 'Online' 
-//                         : `Last seen ${new Date(getOtherParticipant(selectedConversation)?.lastSeen).toLocaleTimeString()}`
-//                       }
-//                     </p>
-//                   </div>
-//                 </div>
-//                 <button className="text-[#FEE123] text-xl">
-//                   <FaPhoneAlt />
-//                 </button>
-//               </div>
-
-//               {/* Messages */}
-//               <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-//                 {messages.map((message, index) => (
-//                   <div
-//                     key={message._id || index}
-//                     className={`mb-3 flex ${message.sender._id === user._id ? 'justify-end' : 'justify-start'}`}
-//                   >
-//                     <div
-//                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-//                         message.sender._id === user._id
-//                           ? "bg-[#AFD1FF] text-white"
-//                           : "bg-[#FEE123] text-gray-900"
-//                       }`}
-//                     >
-//                       {message.content}
-//                       <div className="text-xs mt-1 text-right opacity-70">
-//                         {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-//                       </div>
-//                     </div>
-//                   </div>
-//                 ))}
-//                 {isTyping && (
-//                   <div className="flex justify-start mb-3">
-//                     <div className="bg-gray-200 px-4 py-2 rounded-lg">
-//                       <div className="flex space-x-1">
-//                         <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-//                         <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-//                         <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                 )}
-//                 <div ref={messagesEndRef} />
-//               </div>
-
-//               {/* Message Input */}
-//               <div className="p-4 bg-white border-t">
-//                 <div className="flex items-center">
-//                   <input
-//                     type="text"
-//                     className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-//                     placeholder="Type a message..."
-//                     value={input}
-//                     onChange={(e) => setInput(e.target.value)}
-//                     onKeyPress={handleKeyPress}
-//                     onFocus={() => sendTypingIndicator(selectedConversation._id, user._id)}
-//                     onBlur={() => sendStopTypingIndicator(selectedConversation._id)}
-//                   />
-//                   <button 
-//                     onClick={sendMessage} 
-//                     className="ml-2 text-yellow-500 text-xl hover:text-yellow-600"
-//                     disabled={!input.trim()}
-//                   >
-//                     <IoSend />
-//                   </button>
-//                 </div>
-//               </div>
-//             </>
-//           ) : (
-//             <div className="flex-1 flex items-center justify-center bg-gray-50">
-//               <div className="text-center">
-//                 <h3 className="text-xl font-semibold text-gray-700">No conversation selected</h3>
-//                 <p className="text-gray-500">Select a conversation from the sidebar</p>
-//               </div>
+//       <Header />
+//       <div className="flex h-screen bg-gray-50 pt-20">
+        
+//         {/* Conversations List */}
+//         <div className="w-full md:w-1/3 bg-white border-r overflow-y-auto">
+//           <h2 className="p-4 text-xl font-bold border-b">Messages</h2>
+//           {conversations.length === 0 ? (
+//             <div className="p-4 text-center text-gray-500">
+//               No conversations yet
 //             </div>
+//           ) : (
+//             conversations.map(conv => {
+//               const otherUser = conv.participants.find(p => p._id !== user._id);
+//               const isActive = conv._id === conversationId;
+              
+//               return (
+//                 <div 
+//                   key={conv._id}
+//                   className={`p-4 border-b cursor-pointer transition-colors ${
+//                     isActive ? 'bg-yellow-50' : 'hover:bg-gray-50'
+//                   }`}
+//                   onClick={() => navigate(`/user/chat/${conv._id}`, {
+//                     state: { recipient: otherUser }
+//                   })}
+//                 >
+//                   <div className="flex items-center">
+//                     <img 
+//                       src={otherUser?.profileImage || '/default-avatar.jpg'} 
+//                       alt={otherUser?.name}
+//                       className="w-12 h-12 rounded-full mr-3 object-cover"
+//                     />
+//                     <div className="flex-1 min-w-0">
+//                       <div className="flex justify-between">
+//                         <h3 className="font-medium truncate">{otherUser?.name}</h3>
+//                         <span className="text-xs text-gray-500">
+//                           {conv.lastMessage?.createdAt ? 
+//                             new Date(conv.lastMessage.createdAt).toLocaleTimeString([], {timeStyle: 'short'}) : ''
+//                           }
+//                         </span>
+//                       </div>
+//                       <p className="text-sm text-gray-500 truncate">
+//                         {conv.lastMessage?.content || "No messages yet"}
+//                       </p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               );
+//             })
 //           )}
 //         </div>
+
+//         {/* Chat Area */}
+//         {conversationId ? (
+//           <div className="hidden md:flex flex-col flex-1">
+//             {/* Chat Header */}
+//             <div className="p-4 bg-white border-b flex items-center justify-between">
+//               <div className="flex items-center">
+//                 <img 
+//                   src={recipient?.profileImage || '/default-avatar.jpg'} 
+//                   alt={recipient?.name}
+//                   className="w-10 h-10 rounded-full mr-3 object-cover"
+//                 />
+//                 <div>
+//                   <h3 className="font-bold">{recipient?.name}</h3>
+//                   <p className="text-xs text-gray-500">
+//                     {recipient?.online ? 'Online' : 'Offline'}
+//                   </p>
+//                 </div>
+//               </div>
+//               <button 
+//                 onClick={() => window.location.href = `tel:${recipient?.phone}`}
+//                 className="p-2 text-yellow-600 hover:text-yellow-700 rounded-full hover:bg-yellow-50"
+//                 title="Call"
+//               >
+//                 <FaPhoneAlt size={18} />
+//               </button>
+//             </div>
+
+//             {/* Messages */}
+//             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+//               {messages.length === 0 ? (
+//                 <div className="h-full flex flex-col items-center justify-center text-gray-500">
+//                   <p className="text-lg">No messages yet</p>
+//                   <p>Start the conversation!</p>
+//                 </div>
+//               ) : (
+//                 messages.map(msg => (
+//                   <div 
+//                     key={msg._id} 
+//                     className={`mb-3 flex ${
+//                       msg.sender._id === user._id ? 'justify-end' : 'justify-start'
+//                     }`}
+//                   >
+//                     <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+//                       msg.sender._id === user._id 
+//                         ? 'bg-yellow-400 text-white rounded-br-none' 
+//                         : 'bg-white border rounded-bl-none'
+//                     }`}>
+//                       {msg.content}
+//                       <div className={`text-xs mt-1 flex items-center ${
+//                         msg.sender._id === user._id ? 'text-yellow-100' : 'text-gray-500'
+//                       }`}>
+//                         {new Date(msg.createdAt).toLocaleTimeString([], {timeStyle: 'short'})}
+//                         {msg.sender._id === user._id && (
+//                           <span className="ml-1">
+//                             {msg.read ? '✓✓' : '✓'}
+//                           </span>
+//                         )}
+//                       </div>
+//                     </div>
+//                   </div>
+//                 ))
+//               )}
+//               {isTyping && (
+//                 <div className="flex justify-start mb-3">
+//                   <div className="bg-white px-4 py-2 rounded-lg border">
+//                     <div className="flex space-x-1">
+//                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+//                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+//                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               )}
+//               <div ref={messagesEndRef} />
+//             </div>
+
+//             {/* Input Area - Fixed at bottom */}
+//             <div className="p-4 bg-white border-t sticky bottom-0">
+//               <div className="flex items-center">
+//                 <input
+//                   type="text"
+//                   value={input}
+//                   onChange={(e) => {
+//                     setInput(e.target.value);
+//                     handleTyping();
+//                   }}
+//                   onKeyPress={handleKeyPress}
+//                   placeholder="Type a message..."
+//                   className="flex-1 p-3 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+//                 />
+//                 <button 
+//                   onClick={sendMessage}
+//                   disabled={!input.trim()}
+//                   className="bg-yellow-400 text-white p-3 rounded-r-lg disabled:opacity-50 hover:bg-yellow-500 transition"
+//                 >
+//                   <IoSend size={18} />
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         ) : (
+//           <div className="hidden md:flex flex-1 items-center justify-center">
+//             <div className="text-center text-gray-500">
+//               <p className="text-xl">Select a conversation</p>
+//               <p>or start a new one</p>
+//             </div>
+//           </div>
+//         )}
 //       </div>
 //     </>
 //   );
 // };
 
-// export default ChatApp;
-
-
-
-
-
+// export default UserChat;
 // import { useState, useEffect, useRef } from "react";
 // import { FaPhoneAlt } from "react-icons/fa";
 // import { IoSend } from "react-icons/io5";
-// import ClientNav from "../Client-Navbar/ClientNav";
-// // import { useAuth } from "../../context/AuthContext";
-// import { chatAPI } from "../PropertyController";
+// import Header from "../Header";
+// import { useAuth } from "../../context/AuthContext";
+// import { chatAPI } from "../../Clients-components/PropertyController";
 // import { ChatSocket } from "../../soket/socket";
 
-// const ChatApp = () => {
+// const UserChat = () => {
 //   const { user, logout } = useAuth();
 //   const [users, setUsers] = useState([]);
 //   const [selectedUser, setSelectedUser] = useState(null);
@@ -696,7 +1198,6 @@ export default ClientChat;
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
 //   const socketRef = useRef(null);
-//   const messagesEndRef = useRef(null);
 
 //   // Fetch chat users
 //   useEffect(() => {
@@ -786,11 +1287,6 @@ export default ClientChat;
 //     };
 //   }, [user, selectedUser]);
 
-//   // Auto-scroll to bottom when messages change
-//   useEffect(() => {
-//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-//   }, [messages]);
-
 //   const handleSendMessage = async () => {
 //     if (!input.trim() || !selectedUser) return;
     
@@ -844,8 +1340,8 @@ export default ClientChat;
 
 //   return (
 //     <>
-//       <ClientNav />
-//       <div className="flex h-screen bg-[#F8F8FF] pt-16">
+//       <Header />
+//       <div className="flex h-screen bg-[#F8F8FF] py-20">
 //         {/* Sidebar */}
 //         <div className="w-1/3 bg-white p-4 border-r border-[#727070] overflow-y-auto">
 //           {users.map((chatUser) => (
@@ -950,7 +1446,6 @@ export default ClientChat;
 //                     </div>
 //                   ))
 //                 )}
-//                 <div ref={messagesEndRef} />
 //               </div>
 
 //               <div className="p-4 bg-white border-t flex items-center">
@@ -986,7 +1481,8 @@ export default ClientChat;
 //   );
 // };
 
-// export default ChatApp;
+// export default UserChat;
+
 
 
 
@@ -994,66 +1490,98 @@ export default ClientChat;
 // import { useState, useEffect, useRef } from "react";
 // import { FaPhoneAlt } from "react-icons/fa";
 // import { IoSend } from "react-icons/io5";
-// import ClientNav from "../Client-Navbar/ClientNav";
+// import Header from "../Header";
 // import { useAuth } from "../../context/AuthContext";
-// import { chatAPI } from "../PropertyController";
+// import { useLocation, useNavigate } from "react-router-dom";
+// import { chatAPI } from "../../Clients-components/PropertyController";
 // import { ChatSocket } from "../../soket/socket";
 
-// const ChatApp = () => {
+// const UserChat = () => {
 //   const { user, logout } = useAuth();
+//   const location = useLocation();
+//   const navigate = useNavigate();
 //   const [users, setUsers] = useState([]);
 //   const [selectedUser, setSelectedUser] = useState(null);
 //   const [messages, setMessages] = useState([]);
 //   const [input, setInput] = useState("");
-//   const [loading, setLoading] = useState({
-//     users: true,
-//     messages: false
-//   });
+//   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
-//   const [isSending, setIsSending] = useState(false);
 //   const socketRef = useRef(null);
-//   const messagesEndRef = useRef(null);
-//   const inputRef = useRef(null);
+
+//   // Check authentication and handle navigation state
+//   useEffect(() => {
+//     if (!user) {
+//       navigate("/user/login");
+//       return;
+//     }
+
+//     if (location.state?.recipientId) {
+//       const recipient = {
+//         _id: location.state.recipientId,
+//         name: location.state.recipientName,
+//         avatar: "",
+//         online: false,
+//         propertyId: location.state.propertyId
+//       };
+//       setSelectedUser(recipient);
+      
+//       setUsers(prevUsers => {
+//         const exists = prevUsers.some(u => u._id === recipient._id);
+//         return exists ? prevUsers : [...prevUsers, recipient];
+//       });
+//     }
+//   }, [user, navigate, location.state]);
 
 //   // Fetch chat users
 //   useEffect(() => {
+//     if (!user) return;
+
 //     const fetchUsers = async () => {
 //       try {
-//         setLoading(prev => ({ ...prev, users: true }));
+//         setLoading(true);
+//         console.log("Fetching users...");
 //         const response = await chatAPI.getChatUsers();
+//         console.log("API Response:", response);
         
-//         const usersData = Array.isArray(response?.data) ? response.data : [];
-//         setUsers(usersData);
-        
-//         if (usersData.length > 0 && !selectedUser) {
-//           setSelectedUser(usersData[0]);
+//         // Handle different response structures
+//         let usersData = [];
+//         if (Array.isArray(response)) {
+//           usersData = response;
+//         } else if (Array.isArray(response?.data)) {
+//           usersData = response.data;
+//         } else if (response?.data?.users) {
+//           usersData = response.data.users;
 //         }
+
+//         console.log("Processed users data:", usersData);
+//         setUsers(usersData || []);
+//         setError(null);
 //       } catch (err) {
 //         console.error("Error fetching users:", err);
-//         setError("Failed to load chat users");
+//         setError("Failed to load chat users. Please try again.");
+//         setUsers([]);
 //         if (err.response?.status === 401) {
 //           logout();
 //         }
 //       } finally {
-//         setLoading(prev => ({ ...prev, users: false }));
+//         setLoading(false);
 //       }
 //     };
 
 //     fetchUsers();
-//   }, [logout, selectedUser]);
+//   }, [user, logout]);
 
 //   // Fetch messages when selected user changes
 //   useEffect(() => {
-//     if (!selectedUser || !user?._id) return;
+//     if (!selectedUser || !user) return;
 
 //     const fetchMessages = async () => {
 //       try {
-//         setLoading(prev => ({ ...prev, messages: true }));
+//         setLoading(true);
 //         const response = await chatAPI.getMessages(selectedUser._id);
 //         const messagesData = Array.isArray(response?.data) ? response.data : [];
 //         setMessages(messagesData);
         
-//         // Mark unread messages as read
 //         const unreadMessages = messagesData.filter(
 //           msg => !msg.read && msg.recipient._id === user._id
 //         );
@@ -1066,13 +1594,14 @@ export default ClientChat;
 //       } catch (err) {
 //         console.error("Error fetching messages:", err);
 //         setError("Failed to load messages");
+//         setMessages([]);
 //       } finally {
-//         setLoading(prev => ({ ...prev, messages: false }));
+//         setLoading(false);
 //       }
 //     };
 
 //     fetchMessages();
-//   }, [selectedUser, user?._id]);
+//   }, [selectedUser, user]);
 
 //   // Setup WebSocket connection
 //   useEffect(() => {
@@ -1081,9 +1610,8 @@ export default ClientChat;
 //     const handleNewMessage = (message) => {
 //       setMessages(prev => [...prev, message]);
       
-//       if ((message.sender._id === selectedUser?._id || 
-//           message.recipient._id === selectedUser?._id) &&
-//           message.recipient._id === user._id) {
+//       if (message.sender._id === selectedUser?._id || 
+//           message.recipient._id === selectedUser?._id) {
 //         chatAPI.markAsRead(message._id);
 //       }
 //     };
@@ -1107,79 +1635,65 @@ export default ClientChat;
 //     };
 //   }, [user, selectedUser]);
 
-//   // Auto-scroll to bottom when messages change
-//   useEffect(() => {
-//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-//   }, [messages]);
+//  const handleSendMessage = async () => {
+//   if (!input.trim() || !selectedUser || !user) return;
+  
+//   const tempId = Date.now();
+//   const inputSnapshot = input;
 
-//   const handleSendMessage = async () => {
-//     if (!input.trim() || !selectedUser || !user || isSending) return;
-    
-//     const tempId = Date.now();
-//     const messageText = input.trim();
-
-//     // Clear input immediately
+//   try {
+//     // Optimistic update
+//     setMessages(prev => [...prev, {
+//       _id: tempId,
+//       text: input.trim(),
+//       // ... other message fields
+//     }]);
 //     setInput("");
-//     setIsSending(true);
 
-//     try {
-//       // Optimistic update
-//       const newMessage = {
-//         _id: tempId,
-//         sender: { _id: user._id, name: user.name, avatar: user.avatar },
-//         recipient: selectedUser,
-//         text: messageText,
-//         createdAt: new Date().toISOString(),
-//         read: false,
-//         isOptimistic: true
-//       };
-
-//       setMessages(prev => [...prev, newMessage]);
-
-//       // Send via WebSocket
-//       if (socketRef.current) {
-//         socketRef.current.sendMessage({
-//           sender: user._id,
-//           recipient: selectedUser._id,
-//           text: messageText
-//         });
-//       }
-
-//       // Send via HTTP as fallback
-//       await chatAPI.sendMessage(selectedUser._id, messageText);
-//     } catch (err) {
-//       console.error("Error sending message:", err);
-//       setError("Failed to send message");
-//       // Rollback optimistic update
-//       setMessages(prev => prev.filter(msg => msg._id !== tempId));
-//       // Restore the message text
-//       setInput(messageText);
-//     } finally {
-//       setIsSending(false);
-//       scrollToBottom();
-//       inputRef.current?.focus();
+//     // WebSocket
+//     if (socketRef.current) {
+//       socketRef.current.sendMessage({
+//         sender: user._id,
+//         recipient: selectedUser._id,
+//         text: input.trim()
+//       });
 //     }
-//   };
+
+//     // API call - ensure path matches backend
+//     const response = await chatAPI.sendMessage(
+//       selectedUser._id, 
+//       input.trim()
+//     );
+
+//     // Update with server response
+//     setMessages(prev => [
+//       ...prev.filter(msg => msg._id !== tempId),
+//       response.data
+//     ]);
+
+//   } catch (err) {
+//     console.error("Send error:", err);
+//     setMessages(prev => prev.filter(msg => msg._id !== tempId));
+//     setInput(inputSnapshot);
+//   }
+// };
 
 //   const retryFetchUsers = async () => {
 //     setError(null);
+//     setLoading(true);
 //     try {
-//       setLoading(prev => ({ ...prev, users: true }));
 //       const response = await chatAPI.getChatUsers();
 //       const usersData = Array.isArray(response?.data) ? response.data : [];
 //       setUsers(usersData);
-//       if (usersData.length > 0 && !selectedUser) {
-//         setSelectedUser(usersData[0]);
-//       }
 //     } catch (err) {
 //       console.error("Retry failed:", err);
 //       setError("Still unable to load users");
 //     } finally {
-//       setLoading(prev => ({ ...prev, users: false }));
+//       setLoading(false);
 //     }
 //   };
 
-//   if (loading.users && users.length === 0) {
+//   if (loading && users.length === 0) {
 //     return (
 //       <div className="flex items-center justify-center h-screen">
 //         <div className="text-xl">Loading chat...</div>
@@ -1203,8 +1717,8 @@ export default ClientChat;
 
 //   return (
 //     <>
-//       <ClientNav />
-//       <div className="flex h-screen bg-[#F8F8FF] pt-16">
+//       <Header />
+//       <div className="flex h-screen bg-[#F8F8FF] py-20">
 //         {/* Sidebar */}
 //         <div className="w-1/3 bg-white p-4 border-r border-[#727070] overflow-y-auto">
 //           {users.length > 0 ? (
@@ -1222,10 +1736,7 @@ export default ClientChat;
 //                   <img 
 //                     src={chatUser.avatar || "/default-avatar.jpg"} 
 //                     alt={chatUser.name} 
-//                     className="w-12 h-12 rounded-full mr-3 object-cover"
-//                     onError={(e) => {
-//                       e.target.src = "/default-avatar.jpg";
-//                     }}
+//                     className="w-12 h-12 rounded-full mr-3" 
 //                   />
 //                   {chatUser.online && (
 //                     <div className="absolute bottom-0 right-3 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -1234,13 +1745,15 @@ export default ClientChat;
 //                 <div className="flex-1 min-w-0">
 //                   <h3 className="font-bold truncate">{chatUser.name}</h3>
 //                   <p className="text-sm text-gray-500 truncate">
-//                     {getLastMessagePreview(chatUser._id) || "No messages yet"}
+//                     {chatUser.lastMessage || "No messages yet"}
 //                   </p>
 //                 </div>
-//                 {hasUnreadMessages(chatUser._id) && (
-//                   <div className="ml-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
-//                     {getUnreadCount(chatUser._id)}
-//                   </div>
+//                 {messages.some(m => 
+//                   (m.sender._id === chatUser._id || m.recipient._id === chatUser._id) && 
+//                   !m.read && 
+//                   m.recipient._id === user._id
+//                 ) && (
+//                   <div className="ml-2 w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
 //                 )}
 //               </div>
 //             ))
@@ -1251,7 +1764,7 @@ export default ClientChat;
 //                 onClick={retryFetchUsers}
 //                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
 //               >
-//                 Refresh Users
+//                 Refresh
 //               </button>
 //             </div>
 //           )}
@@ -1267,10 +1780,7 @@ export default ClientChat;
 //                     <img 
 //                       src={selectedUser.avatar || "/default-avatar.jpg"} 
 //                       alt={selectedUser.name} 
-//                       className="w-10 h-10 rounded-full mr-3 object-cover"
-//                       onError={(e) => {
-//                         e.target.src = "/default-avatar.jpg";
-//                       }}
+//                       className="w-10 h-10 rounded-full mr-3" 
 //                     />
 //                     {selectedUser.online && (
 //                       <div className="absolute bottom-0 right-2 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
@@ -1283,23 +1793,17 @@ export default ClientChat;
 //                     </p>
 //                   </div>
 //                 </div>
-//                 {selectedUser.phone && (
-//                   <a 
-//                     href={`tel:${selectedUser.phone}`}
-//                     className="text-[#FEE123] text-xl hover:bg-yellow-100 p-2 rounded-full"
-//                     title="Call"
-//                   >
-//                     <FaPhoneAlt />
-//                   </a>
-//                 )}
+//                 <button 
+//                   className="text-[#FEE123] text-xl hover:bg-yellow-100 p-2 rounded-full"
+//                   title="Call"
+//                   onClick={() => window.location.href = `tel:${selectedUser.phone || ''}`}
+//                 >
+//                   <FaPhoneAlt />
+//                 </button>
 //               </div>
 
 //               <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-//                 {loading.messages && messages.length === 0 ? (
-//                   <div className="flex items-center justify-center h-full">
-//                     <div className="text-xl">Loading messages...</div>
-//                   </div>
-//                 ) : messages.length === 0 ? (
+//                 {messages.length === 0 ? (
 //                   <div className="flex items-center justify-center h-full">
 //                     <p className="text-gray-500">No messages yet. Start the conversation!</p>
 //                   </div>
@@ -1307,13 +1811,13 @@ export default ClientChat;
 //                   messages.map((msg) => (
 //                     <div
 //                       key={msg._id || msg.createdAt}
-//                       className={`mb-3 p-3 rounded-lg max-w-xs md:max-w-md lg:max-w-lg ${
+//                       className={`mb-3 p-3 rounded-lg max-w-xs md:max-w-md ${
 //                         msg.sender._id === user._id
 //                           ? "bg-[#AFD1FF] text-white ml-auto"
 //                           : "bg-[#FEE123] text-gray-900"
-//                       } ${msg.isOptimistic ? "opacity-70" : ""}`}
+//                       }`}
 //                     >
-//                       <p className="break-words">{msg.text}</p>
+//                       <p>{msg.text}</p>
 //                       <p className={`text-xs mt-1 ${
 //                         msg.sender._id === user._id 
 //                           ? "text-blue-100" 
@@ -1326,53 +1830,34 @@ export default ClientChat;
 //                         {msg.sender._id === user._id && (
 //                           <span className="ml-2">
 //                             {msg.read ? '✓✓' : '✓'}
-//                             {msg.isOptimistic && ' (Sending...)'}
 //                           </span>
 //                         )}
 //                       </p>
 //                     </div>
 //                   ))
 //                 )}
-//                 <div ref={messagesEndRef} />
 //               </div>
 
 //               <div className="p-4 bg-white border-t flex items-center">
 //                 <input
-//                   ref={inputRef}
 //                   type="text"
 //                   className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-300"
 //                   placeholder="Type a message..."
 //                   value={input}
 //                   onChange={(e) => setInput(e.target.value)}
-//                   onKeyDown={(e) => {
-//                     if (e.key === "Enter" && input.trim() && !isSending) {
-//                       e.preventDefault();
-//                       handleSendMessage();
-//                     }
-//                   }}
-//                   disabled={isSending}
+//                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
 //                 />
 //                 <button 
-//                   onClick={(e) => {
-//                     e.preventDefault();
-//                     handleSendMessage();
-//                   }}
-//                   disabled={!input.trim() || isSending}
-//                   className={`ml-2 p-2 rounded-full flex items-center justify-center ${
-//                     input.trim() && !isSending
+//                   onClick={handleSendMessage}
+//                   disabled={!input.trim()}
+//                   className={`ml-2 p-2 rounded-full ${
+//                     input.trim() 
 //                       ? "text-yellow-500 hover:bg-yellow-100" 
 //                       : "text-gray-400 cursor-not-allowed"
 //                   }`}
 //                 >
-//                   {isSending ? (
-//                     <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-//                   ) : (
-//                     <IoSend size={20} />
-//                   )}
+//                   <IoSend size={20} />
 //                 </button>
-//                 {isSending && (
-//                   <div className="ml-2 text-gray-500">Sending...</div>
-//                 )}
 //               </div>
 //             </>
 //           ) : (
@@ -1388,91 +1873,120 @@ export default ClientChat;
 //       </div>
 //     </>
 //   );
-
-//   // Helper functions
-//   function getLastMessagePreview(userId) {
-//     const userMessages = messages.filter(msg => 
-//       msg.sender._id === userId || msg.recipient._id === userId
-//     );
-//     const lastMessage = userMessages[userMessages.length - 1];
-//     return lastMessage?.text;
-//   }
-
-//   function hasUnreadMessages(userId) {
-//     return messages.some(msg => 
-//       (msg.sender._id === userId || msg.recipient._id === userId) && 
-//       !msg.read && 
-//       msg.recipient._id === user._id
-//     );
-//   }
-
-//   function getUnreadCount(userId) {
-//     return messages.filter(msg => 
-//       (msg.sender._id === userId || msg.recipient._id === userId) && 
-//       !msg.read && 
-//       msg.recipient._id === user._id
-//     ).length;
-//   }
 // };
 
-// export default ChatApp;
+// export default UserChat;
+
+
+
+
+
 
 
 // import { useState, useEffect, useRef, useCallback } from "react";
 // import { FaPhoneAlt } from "react-icons/fa";
 // import { IoSend } from "react-icons/io5";
-// import ClientNav from "../Client-Navbar/ClientNav";
+// import Header from "../Header";
 // import { useAuth } from "../../context/AuthContext";
-// import { chatAPI } from "../PropertyController";
+// import { useLocation, useNavigate } from "react-router-dom";
+// import { chatAPI } from "../../Clients-components/PropertyController";
 // import { ChatSocket } from "../../soket/socket";
 
-// const ChatApp = () => {
+// const UserChat = () => {
 //   const { user, logout } = useAuth();
+//   const location = useLocation();
+//   const navigate = useNavigate();
 //   const [state, setState] = useState({
-//     users: [],          // Users who have messaged this owner
-//     selectedUser: null, // Currently selected user to chat with
-//     messages: [],       // Messages in current conversation
-//     input: "",          // Message input field
-//     loading: true,      // Loading state
-//     error: null,        // Error state
+//     users: [],
+//     selectedUser: null,
+//     messages: [],
+//     input: "",
+//     loading: true,
+//     error: null,
 //   });
-  
 //   const [isSending, setIsSending] = useState(false);
-//   const [isTyping, setIsTyping] = useState(false);
 //   const messagesEndRef = useRef(null);
 //   const socketRef = useRef(null);
 //   const inputRef = useRef(null);
 
 //   const { users, selectedUser, messages, input, loading, error } = state;
 
-//   // Update state helper
 //   const updateState = (newState) => {
-//     setState((prev) => ({ ...prev, ...newState }));
+//     setState(prev => ({ ...prev, ...newState }));
 //   };
 
-//   // Scroll to bottom of messages
 //   const scrollToBottom = () => {
 //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 //   };
 
-//   // Fetch users who have messaged this owner
+//   useEffect(() => {
+//     if (!user) {
+//       navigate("/user/login");
+//       return;
+//     }
+
+//     // Handle when coming from property page with owner details
+//     if (location.state?.recipient) {
+//       const { recipient } = location.state;
+      
+//       const newRecipient = {
+//         _id: recipient._id,
+//         name: recipient.name || "Property Owner",
+//         avatar: recipient.avatar || "/default-avatar.jpg",
+//         phone: recipient.phone || "",
+//         online: false,
+//         propertyId: recipient.propertyId || null,
+//         isOwner: true
+//       };
+
+//       const existingUserIndex = users.findIndex(u => u._id === newRecipient._id);
+      
+//       if (existingUserIndex === -1) {
+//         updateState({
+//           users: [...users, newRecipient],
+//           selectedUser: newRecipient
+//         });
+//       } else {
+//         // Update existing user with any new info
+//         const updatedUsers = [...users];
+//         updatedUsers[existingUserIndex] = { 
+//           ...updatedUsers[existingUserIndex], 
+//           ...newRecipient 
+//         };
+//         updateState({
+//           users: updatedUsers,
+//           selectedUser: updatedUsers[existingUserIndex]
+//         });
+//       }
+      
+//       // Clear the location state to prevent re-adding on refresh
+//       navigate(location.pathname, { replace: true, state: {} });
+//     }
+//   }, [user, navigate, location.state]);
+
 //   const fetchUsers = useCallback(async () => {
-//     if (!user || user.role !== 'client') return;
+//     if (!user) return;
 
 //     try {
 //       updateState({ loading: true, error: null });
+//       const response = await chatAPI.getChatOwners();
       
-//       const response = await chatAPI.getChatUsers();
-//       const usersData = response.data?.users || [];
-      
-//       if (usersData.length > 0) {
-//         updateState({ 
-//           users: usersData,
-//           selectedUser: state.selectedUser || usersData[0]
-//         });
-//       } else {
-//         updateState({ users: usersData });
+//       let usersData = [];
+//       if (Array.isArray(response?.data?.users)) {
+//         usersData = response.data.users;
+//       } else if (Array.isArray(response?.users)) {
+//         usersData = response.users;
+//       } else if (Array.isArray(response)) {
+//         usersData = response;
 //       }
+
+//       // Merge with any existing users (like from location.state)
+//       const mergedUsers = [...usersData];
+//       if (selectedUser && !usersData.some(u => u._id === selectedUser._id)) {
+//         mergedUsers.push(selectedUser);
+//       }
+
+//       updateState({ users: mergedUsers });
 //     } catch (err) {
 //       console.error("Error fetching users:", err);
 //       updateState({ 
@@ -1483,31 +1997,42 @@ export default ClientChat;
 //     } finally {
 //       updateState({ loading: false });
 //     }
-//   }, [user, logout, state.selectedUser]);
+//   }, [user, selectedUser, logout]);
 
-//   // Fetch messages between owner and selected user
+//   useEffect(() => {
+//     fetchUsers();
+//   }, [fetchUsers]);
+
 //   const fetchMessages = useCallback(async () => {
 //     if (!selectedUser || !user) return;
 
 //     try {
 //       updateState({ loading: true });
-      
 //       const response = await chatAPI.getMessages(selectedUser._id);
-//       const messagesData = response.data?.messages || [];
+      
+//       let messagesData = [];
+//       if (Array.isArray(response?.messages)) {
+//         messagesData = response.messages;
+//       } else if (Array.isArray(response?.data?.messages)) {
+//         messagesData = response.data.messages;
+//       } else if (Array.isArray(response?.data)) {
+//         messagesData = response.data;
+//       } else if (Array.isArray(response)) {
+//         messagesData = response;
+//       }
 
 //       const formattedMessages = messagesData.map(msg => ({
 //         _id: msg._id,
 //         text: msg.text,
 //         read: msg.read,
 //         createdAt: msg.createdAt,
-//         propertyId: msg.propertyId,
 //         sender: {
-//           _id: msg.sender?._id,
+//           _id: msg.sender?._id || user._id,
 //           name: msg.sender?.name || 'Unknown',
 //           avatar: msg.sender?.avatar || '/default-avatar.jpg'
 //         },
 //         recipient: {
-//           _id: msg.recipient?._id,
+//           _id: msg.recipient?._id || selectedUser._id,
 //           name: msg.recipient?.name || 'Unknown',
 //           avatar: msg.recipient?.avatar || '/default-avatar.jpg'
 //         }
@@ -1515,7 +2040,6 @@ export default ClientChat;
 
 //       updateState({ messages: formattedMessages });
       
-//       // Mark unread messages as read
 //       const unreadMessages = formattedMessages.filter(
 //         msg => !msg.read && msg.recipient._id === user._id
 //       );
@@ -1533,60 +2057,43 @@ export default ClientChat;
 //       });
 //     } finally {
 //       updateState({ loading: false });
-//       scrollToBottom();
 //     }
 //   }, [selectedUser, user]);
 
-//   // Handle new incoming message via socket
-//   const handleNewMessage = useCallback((message) => {
-//     if ((message.sender._id !== selectedUser?._id && 
-//          message.recipient._id !== selectedUser?._id) ||
-//         message.sender._id === user._id) {
-//       return;
-//     }
-
-//     const formattedMessage = {
-//       _id: message._id,
-//       text: message.text,
-//       read: message.read,
-//       createdAt: message.createdAt,
-//       propertyId: message.propertyId,
-//       sender: {
-//         _id: message.sender._id,
-//         name: message.sender.name,
-//         avatar: message.sender.avatar || '/default-avatar.jpg'
-//       },
-//       recipient: {
-//         _id: message.recipient._id,
-//         name: message.recipient.name,
-//         avatar: message.recipient.avatar || '/default-avatar.jpg'
-//       }
-//     };
-
-//     updateState(prev => ({
-//       messages: [...prev.messages, formattedMessage]
-//     }));
-    
+//   useEffect(() => {
+//     fetchMessages();
 //     scrollToBottom();
+//   }, [fetchMessages]);
 
-//     // Mark as read if recipient is current user
-//     if (formattedMessage.recipient._id === user._id) {
-//       chatAPI.markAsRead(formattedMessage._id);
-//     }
-//   }, [selectedUser, user]);
-
-//   // Handle typing indicator
-//   const handleTyping = useCallback((userId) => {
-//     if (userId === selectedUser?._id) {
-//       setIsTyping(true);
-//       const timer = setTimeout(() => setIsTyping(false), 2000);
-//       return () => clearTimeout(timer);
-//     }
-//   }, [selectedUser]);
-
-//   // Initialize socket connection
 //   useEffect(() => {
 //     if (!user?._id || !user?.token) return;
+
+//     const handleNewMessage = (message) => {
+//       const formattedMessage = {
+//         _id: message._id || Date.now().toString(),
+//         text: message.text,
+//         read: message.read || false,
+//         createdAt: message.createdAt || new Date().toISOString(),
+//         sender: {
+//           _id: message.sender?._id || user._id,
+//           name: message.sender?.name || 'Unknown',
+//           avatar: message.sender?.avatar || '/default-avatar.jpg'
+//         },
+//         recipient: {
+//           _id: message.recipient?._id || selectedUser?._id,
+//           name: message.recipient?.name || 'Unknown',
+//           avatar: message.recipient?.avatar || '/default-avatar.jpg'
+//         }
+//       };
+
+//       updateState(prev => ({
+//         messages: [...prev.messages, formattedMessage]
+//       }));
+      
+//       if (formattedMessage.recipient._id === user._id) {
+//         chatAPI.markAsRead(formattedMessage._id);
+//       }
+//     };
 
 //     const handleSocketError = (error) => {
 //       console.error('Socket error:', error);
@@ -1597,40 +2104,26 @@ export default ClientChat;
 //       user._id,
 //       user.token,
 //       handleNewMessage,
-//       handleSocketError,
-//       'owner_channel'
+//       handleSocketError
 //     );
-//     socketRef.current.onTyping = handleTyping;
 
 //     return () => {
 //       if (socketRef.current) {
 //         socketRef.current.close();
 //       }
 //     };
-//   }, [user, handleNewMessage, handleTyping]);
+//   }, [user, selectedUser]);
 
-//   // Fetch users on mount
-//   useEffect(() => {
-//     fetchUsers();
-//   }, [fetchUsers]);
-
-//   // Fetch messages when selected user changes
-//   useEffect(() => {
-//     fetchMessages();
-//   }, [fetchMessages]);
-
-//   // Send message handler
 //   const handleSendMessage = async () => {
 //     if (!input.trim() || !selectedUser || !user || isSending) return;
     
 //     const tempId = Date.now().toString();
 //     const messageText = input.trim();
 
-//     updateState(prev => ({ ...prev, input: "" }));
+//     setState(prev => ({ ...prev, input: "" }));
 //     setIsSending(true);
 
 //     try {
-//       // Optimistic update
 //       const tempMessage = {
 //         _id: tempId,
 //         text: messageText,
@@ -1645,53 +2138,41 @@ export default ClientChat;
 //           avatar: selectedUser.avatar || '/default-avatar.jpg'
 //         },
 //         createdAt: new Date().toISOString(),
-//         read: false,
-//         isOptimistic: true
+//         read: false
 //       };
 
-//       updateState(prev => ({
+//       setState(prev => ({
+//         ...prev,
 //         messages: [...prev.messages, tempMessage]
 //       }));
 
-//       scrollToBottom();
-
-//       // Send via socket
 //       if (socketRef.current) {
 //         socketRef.current.sendMessage({
 //           sender: user._id,
 //           recipient: selectedUser._id,
-//           text: messageText,
-//           role: 'client'
+//           text: messageText
 //         });
 //       }
 
-//       // Send to API
-//       const response = await chatAPI.sendMessage(selectedUser._id, messageText);
-      
-//       // Replace optimistic message with real one
-//       updateState(prev => ({
-//         messages: prev.messages.map(msg => 
-//           msg._id === tempId ? {
-//             ...response.data,
-//             isOptimistic: false
-//           } : msg
-//         )
-//       }));
+//       await chatAPI.sendMessage(selectedUser._id, messageText);
 
 //     } catch (err) {
 //       console.error("Send error:", err);
-//       updateState(prev => ({
+//       setState(prev => ({
+//         ...prev,
 //         messages: prev.messages.filter(msg => msg._id !== tempId),
-//         input: messageText,
-//         error: "Failed to send message. Please try again."
+//         input: messageText
 //       }));
 //     } finally {
 //       setIsSending(false);
-//       inputRef.current?.focus();
+//       scrollToBottom();
+//       if (inputRef.current) {
+//         inputRef.current.focus();
+//         inputRef.current.value = "";
+//       }
 //     }
 //   };
 
-//   // Retry loading users
 //   const retryFetchUsers = async () => {
 //     updateState({ error: null, loading: true });
 //     try {
@@ -1702,7 +2183,6 @@ export default ClientChat;
 //     }
 //   };
 
-//   // Loading state
 //   if (loading && users.length === 0) {
 //     return (
 //       <div className="flex items-center justify-center h-screen">
@@ -1711,7 +2191,6 @@ export default ClientChat;
 //     );
 //   }
 
-//   // Error state
 //   if (error && users.length === 0) {
 //     return (
 //       <div className="flex items-center justify-center h-screen flex-col">
@@ -1728,22 +2207,19 @@ export default ClientChat;
 
 //   return (
 //     <>
-//       <ClientNav />
-//       <div className="flex h-screen bg-[#F8F8FF] pt-4">
+//       <Header />
+//       <div className="flex h-screen bg-[#F8F8FF] py-20">
 //         {/* Sidebar - User List */}
 //         <div className="w-1/3 bg-white p-4 border-r border-[#727070] overflow-y-auto">
 //           {users.length > 0 ? (
 //             users.map((chatUser) => {
 //               const unreadCount = messages.filter(m => 
-//                 m.sender._id === chatUser._id && 
+//                 (m.sender._id === chatUser._id || m.recipient._id === chatUser._id) && 
 //                 !m.read && 
 //                 m.recipient._id === user._id
 //               ).length;
 
 //               const isSelected = selectedUser?._id === chatUser._id;
-//               const lastMessage = messages
-//                 .filter(m => m.sender._id === chatUser._id || m.recipient._id === chatUser._id)
-//                 .slice(-1)[0];
 
 //               return (
 //                 <div
@@ -1769,13 +2245,13 @@ export default ClientChat;
 //                   <div className="flex-1 min-w-0">
 //                     <h3 className="font-bold truncate">{chatUser.name}</h3>
 //                     <p className="text-sm text-gray-500 truncate">
-//                       {lastMessage?.text || "No messages yet"}
+//                       {chatUser.isOwner ? "Property Owner" : "Chat User"}
 //                     </p>
-//                     {lastMessage?.propertyId && (
-//                       <p className="text-xs text-blue-500 truncate">
-//                         Property Inquiry
-//                       </p>
-//                     )}
+//                     <p className="text-xs text-gray-400 truncate">
+//                       {messages
+//                         .filter(m => m.sender._id === chatUser._id || m.recipient._id === chatUser._id)
+//                         .slice(-1)[0]?.text || "No messages yet"}
+//                     </p>
 //                   </div>
 //                   {unreadCount > 0 && (
 //                     <div className="ml-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
@@ -1787,7 +2263,7 @@ export default ClientChat;
 //             })
 //           ) : (
 //             <div className="text-center py-10">
-//               <p className="text-gray-500">No users have messaged you yet</p>
+//               <p className="text-gray-500">No chat users available</p>
 //               <button 
 //                 onClick={retryFetchUsers}
 //                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -1821,18 +2297,29 @@ export default ClientChat;
 //                     <h3 className="font-bold">{selectedUser.name}</h3>
 //                     <p className="text-xs text-gray-500">
 //                       {selectedUser.online ? "Online" : "Offline"}
+//                       {selectedUser.isOwner && " • Property Owner"}
 //                     </p>
 //                   </div>
 //                 </div>
-//                 {selectedUser.phone && (
-//                   <button 
-//                     className="text-[#FEE123] text-xl hover:bg-yellow-100 p-2 rounded-full"
-//                     title={`Call ${selectedUser.name}`}
-//                     onClick={() => window.location.href = `tel:${selectedUser.phone}`}
-//                   >
-//                     <FaPhoneAlt />
-//                   </button>
-//                 )}
+//                 <div className="flex items-center gap-2">
+//                   {selectedUser.propertyId && (
+//                     <button
+//                       className="text-sm bg-blue-500 text-white px-3 py-1 rounded"
+//                       onClick={() => navigate(`/property/${selectedUser.propertyId}`)}
+//                     >
+//                       View Property
+//                     </button>
+//                   )}
+//                   {selectedUser.phone && (
+//                     <button 
+//                       className="text-[#FEE123] text-xl hover:bg-yellow-100 p-2 rounded-full"
+//                       title={`Call ${selectedUser.name}`}
+//                       onClick={() => window.location.href = `tel:${selectedUser.phone}`}
+//                     >
+//                       <FaPhoneAlt />
+//                     </button>
+//                   )}
+//                 </div>
 //               </div>
 
 //               <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
@@ -1848,13 +2335,8 @@ export default ClientChat;
 //                         msg.sender._id === user._id
 //                           ? "bg-[#AFD1FF] text-white ml-auto"
 //                           : "bg-[#FEE123] text-gray-900"
-//                       } ${msg.isOptimistic ? "opacity-70" : ""}`}
+//                       }`}
 //                     >
-//                       {msg.propertyId && (
-//                         <p className="text-xs text-blue-500 mb-1">
-//                           Regarding Property: {msg.propertyId}
-//                         </p>
-//                       )}
 //                       <p className="break-words">{msg.text}</p>
 //                       <p className={`text-xs mt-1 ${
 //                         msg.sender._id === user._id 
@@ -1867,17 +2349,12 @@ export default ClientChat;
 //                         })}
 //                         {msg.sender._id === user._id && (
 //                           <span className="ml-2">
-//                             {msg.isOptimistic ? '🕒' : msg.read ? '✓✓' : '✓'}
+//                             {msg.read ? '✓✓' : '✓'}
 //                           </span>
 //                         )}
 //                       </p>
 //                     </div>
 //                   ))
-//                 )}
-//                 {isTyping && (
-//                   <div className="mb-3 p-3 rounded-lg max-w-xs bg-[#FEE123] text-gray-900">
-//                     <p>Typing...</p>
-//                   </div>
 //                 )}
 //                 <div ref={messagesEndRef} />
 //               </div>
@@ -1890,10 +2367,7 @@ export default ClientChat;
 //                   placeholder="Type a message..."
 //                   value={input}
 //                   onChange={(e) => {
-//                     updateState(prev => ({ ...prev, input: e.target.value }));
-//                     if (socketRef.current?.sendTyping) {
-//                       socketRef.current.sendTyping(user._id);
-//                     }
+//                     setState(prev => ({ ...prev, input: e.target.value }));
 //                   }}
 //                   onKeyDown={(e) => {
 //                     if (e.key === "Enter" && input.trim() && !isSending) {
@@ -1904,7 +2378,10 @@ export default ClientChat;
 //                   disabled={isSending}
 //                 />
 //                 <button 
-//                   onClick={handleSendMessage}
+//                   onClick={(e) => {
+//                     e.preventDefault();
+//                     handleSendMessage();
+//                   }}
 //                   disabled={!input.trim() || isSending}
 //                   className={`ml-2 p-2 rounded-full flex items-center justify-center ${
 //                     input.trim() && !isSending
@@ -1919,6 +2396,9 @@ export default ClientChat;
 //                     <IoSend size={20} />
 //                   )}
 //                 </button>
+//                 {isSending && (
+//                   <div className="ml-2 text-gray-500">Sending...</div>
+//                 )}
 //               </div>
 //             </>
 //           ) : (
@@ -1936,4 +2416,6 @@ export default ClientChat;
 //   );
 // };
 
-// export default ChatApp;
+// export default UserChat;
+
+

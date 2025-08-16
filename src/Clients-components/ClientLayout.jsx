@@ -27,7 +27,7 @@ import TanentConfirmbox from "./CheckOutPages/TanentConfirmbox";
 // import ClientNav from "./Client-Navbar/ClientNav";
 import Main from "./ManageProperties/Main"
 import SupportDashboard from "./Support Dashboard/SupportDashboard";
-import ChatApp from "./Chat/ChatApp";
+import ClientChat from "./Chat/ChatApp";
 import ClientLogin from "./Client-Login/ClientLogin";
 import ProfilePage from "./Client-Home/ProfilePage";
 import HostelInfrastructure from "./TenantList/HostelInfrastructure";
@@ -63,7 +63,7 @@ const ClientLayout = () => {
         <Route path="/properties" element={<Main />} />
 
         <Route path="/supportdashboard" element={<SupportDashboard />} />
-        <Route path="/chat" element={<ChatApp />} />
+        <Route path="/chat" element={<ClientChat />} />
 
 
         

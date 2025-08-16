@@ -1,0 +1,222 @@
+[
+  {
+    "id": 1,
+    "name": "Urban Nest Co-Living",
+    "gender": "Co-Living",
+    "location": "Bangalore",
+    "price": 6200,
+    "rating": 4.2,
+    "roomType": "Single",
+    "image": "/images/pg1.jpg",
+    "amenities": ["WiFi", "Laundry", "Housekeeping"]
+  },
+  {
+    "id": 2,
+    "name": "Green Haven Girls Hostel",
+    "gender": "Girls/Women's",
+    "location": "Delhi",
+    "price": 5000,
+    "rating": 4.5,
+    "roomType": "Double",
+    "image": "/images/pg2.jpg",
+    "amenities": ["CCTV", "Power Backup", "Geyser"]
+  },
+  {
+    "id": 3,
+    "name": "Sunshine PG for Women",
+    "gender": "Girls/Women's",
+    "location": "Mumbai",
+    "price": 5800,
+    "rating": 4.3,
+    "roomType": "Triple",
+    "image": "/images/pg3.jpg",
+    "amenities": ["WiFi", "Meal Service", "24x7 Security"]
+  },
+  {
+    "id": 4,
+    "name": "Comfort Stay for Men",
+    "gender": "Men's",
+    "location": "Hyderabad",
+    "price": 4500,
+    "rating": 4.0,
+    "roomType": "Double",
+    "image": "/images/pg4.jpg",
+    "amenities": ["Laundry", "Gym Access", "Parking"]
+  },
+  {
+    "id": 5,
+    "name": "Elite Women’s Co-Living",
+    "gender": "Girls/Women's",
+    "location": "Pune",
+    "price": 7000,
+    "rating": 4.8,
+    "roomType": "Single",
+    "image": "/images/pg5.jpg",
+    "amenities": ["WiFi", "AC Rooms", "Kitchen Access"]
+  },
+  {
+    "id": 6,
+    "name": "Metro Men’s PG",
+    "gender": "Men's",
+    "location": "Chennai",
+    "price": 5200,
+    "rating": 4.1,
+    "roomType": "Triple",
+    "image": "/images/pg6.jpg",
+    "amenities": ["Power Backup", "CCTV", "Meal Service"]
+  },
+  {
+    "id": 7,
+    "name": "Cozy Corner for Women",
+    "gender": "Girls/Women's",
+    "location": "Kolkata",
+    "price": 4900,
+    "rating": 4.4,
+    "roomType": "Double",
+    "image": "/images/pg7.jpg",
+    "amenities": ["Laundry", "WiFi", "Common Area"]
+  },
+  {
+    "id": 8,
+    "name": "BlueSky Men's PG",
+    "gender": "Men's",
+    "location": "Noida",
+    "price": 5600,
+    "rating": 4.6,
+    "roomType": "Single",
+    "image": "/images/pg8.jpg",
+    "amenities": ["CCTV", "Power Backup", "Refrigerator"]
+  },
+  {
+    "id": 9,
+    "name": "Serene Stay for Girls",
+    "gender": "Girls/Women's",
+    "location": "Ahmedabad",
+    "price": 4800,
+    "rating": 4.0,
+    "roomType": "Double",
+    "image": "/images/pg9.jpg",
+    "amenities": ["WiFi", "Common Kitchen", "Security"]
+  },
+  {
+    "id": 10,
+    "name": "Bright Living for Men",
+    "gender": "Men's",
+    "location": "Jaipur",
+    "price": 4300,
+    "rating": 3.9,
+    "roomType": "Triple",
+    "image": "/images/pg10.jpg",
+    "amenities": ["Laundry", "Meal Service", "TV"]
+  },
+  {
+    "id": 11,
+    "name": "Lakeside Girls PG",
+    "gender": "Girls/Women's",
+    "location": "Indore",
+    "price": 5100,
+    "rating": 4.2,
+    "roomType": "Single",
+    "image": "/images/pg11.jpg",
+    "amenities": ["WiFi", "Refrigerator", "AC"]
+  },
+  {
+    "id": 12,
+    "name": "The Nest for Men",
+    "gender": "Men's",
+    "location": "Gurgaon",
+    "price": 6000,
+    "rating": 4.7,
+    "roomType": "Double",
+    "image": "/images/pg12.jpg",
+    "amenities": ["Parking", "Security", "Housekeeping"]
+  },
+  {
+    "id": 13,
+    "name": "Royal PG for Women",
+    "gender": "Girls/Women's",
+    "location": "Surat",
+    "price": 5300,
+    "rating": 4.3,
+    "roomType": "Triple",
+    "image": "/images/pg13.jpg",
+    "amenities": ["AC", "WiFi", "Power Backup"]
+  },
+  {
+    "id": 14,
+    "name": "Elite Stay for Men",
+    "gender": "Men's",
+    "location": "Nagpur",
+    "price": 4700,
+    "rating": 4.1,
+    "roomType": "Single",
+    "image": "/images/pg14.jpg",
+    "amenities": ["CCTV", "Laundry", "TV"]
+  },
+  {
+    "id": 15,
+    "name": "Skyline Women’s PG",
+    "gender": "Girls/Women's",
+    "location": "Lucknow",
+    "price": 4900,
+    "rating": 4.0,
+    "roomType": "Double",
+    "image": "/images/pg15.jpg",
+    "amenities": ["Housekeeping", "Power Backup", "WiFi"]
+  },
+  {
+    "id": 16,
+    "name": "Green View PG for Men",
+    "gender": "Men's",
+    "location": "Chandigarh",
+    "price": 5400,
+    "rating": 4.2,
+    "roomType": "Triple",
+    "image": "/images/pg16.jpg",
+    "amenities": ["Common Room", "Laundry", "AC"]
+  },
+  {
+    "id": 17,
+    "name": "Palm Residency for Women",
+    "gender": "Girls/Women's",
+    "location": "Bhopal",
+    "price": 5600,
+    "rating": 4.5,
+    "roomType": "Single",
+    "image": "/images/pg17.jpg",
+    "amenities": ["WiFi", "Kitchen", "Security"]
+  },
+  {
+    "id": 18,
+    "name": "UrbanLife Men's PG",
+    "gender": "Men's",
+    "location": "Coimbatore",
+    "price": 4900,
+    "rating": 3.8,
+    "roomType": "Double",
+    "image": "/images/pg18.jpg",
+    "amenities": ["Meal Service", "TV", "WiFi"]
+  },
+  {
+    "id": 19,
+    "name": "Tranquil Stay for Women",
+    "gender": "Girls/Women's",
+    "location": "Vijayawada",
+    "price": 4600,
+    "rating": 4.0,
+    "roomType": "Triple",
+    "image": "/images/pg19.jpg",
+    "amenities": ["Geyser", "Power Backup", "WiFi"]
+  },
+  {
+    "id": 20,
+    "name": "Downtown PG for Men",
+    "gender": "Men's",
+    "location": "Rajkot",
+    "price": 5000,
+    "rating": 4.3,
+    "roomType": "Double",
+    "image": "/images/pg20.jpg",
+    "amenities": ["WiFi", "Refrigerator", "CCTV"]
+  }
+]

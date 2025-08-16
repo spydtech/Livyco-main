@@ -11,14 +11,16 @@ const cities = [
 
 export default function PopularCities() {
   return (
-    <div className="bg-[#F8F8FF] py-12 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="bg-[#F8F8FF] ">
+      <div className="max-w-6xl mx-auto py-12 px-4">
         {/* Top Section */}
         <div className=" items-center justify-between mb-6">
           <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 text-center">Find Hostels in These Popular Cities</h2>
-          <button className="flex items-center text-right text-sm font-medium text-gray-800 hover:underline">
+          <div className="md:ml-[85%] lg:ml-[90%] mt-4">
+          <button className="flex  text-sm font-mediu text-gray-800 hover:underline">
             View All Cities <span className="ml-1">→</span>
           </button>
+          </div>
         </div>
 
         {/* City List */}

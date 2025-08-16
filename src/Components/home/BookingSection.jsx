@@ -7,7 +7,7 @@ const BookingSection = props => {
     return (
         <>
      <section className="bg-[#f7f7fd] py-16 px-4 md:px-16">
-            <div className="absolute md:ml-[40%] z-10">
+            <div className="absolute md:ml-[35%] z-10">
              
            <svg width="808" height="840" viewBox="0 0 808 840" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g opacity="0.04" clip-path="url(#clip0_4693_44030)">
@@ -177,7 +177,7 @@ const BookingSection = props => {
 
     
             </div>
-          <div className="relative flex flex-col lg:flex-row items-center justify-center gap-10 max-w-7xl mx-auto">
+          <div className="relative flex flex-col lg:flex-row items-center justify-center gap-10 max-w-6xl mx-auto">
             {/* Woman Image */}
             <div className="flex-1 ">
               <img
