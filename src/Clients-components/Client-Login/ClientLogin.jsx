@@ -22,10 +22,10 @@ const ClientLogin = () => {
 
    const setupRecaptcha = () => {
   if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier( auth,'recaptcha-container', {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth,'recaptcha-container', {
       'size': 'invisible',
       'callback': (response) => {
-        console.log("reCAPTCHA verified");
+        console.log("reCAPTCHA verified", response);
       },
       'expired-callback': () => {
         console.log("reCAPTCHA expired");
