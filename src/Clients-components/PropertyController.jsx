@@ -234,7 +234,7 @@ export const bookingAPI = {
    * Requires client role on the backend for this endpoint.
    * @returns {Promise<AxiosResponse>} A promise that resolves to the API response.
    */
-  getBookingDetails: (bookingId) => api.get(`/api/auth/bookings/${bookingId}`)
+  getBookingDetails: (bookingId) => api.get(`/api/auth/bookings/${bookingId}`) 
     .then(response => {
       // Basic success check for the response structure
       if (!response.data?.success) {
@@ -267,14 +267,28 @@ export const bookingAPI = {
       }
       return response;
     }),
-  getBookingsByProperty: () => api.get('/api/auth/bookings/property')
-    .then(response => {
-      // Basic success check for the response structure
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || 'Invalid response format for fetching bookings by property');
-      }
-      return response;
-    }),
+   getBookingsByProperty: () => 
+    api.get('/api/auth/bookings/property')
+      .then(response => {
+        console.log('Bookings API response:', response.data);
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch bookings');
+        }
+        return response;
+      })
+      .catch(error => {
+        console.error('Booking API error:', error);
+        throw new Error(error.response?.data?.message || 'Failed to fetch bookings');
+      }),
+      getUserBookings: () =>
+    api.get('/api/auth/bookings/user')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Invalid response format for fetching user bookings');
+        }
+        return response;
+      }),
+      
 
   /**
    * Creates a new booking.

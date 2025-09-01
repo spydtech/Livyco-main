@@ -51,7 +51,7 @@ const ServiceStatus = () => {
   return (
     <>
     <Header />
-      <div className="flex justify-between py-6 px-14">
+      <div className="flex justify-between  px-14 py-24">
         <div className="p-4 rounded-md  mt-10 ">
           <div className="flex flex-col md:flex-row md:justify-between gap-3 mb-10">
             <p>Current Room/Bed Details :</p>

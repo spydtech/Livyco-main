@@ -117,9 +117,11 @@ const Navbar = () => {
                 <HiOutlineHome className='text-xl'/> Hostel
               </li>
               </Link>
+              <Link to="/user/wishlist">
               <li className="flex items-center gap-1 hover:text-yellow-400 hover:border-b-2 border-yellow-400 pb-1 transition">
                 <FaRegHeart className='text-xl'/> Wishlist
               </li>
+              </Link>
               <li className="relative hover:text-yellow-400 transition">
                 <FaBell className='text-xl'/>
                 <span className="absolute -top-2 -right-2 w-2 h-2 bg-red-500 rounded-full" />
@@ -135,18 +137,21 @@ const Navbar = () => {
                 
                 {profileDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                    <Link 
+                      to="/user/profile">
                     <a 
-                      href="#" 
+                      // href="/user/profile" 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        // Handle profile click
-                        console.log('Profile clicked');
-                        setProfileDropdownOpen(false);
-                      }}
+                      // onClick={(e) => {
+                      //   e.preventDefault();
+                      //   // Handle profile click
+                      //   // console.log('Profile clicked');
+                      //   setProfileDropdownOpen(false);
+                      // }}
                     >
                       Profile
                     </a>
+                    </Link>
                     <a 
                       href="#" 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -223,18 +228,21 @@ const Navbar = () => {
                   
                   {profileDropdownOpen && (
                     <div className="mt-2 w-full bg-white rounded-md shadow-lg py-1 z-50">
+                      <Link 
+                        to="/user/profile">
                       <a 
-                        href="#" 
+                        // href="/user/profile" 
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Handle profile click
-                          console.log('Profile clicked');
-                          setProfileDropdownOpen(false);
-                        }}
+                        // onClick={(e) => {
+                        //   e.preventDefault();
+                        //   // Handle profile click
+                        //   // console.log('Profile clicked');
+                        //   setProfileDropdownOpen(false);
+                        // }}
                       >
                         Profile
                       </a>
+                      </Link>
                       <a 
                         href="#" 
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

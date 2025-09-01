@@ -53,6 +53,14 @@ import VacateRoom from "./Components/myStay/VacateRoom"; // Import VacateRoom co
 import Concern from "./Components/raiseConcern/Concern";
 import ServiceStatusPage from "./Components/raiseConcern/ServiceStatusPage"; // Import ServiceStatusPage component
 import { ChatProvider } from './context/ChatContext';
+import MyWishList from "./Components/whishList/MyWishList"; // Import MyWishList component
+import UserProfile from "./Components/profile/userProfile";
+import FigmaDeluxeHostel from "./Components/booking/FigmaDeluxeHostel";
+import Cart from "./Components/cart/Cart"; // Import Cart component
+import Paymenthistory from "./Components/paymentGateway/Paymenthistory"; // Import Paymenthistory component
+import PayRent from "./Components/paymentGateway/PayRent";
+import { Cancel } from "./Components/paymentGateway/Cancel";
+
 
 function App() {
   return (
@@ -67,6 +75,28 @@ function App() {
           <Route path="/user/pgsearch" element={<PgSearch />} />
           <Route path="/user/view-pg/:id" element={<BookPG />} />
           <Route path="/user/add-proof" element={<AddProof />} />
+
+          {/* add to whishList */}
+          {/* <Route path="/user/wishlist" element={<PgSearch />} /> */}
+          <Route path="/user/wishlist" element={<MyWishList />} />
+          {/* user profile */}
+          <Route path="/user/profile" element={<UserProfile />} />
+          {/* bookingng confirmation */}
+          <Route path="/user/booking" element={<FigmaDeluxeHostel />} />
+
+          {/* Payment User Routes */}
+           {/* cart to pay */}
+          <Route path="/user/pay-to-cart" element={<Cart />} />
+
+          <Route path="/user/payment-history" element={<Paymenthistory />} />
+          <Route path="/user/booking/conformation" element={<Cancel />} />
+          <Route path="/user/pay-rent" element={<PayRent />} />
+
+         
+          
+         
+
+          {/* User Routes */}
 
           {/* my stay routes */}
           <Route 
@@ -85,7 +115,7 @@ function App() {
 
             {/* user concerns */}
           <Route 
-            path="/user/raise-concern"
+            path="/user/my-concerns"
             element={
               <Concern />
             } />

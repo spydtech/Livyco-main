@@ -135,8 +135,63 @@ const handleMessageClick = () => {
     setIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-
-
+// const handleBookNow = () => {
+//     if (!pg) return;
+    
+//     navigate(`/user/booking`, { // Use pg._id directly in the URL
+//       state: {
+//         propertyId: pg._id, // Use pg._id directly
+//         propertyName: pg.name,
+//         roomTypes: pg.rooms?.roomTypes || [],
+//         price: pg.rooms?.roomTypes?.[0]?.price || 0,
+//         rooms: pg.rooms || {},
+//         owner: pg.owner,
+//         role: "client",
+//       }
+//     });
+//     console.log("Booking details:", {
+//       propertyId: pg._id, // Changed from pg.property._id
+//       propertyName: pg.name,
+//       roomTypes: pg.rooms?.roomTypes || [],
+//       price: pg.rooms?.roomTypes?.[0]?.price || 0,
+//       rooms: pg.rooms || {},
+//       owner: pg.owner,
+//       role: "client",
+//     });
+// };
+const handleview = () => {
+    if (!pg) {
+        console.error("PG data is missing");
+        return;
+    }
+    
+    const propertyId = pg._id || pg.id || pg.property?._id;
+    
+    if (!propertyId) {
+        console.error("Property ID is undefined", pg);
+        // You might want to show an error message to the user
+        alert("Unable to book: Property information is incomplete");
+        return;
+    }
+    
+    const propertyName = pg.name || pg.propertyName;
+    const roomTypes = pg.rooms?.roomTypes || pg.roomTypes || [];
+    const price = roomTypes[0]?.price || 0;
+    const rooms = pg.rooms || {};
+    const owner = pg.owner || {};
+    
+    navigate(`/user/booking`, {
+      state: {
+        propertyId,
+        propertyName,
+        roomTypes,
+        price,
+        rooms,
+        owner,
+        role: "client",
+      }
+    });
+};
 
   const Images = [
     {
@@ -547,7 +602,7 @@ const handleMessageClick = () => {
           </button>
 
           <button 
-         onClick={() => navigate("/user/add-proof")}
+         onClick={handleview}
           className="bg-blue-700 px-10 md:px-20 lg:px-44 rounded-md py-3 text-white w-full sm:w-auto">
             Book Now
           </button>

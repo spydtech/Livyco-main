@@ -3,6 +3,8 @@ import { FaEdit } from "react-icons/fa";
 import { ChevronRight } from "lucide-react";
 import ClientNav from "../Client-Navbar/ClientNav";
 import { userAPI } from "../PropertyController"; // adjust the path as needed
+import { Link } from "react-router-dom";
+
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
@@ -22,7 +24,7 @@ const ProfilePage = () => {
     { label: "Booking Dashboard", hasArrow: true },
     
     
-    { label: "Payment Management", hasArrow: true },
+    { label: "Payment Management", hasArrow: true, link: "/client/payment" },
     { label: "Tenant List", hasArrow: true },
     
     { label: "My wallet", hasArrow: true },
@@ -90,6 +92,7 @@ const ProfilePage = () => {
               className="w-16 h-16 rounded-full object-cover"
             />
             <div>
+              
               <h2 className="font-semibold text-lg">{profile.name}</h2>
               <p className="text-sm text-gray-600">{profile.location}</p>
               <p className="text-sm text-gray-600">{profile.phone}</p>
@@ -105,14 +108,19 @@ const ProfilePage = () => {
 
         {/* Menu Items */}
         <div className="space-y-6">
+          
           {menuItems.map((item, idx) => (
+
             <div
               key={idx}
               className="flex justify-between items-center text-sm font-medium border-b pb-2 border-gray-300"
             >
+              <Link to={item.link || "#"} className="flex items-center gap-2">
               <span>{item.label}</span>
               {item.hasArrow && <ChevronRight className="w-4 h-4 text-gray-500" />}
+               </Link>
             </div>
+             
           ))}
         </div>
       </div>

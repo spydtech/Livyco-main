@@ -31,6 +31,7 @@ import ClientChat from "./Chat/ChatApp";
 import ClientLogin from "./Client-Login/ClientLogin";
 import ProfilePage from "./Client-Home/ProfilePage";
 import HostelInfrastructure from "./TenantList/HostelInfrastructure";
+import  Chat  from "./Payment/Chat";
 
 
 const ClientLayout = () => {
@@ -54,6 +55,8 @@ const ClientLayout = () => {
         <Route path="/checkoutrequest" element={<TenantCheckoutRequest />} />
         <Route path="/approvecheckout/:id" element={<ApproveCheckout />} />
         <Route path="/confirm-booking" element={<TanentConfirmbox />} />
+         {/* payment request to user*/}
+         <Route path="/payment" element={<Chat />} />
         <Route path="/foodmenu" element={<FoodMenu />} />
         <Route path="/tenantlist" element={<TenantList />} />
         <Route path="/confirmbooking" element={<ConformBooking />} />
