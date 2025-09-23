@@ -190,6 +190,88 @@ export const wishlistAPI = {
 };
 
 
+export const menuAPI = {
+  // Get all food items
+  getFoodItems: () => 
+    api.get('/api/menu')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch food items');
+        }
+        return response;
+      }),
+
+  // Get weekly menu
+  getWeeklyMenu: () => 
+    api.get('/api/menu/weekly')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch weekly menu');
+        }
+        return response;
+      }),
+
+  // Add new food item
+  addFoodItem: (foodItemData) => 
+    api.post('/api/menu', foodItemData)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to add food item');
+        }
+        return response;
+      }),
+
+  // Delete food item by ID
+  deleteFoodItem: (foodItemId) => 
+    api.delete(`/api/menu/${foodItemId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to delete food item');
+        }
+        return response;
+      }),
+
+  // Clear menu for a specific day
+  clearDayMenu: (day) => 
+    api.delete('/api/menu/clear/day', { params: { day } })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to clear day menu');
+        }
+        return response;
+      }),
+
+  // Clear menu for multiple days
+  clearDaysMenu: (days) => 
+    api.delete('/api/menu/clear/days', { params: { days } })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to clear days menu');
+        }
+        return response;
+      }),
+
+  // Update food item (optional - if your backend supports it)
+  updateFoodItem: (foodItemId, updates) => 
+    api.put(`/api/menu/${foodItemId}`, updates)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to update food item');
+        }
+        return response;
+      }),
+
+  // Get menu for specific day (optional - if your backend supports it)
+  getDayMenu: (day) => 
+    api.get(`/api/menu/day/${day}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch day menu');
+        }
+        return response;
+      }),
+};
+
 // Add this to your PropertyController.js file
 export const concernAPI = {
   // Submit a new concern

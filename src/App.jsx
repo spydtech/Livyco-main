@@ -48,7 +48,7 @@ import UserChat from "./Components/userChats/UserChat";
 import BookPG from "./Components/pgSearch/BookPG";
 import AddProof from "./Components/pgSearch/AddProof";
 import MyStay_Main from "./Components/myStay/MyStay_Main"; // Updated import
-import FoodMenu from "./Components/foodMenu/FoodMenu"; // Import FoodMenu component
+import FoodMenuUser from "./Components/foodMenu/FoodMenu"; // Import FoodMenu component
 import VacateRoom from "./Components/myStay/VacateRoom"; // Import VacateRoom component
 
 import ServiceStatusPage from "./Components/raiseConcern/ServiceStatusPage"; // Import ServiceStatusPage component
@@ -131,7 +131,7 @@ function App() {
           <Route 
             path="/user/food-menu" 
             element={
-             <FoodMenu />
+             <FoodMenuUser />
             } 
           />
 
