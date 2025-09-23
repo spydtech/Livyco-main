@@ -1702,7 +1702,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../Header";
 import { bookingAPI, propertyAPI, concernAPI } from "../../Clients-components/PropertyController";
-import { API_Base_URL } from '../../Clients-components/PropertyController'
+import { API_BASE_URL } from '../../Clients-components/PropertyController'
 
 function SingleBed({ room, bed, booked = false, selected, onToggle }) {
     let mainBg = booked
@@ -1827,7 +1827,7 @@ const RiseConcern = () => {
                 return;
             }
             
-            const response = await fetch(`${API_Base_URL}/api/auth/bookings/availability/property/${propertyId}/all-beds`, {
+            const response = await fetch(`${API_BASE_URL}/api/auth/bookings/availability/property/${propertyId}/all-beds`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
