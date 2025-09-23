@@ -32,7 +32,7 @@ import ClientLogin from "./Client-Login/ClientLogin";
 import ProfilePage from "./Client-Home/ProfilePage";
 import HostelInfrastructure from "./TenantList/HostelInfrastructure";
 import ClientPayments from "./payment/Payments";
-import PaymentChat from "./Payment/Chat";
+import PaymentChat from "./payment/PaymentChat";
 import WalletHistory from "./Payment/WalletHistory";
 
 
