@@ -1917,7 +1917,7 @@ const FigmaDeluxeHostel = () => {
       const endDate = calculateEndDate();
       
       // Use the new endpoint that accepts date range
-      const response = await fetch(`${API_Base_URL}/auth/bookings/availability/property/${propertyId}/all-beds?startDate=${date}&endDate=${endDate || date}`, {
+      const response = await fetch(`${API_Base_URL}/api/auth/bookings/availability/property/${propertyId}/all-beds?startDate=${date}&endDate=${endDate || date}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -1954,7 +1954,7 @@ const FigmaDeluxeHostel = () => {
       setBedStatistics(stats);
       
       // Now check specific availability for the date range
-      const availabilityResponse = await fetch(`${API_Base_URL}/auth/bookings/check-availability`, {
+      const availabilityResponse = await fetch(`${API_Base_URL}/api/auth/bookings/check-availability`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
