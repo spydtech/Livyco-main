@@ -31,7 +31,7 @@ import ClientChat from "./Chat/ChatApp";
 import ClientLogin from "./Client-Login/ClientLogin";
 import ProfilePage from "./Client-Home/ProfilePage";
 import HostelInfrastructure from "./TenantList/HostelInfrastructure";
-import  Payments  from "./Payment/Payments";
+import ClientPayments from "./payment/Payments";
 import PaymentChat from "./Payment/Chat";
 import WalletHistory from "./Payment/WalletHistory";
 
@@ -58,7 +58,7 @@ const ClientLayout = () => {
         <Route path="/approvecheckout/:id" element={<ApproveCheckout />} />
         <Route path="/confirm-booking/:id" element={<TanentConfirmbox />} />
          {/* payment request to user*/}
-         <Route path="/payment/:id" element={<Payments />} />
+         <Route path="/payment/:id" element={<ClientPayments />} />
         <Route path="/payment" element={<PaymentChat />} />
           <Route path="/payment-history" element={<WalletHistory />} />
         <Route path="/foodmenu" element={<FoodMenu />} />
