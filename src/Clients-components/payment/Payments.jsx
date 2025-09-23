@@ -189,7 +189,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import ClientNav from "../Client-Navbar/ClientNav";
 import { vacateAPI, paymentAPI } from "../PropertyController";
 
-const Payment = () => {
+const payments = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -472,4 +472,4 @@ const Payment = () => {
   );
 };
 
-export default Payment;
+export default payments;
