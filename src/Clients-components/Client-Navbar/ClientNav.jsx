@@ -4,18 +4,14 @@ import { IoIosArrowDown } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
- // Adjust if needed
- const API_BASE_URL = "http://localhost:5000/api/auth";
+const API_BASE_URL = "http://localhost:5000/api/auth";
 
 const ClientNav = () => {
-   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const clientId = user ? user.clientId : null; // Get clientId from user state
-  const idToken = user ? user.token : null; // Get token from user state
   const navigate = useNavigate();
-
 
   const navLinks = [
     { name: "Home", path: "/client/home" },
@@ -25,27 +21,32 @@ const ClientNav = () => {
     { name: "Chat", path: "/client/chat" },
     { name: "Contact Us", path: "/client/supportdashboard" },
   ];
-  // ClientNav.js (updated useEffect and logout)
-useEffect(() => {
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found');
-      }
 
-      const response = await axios.get(`${API_BASE_URL}/user`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          throw new Error('No token found');
         }
-      });
 
-       if (response.data.success) {
+        // Verify token is still valid
+        const response = await axios.get(`${API_BASE_URL}/user`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.data.success) {
           setUser(response.data.user);
           
-          // If user is a client, you can fetch additional client data here
-          if (response.data.user.role === 'client') {
-            // Example: fetchClientData(response.data.user.clientId);
+          // Check if user is a client
+          if (response.data.user.role !== 'client') {
+            localStorage.removeItem('token');
+            alert('Access restricted to clients only. Redirecting to login.');
+            navigate('/client/client-login');
           }
         } else {
           throw new Error(response.data.message || 'Failed to fetch user');
@@ -53,7 +54,10 @@ useEffect(() => {
       } catch (error) {
         console.error('Error fetching user:', error);
         setError(error.message);
-        if (error.response?.status === 401) {
+        
+        // If token is invalid/expired, redirect to login
+        if (error.response?.status === 401 || error.message === 'No token found') {
+          localStorage.removeItem('token');
           navigate('/client/client-login');
         }
       } finally {
@@ -64,42 +68,34 @@ useEffect(() => {
     fetchUserData();
   }, [navigate]);
 
- const handleLogout = () => {
+  const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/client/client-login');
   };
+
   const handleDropdownToggle = () => {
     setDropdownOpen(!dropdownOpen);
   };
+
   const handleDropdownClose = () => {
     setDropdownOpen(false);
   };
-  const handleLinkClick = () => {
-    setDropdownOpen(false);
-  };
+
   const handleNotificationClick = () => {
-    // Handle notification click
     console.log("Notification clicked");
   };
-  const handleProfileClick = () => {
-    // Handle profile click
-    console.log("Profile clicked");
-  };
-
-  // const handleLogout = () => {
-  //   localStorage.removeItem('clientUser');
-  //   localStorage.removeItem('token');
-  //   navigate('/client/client-login');
-  // };
 
   if (loading) {
-    return <div className="bg-blue-900 py-4 px-6">Loading...</div>;
+    return <div className="bg-blue-900 py-4 px-6 text-white">Loading...</div>;
   }
 
-  if (error) {
-    return <div className="bg-blue-900 py-4 px-6 text-white">Error: {error}</div>;
+  if (error && !user) {
+    return <div className="bg-blue-900 py-4 px-6 text-white">Error: {error}. Please <Link to="/client/client-login" className="text-yellow-400 underline">login again</Link>.</div>;
   }
 
+  if (!user) {
+    return null; // or redirect to login
+  }
    
   return (
     <nav className="bg-blue-900 py-4 px-6 flex items-center justify-between">

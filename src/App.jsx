@@ -50,7 +50,7 @@ import AddProof from "./Components/pgSearch/AddProof";
 import MyStay_Main from "./Components/myStay/MyStay_Main"; // Updated import
 import FoodMenu from "./Components/foodMenu/FoodMenu"; // Import FoodMenu component
 import VacateRoom from "./Components/myStay/VacateRoom"; // Import VacateRoom component
-import Concern from "./Components/raiseConcern/Concern";
+
 import ServiceStatusPage from "./Components/raiseConcern/ServiceStatusPage"; // Import ServiceStatusPage component
 import { ChatProvider } from './context/ChatContext';
 import MyWishList from "./Components/whishList/MyWishList"; // Import MyWishList component
@@ -60,6 +60,8 @@ import Cart from "./Components/cart/Cart"; // Import Cart component
 import Paymenthistory from "./Components/paymentGateway/Paymenthistory"; // Import Paymenthistory component
 import PayRent from "./Components/paymentGateway/PayRent";
 import { Cancel } from "./Components/paymentGateway/Cancel";
+import RiseConcern from "./Components/raiseConcern/RiseConcern";
+
 
 
 function App() {
@@ -115,9 +117,9 @@ function App() {
 
             {/* user concerns */}
           <Route 
-            path="/user/my-concerns"
+            path="/user/raise-concern"
             element={
-              <Concern />
+              <RiseConcern />
             } />
             <Route 
             path="/user/concern/:id"

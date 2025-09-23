@@ -384,6 +384,7 @@ import { FiExternalLink } from "react-icons/fi";
 import FilterModal from "./FilterModal";
 import ClientNav from "../Client-Navbar/ClientNav";
 import { bookingAPI, handleApiError } from "../PropertyController";
+import bgImg from "../../assets/user/pgsearch/image (5).png";
 
 const TenantRequestTable = () => {
   const navigate = useNavigate();
@@ -439,7 +440,9 @@ const TenantRequestTable = () => {
     return (
       <>
         <ClientNav />
-        <div className="p-6 bg-[#F8F8FF] min-h-screen">
+        <div className="p-6  min-h-screen bg-cover bg-no-repeat bg-center"
+         style={{ backgroundImage: `url('${bgImg}')` }}
+        >
           <h2 className="text-gray-500 text-sm mb-2">Home / Tenant Request</h2>
           <div className="text-center mt-8">Loading tenant requests...</div>
         </div>
@@ -451,7 +454,8 @@ const TenantRequestTable = () => {
     return (
       <>
         <ClientNav />
-        <div className="p-6 bg-[#F8F8FF] min-h-screen">
+        <div className="p-6  min-h-screen bg-cover bg-no-repeat bg-center"
+         style={{ backgroundImage: `url('${bgImg}')` }}>
           <h2 className="text-gray-500 text-sm mb-2">Home / Tenant Request</h2>
           <div className="text-center mt-8 text-red-600">Error: {error}</div>
         </div>
@@ -462,7 +466,9 @@ const TenantRequestTable = () => {
   return (
     <>
       <ClientNav />
-      <div className="p-6 bg-[#F8F8FF] min-h-screen">
+      <div className="p-6  min-h-screen bg-cover bg-no-repeat bg-center"
+       style={{ backgroundImage: `url('${bgImg}')` }}
+      >
         <h2 className="text-gray-500 text-sm mb-2">Home / Tenant Request</h2>
         <div className="p-4">
           <div className="flex items-center mb-4">

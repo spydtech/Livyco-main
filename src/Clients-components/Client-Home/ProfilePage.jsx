@@ -20,14 +20,14 @@ const ProfilePage = () => {
       { label: "Theme", hasArrow: false },
     { label: "Account Info", hasArrow: false },
   
-    { label: "Manage Properties", hasArrow: true },
-    { label: "Booking Dashboard", hasArrow: true },
+    { label: "Manage Properties", hasArrow: true, link: "/client/tenantlist" },
+    { label: "Booking Dashboard", hasArrow: true, link: "/client/tenantrequest" },
     
     
     { label: "Payment Management", hasArrow: true, link: "/client/payment" },
-    { label: "Tenant List", hasArrow: true },
+    { label: "Tenant List", hasArrow: true, link: "/client/tenantlist" },
     
-    { label: "My wallet", hasArrow: true },
+    { label: "My wallet", hasArrow: true, link: "/client/payment-history" },
     { label: "Help & support", hasArrow: true },
     { label: "Term & policy", hasArrow: true }
   ];

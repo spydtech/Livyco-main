@@ -320,7 +320,7 @@ const UserProfile = () => {
     { label: "My Stay", hasArrow: true, link: "/user/my-stay" },
     { label: "Pay Rent", hasArrow: true, link: "/user/booking/conformation" },
     { label: "Payment history", hasArrow: true, link: "/user/payment-history" },
-    { label: "My Concerns", hasArrow: true, link: "/user/my-concerns" },
+    { label: "My Concerns", hasArrow: true, link: "/user/raise-concern" },
     { label: "My Wallet", hasArrow: true },
     { label: "Help & support", hasArrow: true },
     { label: "Term & policy", hasArrow: true }

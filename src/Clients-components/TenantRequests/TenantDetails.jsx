@@ -152,7 +152,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiMessageCircle, FiPhone } from "react-icons/fi";
 import ClientNav from "../Client-Navbar/ClientNav";
 import { bookingAPI } from "../PropertyController"; // Make sure it's imported
-
+import bgImg from "../../assets/user/pgsearch/image (5).png";
 const TenantDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -200,7 +200,9 @@ const TenantDetails = () => {
   return (
     <>
       <ClientNav />
-      <div className="p-6 bg-white min-h-screen flex flex-col">
+      <div className="p-6 min-h-screen flex flex-col bg-cover bg-no-repeat bg-center"
+       style={{ backgroundImage: `url('${bgImg}')` }}
+      >
         {/* Breadcrumb */}
         <div className="flex justify-between items-center mb-6">
           <h2
@@ -212,9 +214,9 @@ const TenantDetails = () => {
         </div>
 
         {/* Tenant Profile Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+        <div className=" p-6 rounded-xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
           <div className="flex items-center space-x-4 mb-4 md:mb-0">
-            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border border-gray-300">
+            <div className="w-16 h-16 rounded-full  flex items-center justify-center overflow-hidden border border-gray-300">
               {tenant.user?.profileImage ? (
                 <img
                   src={tenant.user.profileImage}
@@ -249,7 +251,7 @@ const TenantDetails = () => {
         </div>
 
         {/* Details Section */}
-        <div className="ml-[30%] bg-white">
+        <div className="ml-[30%] ">
           <div className="grid gap-6 md:grid-cols-1 items-start justify-center">
             {/* Basic Details */}
             <div className="bg-white p-6 rounded-lg border-2 md:w-[600px]">
@@ -276,7 +278,7 @@ const TenantDetails = () => {
                 <p><strong>Check-out Date:</strong> {formatDate(tenant.moveOutDate)}</p>
                 <p><strong>Details:</strong> {tenant.roomType || "N/A"}</p>
                 <p><strong>Room Number:</strong> {tenant.roomNumber || "N/A"}</p>
-                <p><strong>Booking Status:</strong> {tenant.status || "N/A"}</p>
+                <p><strong>Booking Status:</strong> {tenant.bookingStatus || "N/A"}</p>
 
               </div>
             </div>

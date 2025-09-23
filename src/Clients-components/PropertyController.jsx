@@ -88,6 +88,7 @@ api.interceptors.response.use(
     // Handle other error statuses
     if (error.response.status === 403) {
       // Forbidden - redirect to home or appropriate page
+      
       window.location.href = '/';
     }
 
@@ -123,6 +124,175 @@ export const propertyAPI = {
         }
         return response;
       }),
+};
+
+//whishlist
+export const wishlistAPI = {
+  // Add property to wishlist (send both userId and propertyId)
+  addToWishlist: (userId, propertyId) =>
+    api.post('/api/wishlist/add', { userId, propertyId })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to add to wishlist');
+        }
+        return response;
+      }),
+
+  // Remove property from wishlist
+  removeFromWishlist: (userId, propertyId) =>
+    api.delete(`/api/wishlist/remove/${userId}/${propertyId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to remove from wishlist');
+        }
+        return response;
+      }),
+
+  // Get wishlist for a user
+  getUserWishlist: (userId) =>
+    api.get(`/api/wishlist/user/${userId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch wishlist');
+        }
+        return response;
+      }),
+
+  // Check if property is in wishlist
+  checkWishlistStatus: (userId, propertyId) =>
+    api.get(`/api/wishlist/check/${userId}/${propertyId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to check wishlist status');
+        }
+        return response;
+      }),
+
+  // Get single wishlist item by ID
+  getWishlistItem: (wishlistItemId) =>
+    api.get(`/api/wishlist/item/${wishlistItemId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch wishlist item');
+        }
+        return response;
+      }),
+
+  // Admin: Get all wishlist items
+  getAllWishlistItems: () =>
+    api.get('/api/wishlist/all')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch all wishlist items');
+        }
+        return response;
+      }),
+};
+
+
+// Add this to your PropertyController.js file
+export const concernAPI = {
+  // Submit a new concern
+  submitConcern: (concernData) => 
+    api.post('/api/concerns/submit', concernData)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to submit concern');
+        }
+        return response;
+      }),
+
+  // Get user's concerns
+  getUserConcerns: () => 
+    api.get('/api/concerns/my-concerns')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch concerns');
+        }
+        return response;
+      }),
+
+  // Get specific concern by ID
+  getConcernById: (concernId) => 
+    api.get(`/api/concerns/${concernId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch concern');
+        }
+        return response;
+      }),
+
+  // Cancel a concern
+  cancelConcern: (concernId) => 
+    api.put(`/api/concerns/${concernId}/cancel`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to cancel concern');
+        }
+        return response;
+      }),
+
+  // Get property concerns (for clients)
+  getPropertyConcerns: (propertyId) => 
+    api.get(`/api/concerns/property/${propertyId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch property concerns');
+        }
+        return response;
+      }),
+
+  // Approve concern (for clients)
+  approveConcern: (concernId, adminNotes) => 
+    api.put(`/api/concerns/${concernId}/approve`, { adminNotes })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to approve concern');
+        }
+        return response;
+      }),
+
+  // Reject concern (for clients)
+  rejectConcern: (concernId, rejectionReason) => 
+    api.put(`/api/concerns/${concernId}/reject`, { rejectionReason })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to reject concern');
+        }
+        return response;
+      }),
+
+  // Complete concern (for clients)
+  completeConcern: (concernId, completionNotes) => 
+    api.put(`/api/concerns/${concernId}/complete`, { completionNotes })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to complete concern');
+        }
+        return response;
+      }),
+
+  // Add internal note (for clients)
+  addInternalNote: (concernId, note) => 
+    api.post(`/api/concerns/${concernId}/notes`, { note })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to add note');
+        }
+        return response;
+      }),
+};
+
+export const paymentAPI = {
+  createOrder: (data) => api.post('/api/payments/create-order', data),
+  validatePayment: (data) => api.post('/api/payments/validate-payment', data),
+  getPaymentDetails: (paymentId) => api.get(`/api/payments/${paymentId}`),
+  refundPayment: (data) => api.post('/api/payments/refund', data),
+  getPaymentHistory: (bookingId) => api.get(`/api/payments/history/${bookingId}`),
+  sendPaymentRequest: (data) => api.post('/api/payments/request', data),
+  getUserPaymentRequests: (userId) => api.get(`/api/payments/requests/user/${userId}`),
+  updatePaymentRequestStatus: (requestId, data) => api.put(`/api/payments/request/${requestId}`, data),
+  getClientPaymentsForBooking: (bookingId) => api.get(`/api/payments/client-payments/booking/${bookingId}`),
 };
 
 
@@ -267,6 +437,30 @@ export const bookingAPI = {
       }
       return response;
     }),
+
+  // getAllBookings: (propertyId) => 
+  //   api.get('/api/auth/bookings', {
+  //     params: propertyId ? { propertyId } : {}
+  //   })
+  //   .then(response => {
+  //     console.log('Bookings API response:', response.data);
+  //     if (!response.data?.success) {
+  //       throw new Error(response.data?.message || 'Failed to fetch bookings');
+  //     }
+  //     return response;
+  //   })
+  //   .catch(error => {
+  //     console.error('Booking API error:', error);
+  //     throw new Error(error.response?.data?.message || 'Failed to fetch bookings');
+  //   }),
+    getBookingById: (bookingId) => 
+    api.get(`/api/auth/bookings/${bookingId}`) // CORRECTED PATH
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch booking details');
+        }
+        return response;
+      }),
    getBookingsByProperty: () => 
     api.get('/api/auth/bookings/property')
       .then(response => {
@@ -305,6 +499,163 @@ export const bookingAPI = {
 
  
 };
+
+export const vacateAPI = {
+  requestVacate: (bookingId, data) => 
+    api.post(`/api/auth/vacate/${bookingId}/request`, data),
+  getVacateStatus: (bookingId) => 
+    api.get(`/api/auth/vacate/${bookingId}/status`),
+  getVacateRequests: () => 
+    api.get('/api/auth/vacate/requests'),
+  getVacateRequestById: (requestId) => 
+    api.get(`/api/auth/vacate/${requestId}`),
+  processDuePayment: (requestId, data) => 
+    api.post(`/api/auth/vacate/${requestId}/process-due-payment`, data),
+  approveVacateRequest: (requestId, data) => 
+    api.put(`/api/auth/vacate/${requestId}/approve`, data),
+  initiateRefund: (requestId) => 
+    api.post(`/api/auth/vacate/${requestId}/initiate-refund`),
+  completeRefund: (requestId, data) => 
+    api.post(`/api/auth/vacate/${requestId}/complete-refund`, data),
+  addDeduction: (requestId, data) => 
+    api.post(`/api/auth/vacate/${requestId}/add-deduction`, data)
+};
+
+
+// export const vacateAPI = {
+//   // Request to vacate
+//   requestVacate: (bookingId, data) => {
+//     return api.post(`/api/auth/vacate/${bookingId}/request`, data)
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to submit vacate request');
+//         }
+//         return response;
+//       })
+//       .catch(error => {
+//         // Handle specific error cases
+//         if (error.response?.data?.message) {
+//           throw new Error(error.response.data.message);
+//         }
+//         if (error.response?.status === 400) {
+//           throw new Error(error.response.data?.message || 'Vacate request already exists');
+//         }
+//         throw error;
+//       });
+//   },
+
+//   // Get vacate status - FIXED
+//   getVacateStatus: (bookingId) => {
+//     return api.get(`/api/auth/vacate/${bookingId}/status`)
+//       .then(response => {
+//         // Handle the actual response structure from backend
+//         if (response.data.success) {
+//           if (response.data.exists && response.data.request) {
+//             // Return in expected format
+//             return { 
+//               data: { 
+//                 success: true, 
+//                 exists: true, 
+//                 request: response.data.request 
+//               } 
+//             };
+//           } else if (response.data.exists === false) {
+//             // No vacate request exists
+//             return { data: { success: true, exists: false } };
+//           } else if (response.data.request) {
+//             // Backward compatibility: if request exists but no 'exists' field
+//             return { 
+//               data: { 
+//                 success: true, 
+//                 exists: true, 
+//                 request: response.data.request 
+//               } 
+//             };
+//           }
+//         }
+//         throw new Error(response.data?.message || 'Failed to fetch vacate status');
+//       })
+//       .catch(error => {
+//         if (error.response?.status === 404) {
+//           // No vacate request exists yet
+//           return { data: { success: true, exists: false, message: 'No vacate request found' } };
+//         }
+//         // For other errors, re-throw
+//         if (error.response?.data?.message) {
+//           throw new Error(error.response.data.message);
+//         }
+//         throw error;
+//       });
+//   },
+
+//   // For clients - get vacate requests
+//   getVacateRequests: () => {
+//     return api.get('/api/auth/vacate/requests')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch vacate requests');
+//         }
+//         return response;
+//       });
+//   },
+
+//   // For clients - process vacate request
+//   processVacateRequest: (bookingId, data) => {
+//     return api.post(`/api/auth/vacate/${bookingId}/process`, data)
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to process vacate request');
+//         }
+//         return response;
+//       });
+//   },
+
+//    // Complete refund process
+//   completeRefund: (requestId, data) => {
+//     return api.post(`/api/auth/vacate/${requestId}/complete-refund`, data)
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to complete refund');
+//         }
+//         return response;
+//       });
+//   },
+
+//   // Add deduction to vacate request
+//   addDeduction: (requestId, data) => {
+//     return api.post(`/api/auth/vacate/${requestId}/add-deduction`, data)
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to add deduction');
+//         }
+//         return response;
+//       });
+//   },
+
+//   // Create payment order for Razorpay
+//   createPaymentOrder: (data) => {
+//     return api.post('/api/payments/create-order', data)
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to create payment order');
+//         }
+//         return response;
+//       });
+//   },
+
+//   // Verify payment
+//   verifyPayment: (data) => {
+//     return api.post('/api/payments/validate-payment', data)
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Payment verification failed');
+//         }
+//         return response;
+//       });
+//   }
+
+  
+// };
 
 export const mediaAPI = {
   uploadMedia: (formData) => api.post('/api/auth/media/upload', formData, {

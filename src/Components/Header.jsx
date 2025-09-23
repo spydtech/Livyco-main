@@ -23,31 +23,35 @@ const Navbar = () => {
   const [error, setError] = useState(null);
   const isLoggedIn = !!user && !!localStorage.getItem('token');
 
-  const clientId = user ? user.clientId : null; // Get clientId from user state
-    const idToken = user ? user.token : null; // Get token from user state
+  // const clientId = user ? user.clientId : null; // Get clientId from user state
+  //   const idToken = user ? user.token : null; // Get token from user state
     const navigate = useNavigate();
 
 
+  // const isLoggedIn = !!user && !!localStorage.getItem('token');
+
   useEffect(() => {
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/api/auth/user`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
         }
-      });
 
-       if (response.data.success) {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/user`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.data.success) {
           setUser(response.data.user);
           
-          // If user is a client, you can fetch additional client data here
-          if (response.data.user.role === 'user') {
-            // Example: fetchClientData(response.data.user.clientId);
+          // Only redirect if user is not a regular user (i.e., is a client)
+          if (response.data.user.role !== 'user') {
+            alert('Access restricted to users only. Redirecting to login.');
+            navigate('/user/login');
           }
         } else {
           throw new Error(response.data.message || 'Failed to fetch user');
@@ -55,8 +59,11 @@ const Navbar = () => {
       } catch (error) {
         console.error('Error fetching user:', error);
         setError(error.message);
+        
+        // If token is invalid, remove it and redirect to login
         if (error.response?.status === 401) {
-          navigate('/');
+          localStorage.removeItem('token');
+          navigate('/user/login');
         }
       } finally {
         setLoading(false);
@@ -73,6 +80,7 @@ const Navbar = () => {
         setProfileDropdownOpen(false);
       }
     };
+
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
