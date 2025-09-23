@@ -4,7 +4,7 @@ import bgimage from "../../assets/user/pgsearch/image (5).png";
 import { useNavigate } from "react-router-dom";
 import ClientNav from "../Client-Navbar/ClientNav";
 
-export default function WalletHistory() {
+export default function ClientWalletHistory() {
   const [amount, setAmount] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const navigate = useNavigate();

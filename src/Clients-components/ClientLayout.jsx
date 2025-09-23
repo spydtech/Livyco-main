@@ -33,7 +33,7 @@ import ProfilePage from "./Client-Home/ProfilePage";
 import HostelInfrastructure from "./TenantList/HostelInfrastructure";
 import ClientPayments from "./payment/Payments";
 import PaymentChat from "./payment/PaymentChat";
-import WalletHistory from "./Payment/WalletHistory";
+import ClientWalletHistory from "./payment/WalletHistory";
 
 
 const ClientLayout = () => {
@@ -60,7 +60,7 @@ const ClientLayout = () => {
          {/* payment request to user*/}
          <Route path="/payment/:id" element={<ClientPayments />} />
         <Route path="/payment" element={<PaymentChat />} />
-          <Route path="/payment-history" element={<WalletHistory />} />
+          <Route path="/payment-history" element={<ClientWalletHistory />} />
         <Route path="/foodmenu" element={<FoodMenu />} />
         <Route path="/tenantlist" element={<TenantList />} />
         <Route path="/confirmbooking" element={<ConformBooking />} />
