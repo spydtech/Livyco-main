@@ -45,7 +45,8 @@ export default function UserFilters({ filters, setFilters }) {
   };
 
   return (
-    <div className="w-72 p-4 bg-white shadow rounded-md space-y-6">
+    
+    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl p-4 bg-white shadow rounded-md space-y-8 mx-auto">
       <h2 className="font-bold mb-2">Filters</h2>
       {/* Deals */}
       <div>

@@ -75,9 +75,10 @@ import React, { useState, useEffect } from "react";
 import { FaPhone, FaCommentDots, FaHeart, FaShareAlt, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Pgimg from "../../assets/user/home page/homepage image.png";
+import bgImage from "../../assets/user/pgsearch/image (5).png"; 
 import Header from "../Header";
 import { toast } from "react-toastify";
-import { wishlistAPI } from "../../Clients-components/PropertyController";  // Adjust import path as needed
+import { wishlistAPI } from "../../Clients-components/PropertyController";
 
 export default function MyWishList() {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -154,7 +155,6 @@ export default function MyWishList() {
   useEffect(() => {
     fetchWishlist();
 
-    // Listen for wishlist update events
     const handleWishlistUpdate = () => {
       fetchWishlist();
     };
@@ -165,12 +165,21 @@ export default function MyWishList() {
     };
   }, []);
 
+  // Updated container styles without fixed background
+  const containerStyle = {
+    backgroundImage: `url(${bgImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    minHeight: '100vh',
+  };
+
   if (loading) {
     return (
       <>
         <Header />
-        <div className="p-6 bg-white min-h-screen py-24 flex justify-center items-center">
-          <div className="text-lg">Loading your wishlist...</div>
+        <div style={containerStyle} className="min-h-screen py-24 flex justify-center items-center">
+          <div className="text-lg bg-white bg-opacity-90 p-8 rounded-lg shadow-lg">Loading your wishlist...</div>
         </div>
       </>
     );
@@ -180,21 +189,25 @@ export default function MyWishList() {
     return (
       <>
         <Header />
-        <div className="p-6 bg-white min-h-screen py-24">
-          <div className="flex items-center text-blue-700 mb-6 text-lg font-semibold">
-            <button onClick={() => navigate(-1)} className="cursor-pointer mr-2 flex items-center">
-              <FaArrowLeft className="mr-1" /> Back
-            </button>
-            <span className="ml-2">My Wishlist</span>
-          </div>
-          <div className="text-center py-12 text-red-600">
-            <div className="text-lg mb-4">Error: {error}</div>
-            <button
-              onClick={fetchWishlist}
-              className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800"
-            >
-              Try Again
-            </button>
+        <div style={containerStyle} className="min-h-screen py-24">
+          <div className="container mx-auto px-4">
+            <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+              <div className="flex items-center text-blue-700 mb-6 text-lg font-semibold">
+                <button onClick={() => navigate(-1)} className="cursor-pointer mr-2 flex items-center">
+                  <FaArrowLeft className="mr-1" /> Back
+                </button>
+                <span className="ml-2">My Wishlist</span>
+              </div>
+              <div className="text-center py-8 text-red-600">
+                <div className="text-lg mb-4">Error: {error}</div>
+                <button
+                  onClick={fetchWishlist}
+                  className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </>
@@ -204,87 +217,133 @@ export default function MyWishList() {
   return (
     <>
       <Header />
-      <div className="p-6 bg-white min-h-screen py-24">
-        <div className="flex items-center text-blue-700 mb-6 text-lg font-semibold">
-          <button onClick={() => navigate(-1)} className="cursor-pointer mr-2 flex items-center">
-            <FaArrowLeft className="mr-1" /> Back
-          </button>
-          <span className="ml-2">My Wishlist ({wishlistItems.length} items)</span>
-        </div>
-
-        <div className="space-y-6 w-full md:w-4/5 lg:w-3/5 mx-auto">
-          {wishlistItems.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 text-lg mb-4">Your wishlist is empty</div>
-              <button
-                onClick={() => navigate("/user/pgsearch")}
-                className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800"
-              >
-                Browse Properties
-              </button>
-            </div>
-          ) : (
-            wishlistItems.map((item) => (
-              <div
-                key={item._id}
-                className="flex flex-col md:flex-row bg-gray-100 rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow"
-                onClick={() => handleViewProperty(item)}
-              >
-                <div className="relative md:w-2/5">
-                  <img
-                    src={item.propertyData?.image?.url || Pgimg}
-                    alt={item.propertyData?.name || "Property"}
-                    className="w-full h-48 md:h-full object-cover"
-                  />
-                  <div className="absolute bottom-2 left-2 bg-white text-yellow-500 font-bold text-sm px-2 py-1 rounded shadow">
-                    ₹{item.propertyData?.price || "0"}/
-                  </div>
-                </div>
-
-                <div className="flex flex-col justify-between p-4 flex-grow md:w-3/5">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-bold text-lg text-gray-800">
-                        {item.propertyData?.name || "Unknown Property"}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {item.propertyData?.locality || ""}, {item.propertyData?.city || ""}
-                      </div>
-                    </div>
-                    <div className="flex gap-3 text-gray-500 text-lg">
-                      <FaShareAlt
-                        className="cursor-pointer hover:text-blue-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/share/${item.propertyId}`);
-                        }}
-                      />
-                      <FaHeart
-                        className="cursor-pointer text-red-500 hover:text-red-600"
-                        onClick={(e) => removeFromWishlist(item.propertyId, e)}
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                    {item.propertyData?.pgProperty?.description ||
-                      "Comfortable accommodation with great amenities"}
-                  </p>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleViewProperty(item)}
-                      className="bg-blue-700 text-white px-4 py-2 rounded text-sm hover:bg-blue-800"
-                    >
-                      View Details
-                    </button>
-                    <FaPhone className="text-yellow-400 text-lg cursor-pointer hover:text-yellow-500" />
-                    <FaCommentDots className="text-yellow-400 text-lg cursor-pointer hover:text-yellow-500" />
-                  </div>
-                </div>
+      <div style={containerStyle} className="min-h-screen py-24">
+        <div className="container mx-auto px-4">
+          {/* Header Section - Removed white background */}
+          <div className="mb-8">
+            <div className="rounded-lg p-4 md:p-6 max-w-4xl mx-auto">
+              <div className="flex items-center text-blue-700 text-lg font-semibold">
+                <button 
+                  onClick={() => navigate(-1)} 
+                  className="cursor-pointer mr-3 flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
+                >
+                  <FaArrowLeft className="mr-2" /> Back
+                </button>
+                <span className="text-xl md:text-2xl text-white bg-blue-700 bg-opacity-80 px-4 py-2 rounded-lg">
+                  My Wishlist ({wishlistItems.length} items)
+                </span>
               </div>
-            ))
-          )}
+            </div>
+          </div>
+
+          {/* Wishlist Items */}
+          <div className="max-w-4xl mx-auto">
+            {wishlistItems.length === 0 ? (
+              <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-8 text-center">
+                <div className="text-gray-600 text-lg mb-6">Your wishlist is empty</div>
+                <button
+                  onClick={() => navigate("/user/pgsearch")}
+                  className="bg-blue-700 text-white px-8 py-3 rounded-lg hover:bg-blue-800 transition-colors text-lg font-medium"
+                >
+                  Browse Properties
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 md:space-y-6">
+                {wishlistItems.map((item) => (
+                  <div
+                    key={item._id}
+                    className="bg-white bg-opacity-95 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                    onClick={() => handleViewProperty(item)}
+                  >
+                    <div className="flex flex-col md:flex-row">
+                      {/* Image Section */}
+                      <div className="relative md:w-2/5 lg:w-1/3">
+                        <img
+                          src={item.propertyData?.image?.url || Pgimg}
+                          alt={item.propertyData?.name || "Property"}
+                          className="w-full h-48 md:h-56 lg:h-64 object-cover"
+                        />
+                        <div className="absolute bottom-3 left-3 bg-white text-yellow-600 font-bold text-sm px-3 py-1 rounded-lg shadow-md">
+                          ₹{item.propertyData?.price || "0"}/
+                        </div>
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="flex flex-col justify-between p-4 md:p-6 flex-grow">
+                        {/* Header with title and actions */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start mb-3 md:mb-4 gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-lg md:text-xl text-gray-800 truncate">
+                              {item.propertyData?.name || "Unknown Property"}
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              {item.propertyData?.locality || ""}, {item.propertyData?.city || ""}
+                            </div>
+                          </div>
+                          <div className="flex gap-3 text-gray-500">
+                            <FaShareAlt
+                              className="cursor-pointer hover:text-blue-600 transition-colors p-1 text-lg md:text-xl"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/share/${item.propertyId}`);
+                              }}
+                              title="Share"
+                            />
+                            <FaHeart
+                              className="cursor-pointer text-red-500 hover:text-red-600 transition-colors p-1 text-xl md:text-2xl"
+                              onClick={(e) => removeFromWishlist(item.propertyId, e)}
+                              title="Remove from wishlist"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-gray-600 text-sm md:text-base mb-4 line-clamp-2 md:line-clamp-3">
+                          {item.propertyData?.pgProperty?.description ||
+                            "Comfortable accommodation with great amenities"}
+                        </p>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewProperty(item);
+                              }}
+                              className="bg-blue-700 text-white px-4 md:px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors text-sm md:text-base font-medium"
+                            >
+                              View Details
+                            </button>
+                            <div className="flex gap-3">
+                              <FaPhone 
+                                className="text-yellow-500 text-lg cursor-pointer hover:text-yellow-600 transition-colors" 
+                                title="Call"
+                              />
+                              <FaCommentDots 
+                                className="text-yellow-500 text-lg cursor-pointer hover:text-yellow-600 transition-colors" 
+                                title="Message"
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Additional info for larger screens */}
+                          <div className="hidden md:flex items-center text-sm text-gray-500">
+                            {item.propertyData?.pgProperty?.type && (
+                              <span className="bg-gray-100 px-3 py-1 rounded-full">
+                                {item.propertyData.pgProperty.type}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

@@ -111,8 +111,8 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
-import { FaPhoneAlt } from 'react-icons/fa';
-import { IoSend } from 'react-icons/io5';
+import { FaPhoneAlt, FaBars } from 'react-icons/fa';
+import { IoSend, IoClose } from 'react-icons/io5';
 import Header from '../Header';
 import { chatAPI } from '../../Clients-components/PropertyController';
 
@@ -122,8 +122,8 @@ const UserChat = () => {
   const [loading, setLoading] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [error, setError] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  
 
   // Initialize chat from location state if available
   useEffect(() => {
@@ -136,6 +136,10 @@ const UserChat = () => {
         clientId: location.state.clientId
       });
       console.log('Chat initialized from location state:', location.state);
+      // Close sidebar on mobile when chat is selected
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      }
     }
   }, [location.state, setSelectedChat]);
 
@@ -240,135 +244,190 @@ const UserChat = () => {
     }
   };
 
+  // Handle responsive sidebar behavior
+  const handleConversationSelect = (conversation) => {
+    setSelectedChat({
+      recipientId: conversation.user._id,
+      recipientName: conversation.user.name,
+      propertyId: conversation.property._id,
+      propertyName: conversation.property.name
+    });
+    
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <>
       <Header />
-      <div className="flex h-screen bg-[#F8F8FF] py-20">
-        {/* Sidebar */}
-        <div className="w-1/3 bg-white p-4 border-r border-[#727070] overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-4">Conversations</h2>
-          
-          {error && (
-            <div className="p-2 mb-4 text-red-500 bg-red-100 rounded">
-              {error}
+      <div className="flex flex-col md:flex-row h-screen bg-[#F8F8FF] pt-16 md:pt-20">
+        {/* Mobile Sidebar Toggle */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-[#727070]">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-2xl text-gray-700"
+          >
+            {sidebarOpen ? <IoClose /> : <FaBars />}
+          </button>
+          {selectedChat && (
+            <div className="flex items-center">
+              <img
+                src="https://placehold.co/150x150"
+                alt={selectedChat.recipientName}
+                className="w-8 h-8 rounded-full mr-2"
+              />
+              <span className="font-semibold">{selectedChat.recipientName}</span>
             </div>
           )}
-          
-          {conversations.map((conversation) => (
-            <div
-              key={conversation.user._id}
-              className={`flex items-center p-3 rounded cursor-pointer ${
-                selectedChat?.recipientId === conversation.user._id
-                  ? 'bg-[#FEE123]'
-                  : 'hover:bg-gray-200'
-              }`}
-              onClick={() => {
-                setSelectedChat({
-                  recipientId: conversation.user._id,
-                  recipientName: conversation.user.name,
-                  propertyId: conversation.property._id,
-                  propertyName: conversation.property.name
-                });
-              }}
-            >
-              <img
-                src={conversation.user.profileImage || 'https://placehold.co/150x150'}
-                alt={conversation.user.name}
-                className="w-12 h-12 rounded-full mr-3"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold truncate">{conversation.user.name}</h3>
-                <p className="text-sm text-gray-500 truncate">
-                  {conversation.lastMessage?.content || 'No messages yet'}
-                </p>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-gray-500">
-                  {conversation.lastMessage?.createdAt
-                    ? new Date(conversation.lastMessage.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
-                    : ''}
-                </span>
-                {conversation.lastMessage?.read === false && 
-                 conversation.lastMessage?.sender !== user.id && (
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
 
+        {/* Sidebar */}
+        <div className={`
+          absolute md:relative z-10 w-full md:w-1/3 lg:w-1/4 bg-white border-r border-[#727070] 
+          transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          h-full md:h-auto
+        `}>
+          <div className="p-4 sticky top-0 bg-white border-b border-[#727070] z-10">
+            <h2 className="text-lg font-semibold">Conversations</h2>
+          </div>
+          
+          <div className="overflow-y-auto h-full pb-20 md:pb-4">
+            {error && (
+              <div className="p-2 m-4 text-red-500 bg-red-100 rounded text-sm">
+                {error}
+              </div>
+            )}
+            
+            {conversations.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                No conversations yet
+              </div>
+            ) : (
+              conversations.map((conversation) => (
+                <div
+                  key={conversation.user._id}
+                  className={`flex items-center p-3 border-b border-gray-100 cursor-pointer ${
+                    selectedChat?.recipientId === conversation.user._id
+                      ? 'bg-[#FEE123]'
+                      : 'hover:bg-gray-100'
+                  }`}
+                  onClick={() => handleConversationSelect(conversation)}
+                >
+                  <img
+                    src={conversation.user.profileImage || 'https://placehold.co/150x150'}
+                    alt={conversation.user.name}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full mr-3 flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold truncate text-sm md:text-base">{conversation.user.name}</h3>
+                    <p className="text-xs md:text-sm text-gray-500 truncate">
+                      {conversation.lastMessage?.content || 'No messages yet'}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end flex-shrink-0 ml-2">
+                    <span className="text-xs text-gray-500">
+                      {conversation.lastMessage?.createdAt
+                        ? new Date(conversation.lastMessage.createdAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : ''}
+                    </span>
+                    {conversation.lastMessage?.read === false && 
+                     conversation.lastMessage?.sender !== user.id && (
+                      <span className="w-2 h-2 bg-blue-500 rounded-full mt-1"></span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Overlay for mobile sidebar */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-0 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Chat Window */}
-        <div className="w-2/3 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           {selectedChat ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center justify-between p-4 bg-white border-b border-[#727070] shadow-b-lg">
+              <div className="flex items-center justify-between p-3 md:p-4 bg-white border-b border-[#727070] shadow-sm">
                 <div className="flex items-center">
                   <img
                     src="https://placehold.co/150x150"
                     alt={selectedChat.recipientName}
-                    className="w-10 h-10 rounded-full mr-3"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full mr-3"
                   />
                   <div>
-                    <h3 className="font-bold">{selectedChat.recipientName}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-bold text-sm md:text-base">{selectedChat.recipientName}</h3>
+                    <p className="text-xs md:text-sm text-gray-500 truncate max-w-[150px] md:max-w-none">
                       {selectedChat.clientId}
                     </p>
                   </div>
                 </div>
-                <button className="text-[#FEE123] text-xl">
+                <button className="text-[#FEE123] text-lg md:text-xl p-2">
                   <FaPhoneAlt />
                 </button>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-3 md:p-4">
                 {loading ? (
                   <div className="flex justify-center items-center h-full">
-                    <p>Loading messages...</p>
+                    <p className="text-gray-500">Loading messages...</p>
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex justify-center items-center h-full">
-                    <p>No messages yet. Start the conversation!</p>
+                    <p className="text-gray-500 text-center px-4">
+                      No messages yet. Start the conversation!
+                    </p>
                   </div>
                 ) : (
-                  messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`mb-4 ${
-                        message.sender._id === user.id
-                          ? 'flex justify-end'
-                          : 'flex justify-start'
-                      }`}
-                    >
+                  <div className="space-y-3 md:space-y-4">
+                    {messages.map((message, index) => (
                       <div
-                        className={`max-w-xs p-3 rounded-lg ${
+                        key={index}
+                        className={`flex ${
                           message.sender._id === user.id
-                            ? 'bg-[#AFD1FF] text-white'
-                            : 'bg-[#FEE123] text-gray-900'
+                            ? 'justify-end'
+                            : 'justify-start'
                         }`}
                       >
-                        <p>{message.content}</p>
-                        <p className="text-xs mt-1 opacity-70">
-                          {new Date(message.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
+                        <div
+                          className={`max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg ${
+                            message.sender._id === user.id
+                              ? 'bg-[#AFD1FF] text-white'
+                              : 'bg-[#FEE123] text-gray-900'
+                          }`}
+                        >
+                          <p className="text-sm md:text-base break-words">{message.content}</p>
+                          <p className="text-xs mt-1 opacity-70">
+                            {new Date(message.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
 
               {/* Message Input */}
-              <div className="p-4 flex items-center bg-white border-t">
+              <div className="p-3 md:p-4 flex items-center bg-white border-t border-[#727070]">
                 <input
                   type="text"
-                  className="flex-1 p-2 border rounded-lg"
+                  className="flex-1 p-2 md:p-3 border border-gray-300 rounded-lg text-sm md:text-base focus:outline-none focus:border-[#FEE123]"
                   placeholder="Type a message..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -376,15 +435,28 @@ const UserChat = () => {
                 />
                 <button
                   onClick={sendMessage}
-                  className="ml-2 text-yellow-500 text-xl"
+                  className="ml-2 md:ml-3 text-[#FEE123] text-xl md:text-2xl p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  disabled={!input.trim()}
                 >
                   <IoSend />
                 </button>
               </div>
             </>
           ) : (
-            <div className="flex-1 flex justify-center items-center">
-              <p>Select a conversation to start chatting</p>
+            <div className="flex-1 flex flex-col justify-center items-center p-4 text-center">
+              <div className="max-w-md mx-auto">
+                <p className="text-gray-500 text-lg mb-4">
+                  {conversations.length === 0 ? 'No conversations available' : 'Select a conversation to start chatting'}
+                </p>
+                {conversations.length === 0 && (
+                  <button 
+                    className="bg-[#FEE123] text-gray-900 px-6 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
+                    onClick={() => window.history.back()}
+                  >
+                    Go Back
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -394,7 +466,6 @@ const UserChat = () => {
 };
 
 export default UserChat;
-
 // import { useState, useEffect, useRef, useCallback } from "react";
 // import { FaPhoneAlt, FaPaperclip } from "react-icons/fa";
 // import { IoSend } from "react-icons/io5";

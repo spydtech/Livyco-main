@@ -286,33 +286,32 @@ export default function UserOtpVerfication() {
           </p>
 
           {/* OTP Inputs */}
-          <form onSubmit={handleVerify}>
-            <div className="flex justify-between gap-2 mb-6">
-              {otp.map((digit, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  maxLength="1"
-                  value={digit}
-                  onChange={(e) => handleChange(index, e.target.value)}
-                  onKeyDown={(e) => handleBackspace(index, e)}
-                  ref={(el) => (inputs.current[index] = el)}
-                  className="w-12 h-12 text-center text-xl border rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 text-black"
-                />
-              ))}
-            </div>
-            
-            {error && <p className="text-red-300 text-sm mb-4">{error}</p>}
-
-            {/* Verify Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-yellow-400 text-[#0234c2] font-bold py-2 rounded-full hover:bg-yellow-300 transition disabled:opacity-50"
-            >
-              {loading ? "VERIFYING..." : "VERIFY OTP"}
-            </button>
-          </form>
+         <form onSubmit={handleVerify} className="max-w-sm mx-auto px-2 sm:px-0">
+  <div className="flex justify-center gap-2 mb-6">
+    {otp.map((digit, index) => (
+      <input
+        key={index}
+        type="text"
+        maxLength="1"
+        value={digit}
+        onChange={(e) => handleChange(index, e.target.value)}
+        onKeyDown={(e) => handleBackspace(index, e)}
+        ref={(el) => (inputs.current[index] = el)}
+        className="w-8 h-8 sm:w-8 sm:h-8 md:w-12 md:h-12 text-center text-base border rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 text-black"
+      />
+    ))}
+  </div>
+ 
+  {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
+ 
+  <button
+    type="submit"
+    disabled={loading}
+    className="w-full bg-yellow-400 text-[#0234c2] font-bold py-2 rounded-full hover:bg-yellow-300 transition disabled:opacity-50"
+  >
+    {loading ? "VERIFYING..." : "VERIFY OTP"}
+  </button>
+</form>
 
           {/* Resend */}
           <p className="mt-4 text-sm">

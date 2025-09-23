@@ -131,6 +131,8 @@
 //     </div>
 //   );
 // }
+
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import React from "react";
@@ -147,7 +149,7 @@ import { FiShare2 as Share2, FiHeart as HeartOutline } from 'react-icons/fi';
 import { FaHeart as HeartSolid } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
-// Adjust this import path based on your project structure
+
 import { wishlistAPI } from "../../Clients-components/PropertyController";  
 
 const normalize = (str) => str.toLowerCase().replace(/[\s.-]/g, "");
@@ -267,86 +269,109 @@ export default function ListingCard({ pg }) {
   const displayData = propertyDetails || pg;
 
   return (
-    <div className="relative flex bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg w-full transition">
-      <div className="absolute top-2 right-2 flex gap-2 z-10">
+    <div className="relative bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg lg:w-full md:w-full sm:w-[300px] justify-center  -ml-14 lg:-ml-0 m-d:ml-0 sm:-ml-10 w-[280px] transition duration-300">
+      {/* Top Right Icons */}
+      <div className="absolute top-3 right-3 flex gap-2 z-10">
         <button
           onClick={handleShare}
-          className="bg-white p-2 rounded-full shadow hover:bg-gray-100"
+          className="bg-white p-2 rounded-full shadow hover:bg-gray-100 transition-colors"
         >
-          <Share2 className="w-4 h-4 text-gray-700" />
+          <Share2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-700" />
         </button>
         <button
           onClick={handleWishlist}
           disabled={loading}
-          className={`bg-white p-2 rounded-full shadow hover:bg-gray-100 ${
+          className={`bg-white p-2 rounded-full shadow hover:bg-gray-100 transition-colors ${
             isInWishlist ? 'text-red-500' : 'text-gray-700'
           }`}
         >
           {loading ? (
-            <div className="w-4 h-4 border-t-2 border-red-500 border-solid rounded-full animate-spin"></div>
+            <div className="w-3 h-3 sm:w-4 sm:h-4 border-t-2 border-red-500 border-solid rounded-full animate-spin"></div>
           ) : isInWishlist ? (
-            <HeartSolid className="w-4 h-4" />
+            <HeartSolid className="w-3 h-3 sm:w-4 sm:h-4" />
           ) : (
-            <HeartOutline className="w-4 h-4" />
+            <HeartOutline className="w-3 h-3 sm:w-4 sm:h-4" />
           )}
         </button>
       </div>
 
-      <div onClick={handleCardClick} className="cursor-pointer flex w-full">
-        <div className="w-1/3 h-40 p-4">
+     
+      <div 
+        onClick={handleCardClick} 
+        className="cursor-pointer flex flex-col lg:flex-row w-full lg:w-full md:w-full "
+      >
+        {/* Image Section  */}
+        <div className="w-full lg:w-1/3 h-48 sm:h-56  lg:h-40 p-4 lg:p-4">
           <img
             src={Pgimg}
-            className="w-full h-full object-cover rounded-md"
+            className="w-full h-full object-cover rounded-lg lg:rounded-md"
             alt={displayData.name}
           />
         </div>
 
-        <div className="w-2/3 p-4 flex flex-col justify-between">
+        {/* Content Section  */}
+        <div className="w-full sm:w-full lg:w-2/3 p-4 lg:p-4 flex flex-col justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{displayData.name}</h2>
-            <p className="text-sm text-gray-600">{displayData.location}</p>
-            <p className="text-red-600 font-bold mt-1">₹{displayData.price}/-</p>
+            {/* Title and Location */}
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 line-clamp-1">
+              {displayData.name}
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-1 line-clamp-1">
+              {displayData.location}
+            </p>
+            
+            {/* Price */}
+            <p className="text-red-600 font-bold mt-2 text-lg sm:text-xl">
+              ₹{displayData.price}/-
+            </p>
 
-            <div className="flex items-center text-yellow-500 text-sm mt-1">
+            {/* Rating */}
+            <div className="flex items-center text-yellow-500 text-sm mt-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i}>
+                <span key={i} className="text-base sm:text-lg">
                   {displayData.rating >= i + 1 ? "★" : "☆"}
                 </span>
               ))}
-              <span className="ml-2 text-gray-600 text-xs">
+              <span className="ml-2 text-gray-600 text-xs sm:text-sm">
                 ({displayData.rating} - {displayData.reviews} reviews)
               </span>
             </div>
 
-            <div className="mt-2 text-xs flex flex-wrap gap-4">
-              {displayData.amenities?.slice(0, 3).map((amenity, index) => {
-                const key = normalize(amenity);
-                const icon = imageMap[key];
-                return (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center justify-center text-center px-3 py-2 rounded"
-                  >
-                    <span className="text-[10px] text-gray-700 mb-1">
-                      {amenity}
-                    </span>
-                    {icon ? (
-                      <img
-                        src={icon}
-                        alt={amenity}
-                        className="w-4 h-4 object-contain"
-                      />
-                    ) : (
-                      <div className="w-4 h-4 bg-gray-300 rounded-full" />
-                    )}
-                  </div>
-                );
-              })}
+            {/* Amenities - Responsive grid */}
+            <div className="mt-3 text-xs sm:text-sm">
+              <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-4">
+                {displayData.amenities?.slice(0, 3).map((amenity, index) => {
+                  const key = normalize(amenity);
+                  const icon = imageMap[key];
+                  return (
+                    <div
+                      key={index}
+                      className="flex flex-col items-center justify-center text-center p-2 sm:p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      {icon ? (
+                        <img
+                          src={icon}
+                          alt={amenity}
+                          className="w-5 h-5 sm:w-6 sm:h-6 object-contain mb-1"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gray-300 rounded-full mb-1" />
+                      )}
+                      <span className="text-[10px] sm:text-xs text-gray-700 line-clamp-1">
+                        {amenity}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="text-right mt-2">
-            <p className="text-sm text-blue-600 underline">View all</p>
+          {/* View All Link - Right aligned */}
+          <div className="text-right mt-3 lg:mt-2">
+            <p className="text-sm text-blue-600 hover:text-blue-800 underline transition-colors inline-block">
+              View all details
+            </p>
           </div>
         </div>
       </div>

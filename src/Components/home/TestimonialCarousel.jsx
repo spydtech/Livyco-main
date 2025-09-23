@@ -61,6 +61,8 @@ const testimonials = [
 ];
 
 const TestimonialCarousel = () => {
+  const sliderRef = useRef(null);
+
   const settings = {
     dots: false,
     arrows: false,
@@ -70,37 +72,36 @@ const TestimonialCarousel = () => {
     slidesToScroll: 1,
   };
 
-  const sliderRef = useRef(null);
-
   return (
     <section className="bg-blue-800 text-white py-5 px-4 md:px-10">
-          <h2 className="text-3xl font-bold  text-center md:text-center">
-            Feedbacks From Our Users
-          </h2>
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8 -mt-32">
+      <h2 className="text-3xl font-bold text-center mb-8 md:mb-12">
+        Feedbacks From Our Users
+      </h2>
+
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8 -mt-20 md:-mt-32">
+
         {/* Left Image */}
-        <div className="w-full md:w-1/2">
+        <div className="w-full md:w-1/2 flex justify-center md:justify-start">
           <img
             src={reviewImage}
             alt="happy user"
-            className="w-full md:h-auto object-cover -mt-0 md:-mt-40 top-0 md:top-[-80px]"
+            className="w-full max-w-[400px] object-cover -mt-4 md:-mt-20"
           />
         </div>
 
         {/* Right Section */}
-        <div className="w-full md:w-1/2">
-        
+        <div className="w-full md:w-1/2 flex flex-col mt-10 gap-6">
 
           {/* Stats */}
-          <div className="flex gap-10 mb-6 justify-center md:justify-start">
-            <div className="text-center">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center md:justify-start mt-10 mb-6">
+            <div className="text-center sm:text-left">
               <h3 className="text-2xl font-bold">50K+</h3>
               <p className="text-sm text-gray-200">Happy People</p>
             </div>
-            <div className="text-center">
+            <div className="text-center sm:text-left">
               <h3 className="text-2xl font-bold">4.72</h3>
               <p className="text-sm text-gray-200">Overall rating</p>
-              <div className="flex justify-center mt-1 text-yellow-400">
+              <div className="flex justify-center sm:justify-start mt-1 text-yellow-400">
                 {[...Array(5)].map((_, i) => (
                   <FaStar key={i} size={14} />
                 ))}
@@ -109,10 +110,10 @@ const TestimonialCarousel = () => {
           </div>
 
           {/* Carousel */}
-          <Slider ref={sliderRef} {...settings} {...settings}>
+          <Slider ref={sliderRef} {...settings}>
             {testimonials.map((item, index) => (
               <div key={index} className="mb-8">
-                <div className="flex items-center gap-4 mb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-3">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -122,32 +123,30 @@ const TestimonialCarousel = () => {
                     <h4 className="font-semibold">{item.name}</h4>
                     <p className="text-sm text-gray-200">{item.profession}</p>
                   </div>
-                  <div className="ml-auto flex items-center gap-1 bg-white px-2 py-0.5 rounded-full text-blue-800 text-sm font-bold">
+                  <div className="mt-2 sm:mt-0 ml-auto flex items-center gap-1 bg-white px-2 py-0.5 rounded-full text-blue-800 text-sm font-bold">
                     {item.rating} <FaStar className="text-yellow-400" />
                   </div>
                 </div>
-                <p className="text-sm text-gray-100 leading-relaxed">
-                  {item.review}
-                </p>
+                <p className="text-sm text-gray-100 leading-relaxed">{item.review}</p>
               </div>
             ))}
           </Slider>
 
-          {/* Arrows (external control) */}
-         <div className="flex gap-4 mt-4 justify-center md:justify-start">
-  <button
-    className="border border-[#FEE123] text-[#FEE123] w-14 h-10 rounded-3xl flex items-center justify-center hover:bg-white hover:text-blue-800 transition"
-    onClick={() => sliderRef.current?.slickPrev()}
-  >
-    &lt;
-  </button>
-  <button
-    className="border border-[#FEE123] text-[#FEE123] w-14 h-10 rounded-3xl flex items-center justify-center hover:bg-white hover:text-blue-800 transition"
-    onClick={() => sliderRef.current?.slickNext()}
-  >
-    &gt;
-  </button>
-</div>
+          {/* Arrows */}
+          <div className="flex gap-4 mt-4 justify-center md:justify-start">
+            <button
+              className="border border-[#FEE123] text-[#FEE123] w-14 h-10 rounded-3xl flex items-center justify-center hover:bg-white hover:text-blue-800 transition"
+              onClick={() => sliderRef.current?.slickPrev()}
+            >
+              &lt;
+            </button>
+            <button
+              className="border border-[#FEE123] text-[#FEE123] w-14 h-10 rounded-3xl flex items-center justify-center hover:bg-white hover:text-blue-800 transition"
+              onClick={() => sliderRef.current?.slickNext()}
+            >
+              &gt;
+            </button>
+          </div>
 
         </div>
       </div>

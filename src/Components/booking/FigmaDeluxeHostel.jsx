@@ -1608,6 +1608,11 @@ import bgImage from "../../assets/user/pgsearch/image (5).png";
 import Headers from "../Header";
 import { useNavigate, useLocation } from "react-router-dom";
 
+
+
+// API_Base_URL = 'http://localhost:5000/api'
+
+API_Base_URL ='https://livyco.com'
 const VisualBox = ({ boxes }) => {
   const boxSize = "w-[50px] h-[60px] bg-yellow-400 rounded-sm";
 
@@ -1912,7 +1917,7 @@ const FigmaDeluxeHostel = () => {
       const endDate = calculateEndDate();
       
       // Use the new endpoint that accepts date range
-      const response = await fetch(`http://localhost:5000/api/auth/bookings/availability/property/${propertyId}/all-beds?startDate=${date}&endDate=${endDate || date}`, {
+      const response = await fetch(`${API_Base_URL}/auth/bookings/availability/property/${propertyId}/all-beds?startDate=${date}&endDate=${endDate || date}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -1949,7 +1954,7 @@ const FigmaDeluxeHostel = () => {
       setBedStatistics(stats);
       
       // Now check specific availability for the date range
-      const availabilityResponse = await fetch('http://localhost:5000/api/auth/bookings/check-availability', {
+      const availabilityResponse = await fetch(`${API_Base_URL}/auth/bookings/check-availability`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

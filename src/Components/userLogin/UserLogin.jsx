@@ -146,7 +146,7 @@ function UserLogin() {
         <img
         src={girlImage}
         alt="Representative"
-        className="absolute right-12 bottom-8 max-w-xs z-0"
+       className="absolute hidden md:block right-12 bottom-8 max-w-xs z-0"
       />
 
         </div>

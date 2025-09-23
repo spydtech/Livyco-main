@@ -204,26 +204,37 @@ const Navbar = () => {
       {menuOpen && (
         <div className="md:hidden bg-[#0019A5] backdrop-blur-lg border-t border-white/20">
           <ul className="flex flex-col gap-4 p-4 text-sm font-medium">
+            <Link to="/">
             <li className="flex items-center gap-2">
               <BiHomeAlt /> Home
             </li>
+            </Link>
             {isLoggedIn ? (
               <>
-                <li className="flex items-center gap-2">
-                  <IoChatbubbleOutline /> Chats
-                </li>
-                <li className="flex items-center gap-2">
-                  <HiOutlineHome /> Hostel
-                </li>
-                <li className="flex items-center gap-2">
-                  <FaRegHeart /> Wishlist
-                </li>
+              <Link to="/user/chats">
+                  <li className="flex items-center gap-2">
+ 
+                    <IoChatbubbleOutline /> Chats
+                  </li>
+                </Link>
+                <Link to="/user/pgsearch">
+                  <li className="flex items-center gap-2">
+                    <HiOutlineHome /> Hostel
+                  </li>
+                </Link>
+                <Link to="/user/wishlist">
+                  <li className="flex items-center gap-2">
+                    <FaRegHeart /> Wishlist
+                  </li>
+                </Link>
                 <li className="flex items-center gap-2">
                   <BsPhone /> Get App
                 </li>
+               
                 <li className="flex items-center gap-2">
                   <FaBell /> Notifications
                 </li>
+                
                 <li className="relative" ref={profileDropdownRef}>
                   <div 
                     className="flex items-center gap-2 bg-yellow-400 text-black px-3 py-2 rounded-md"
