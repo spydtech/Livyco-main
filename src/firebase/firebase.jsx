@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator  } from "firebase/auth";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator, initializeRecaptchaConfig  } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBxKGVr5ffZ5q_KglebLOQPKCjdoCzdpMY",
