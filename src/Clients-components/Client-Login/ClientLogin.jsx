@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { auth } from "../../firebase/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
@@ -469,7 +469,14 @@ const ClientLogin = () => {
               By signing up, you agree to our{" "}
               <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
               <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
+             
             </p>
+            <Link to="/client/register">
+             <p className="text-xs text-gray-500" >If you don't have an account? {""}
+              <span className="text-blue-500  cursor-pointer hover:underline ">Rigister
+                </span>
+             </p>
+             </Link>
 
             <button
               type="submit"

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 
-// export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
 
 // Create a separate axios instance without interceptors for token refresh
 const refreshApi = axios.create({
@@ -376,6 +376,141 @@ export const paymentAPI = {
   getUserPaymentRequests: (userId) => api.get(`/api/payments/requests/user/${userId}`),
   updatePaymentRequestStatus: (requestId, data) => api.put(`/api/payments/request/${requestId}`, data),
   getClientPaymentsForBooking: (bookingId) => api.get(`/api/payments/client-payments/booking/${bookingId}`),
+};
+
+export const bankAccountAPI = {
+   addBankAccount: (accountData) => {
+    const payload = {
+      propertyId: accountData.propertyId,
+      bankDetails: {
+        accountHolderName: accountData.accountHolderName,
+        accountNumber: accountData.accountNumber,
+        ifscCode: accountData.ifscCode,
+        bankName: accountData.bankName,
+        branchName: accountData.branchName,
+        accountType: accountData.accountType || 'savings'
+      }
+    };
+    
+    console.log('API sending payload:', payload);
+    
+    return api.post('/api/bank-accounts/add', payload)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to add bank account');
+        }
+        return response;
+      });
+  },
+
+  getMyBankAccounts: () => 
+    api.get('/api/bank-accounts/my-accounts')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch bank accounts');
+        }
+        return response;
+      }),
+
+  getPropertyBankAccount: (propertyId) => 
+    api.get(`/api/bank-accounts/property/${propertyId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch property bank account');
+        }
+        return response;
+      }),
+
+  updateBankAccount: (accountId, updates) => 
+    api.put(`/api/bank-accounts/${accountId}`, updates)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to update bank account');
+        }
+        return response;
+      }),
+
+  deleteBankAccount: (accountId) => 
+    api.delete(`/api/bank-accounts/${accountId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to delete bank account');
+        }
+        return response;
+      }),
+
+  getAllBankAccounts: (params = {}) => 
+    api.get('/api/bank-accounts/admin/all', { params })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch all bank accounts');
+        }
+        return response;
+      }),
+
+  getBankAccountStats: () => 
+    api.get('/api/bank-accounts/admin/stats')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch bank account statistics');
+        }
+        return response;
+      }),
+
+  verifyBankAccount: (accountId, verificationData = {}) => 
+    api.patch(`/api/bank-accounts/admin/verify/${accountId}`, verificationData)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to verify bank account');
+        }
+        return response;
+      }),
+
+  validateBankAccount: (accountData) => {
+    const errors = [];
+    
+    if (!accountData.accountHolderName?.trim()) {
+      errors.push('Account holder name is required');
+    }
+    
+    if (!accountData.accountNumber?.trim()) {
+      errors.push('Account number is required');
+    } else if (!/^\d{9,18}$/.test(accountData.accountNumber.replace(/\s/g, ''))) {
+      errors.push('Account number must be 9-18 digits');
+    }
+    
+    if (!accountData.ifscCode?.trim()) {
+      errors.push('IFSC code is required');
+    } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(accountData.ifscCode.toUpperCase())) {
+      errors.push('Invalid IFSC code format');
+    }
+    
+    if (!accountData.bankName?.trim()) {
+      errors.push('Bank name is required');
+    }
+    
+    if (!accountData.branchName?.trim()) {
+      errors.push('Branch name is required');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  },
+
+  formatAccountNumber: (accountNumber) => {
+    if (!accountNumber) return '';
+    const cleaned = accountNumber.replace(/\s/g, '');
+    return cleaned.replace(/(\d{4})(?=\d)/g, '$1 ');
+  },
+
+  maskAccountNumber: (accountNumber) => {
+    if (!accountNumber) return '';
+    const cleaned = accountNumber.replace(/\s/g, '');
+    if (cleaned.length <= 8) return cleaned;
+    return 'X'.repeat(cleaned.length - 4) + cleaned.slice(-4);
+  }
 };
 
 

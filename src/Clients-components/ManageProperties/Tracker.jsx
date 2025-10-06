@@ -189,12 +189,10 @@ export default function Tracker() {
     }
   }, [editMode, propertyId]);
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
+   const nextStep = (newId) => {
+    if (newId) setPropertyId(newId); // <- assign newly created propertyId
+    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
   };
-
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
@@ -249,7 +247,9 @@ export default function Tracker() {
         );
       case 1:
         return (
+          console.log("propertyId at renderStepContent AddMedia:-", propertyId),
           <AddMedia 
+          
             nextStep={nextStep} 
             prevStep={prevStep} 
             propertyId={propertyId}
@@ -259,6 +259,7 @@ export default function Tracker() {
         );
       case 2:
         return (
+          console.log("propertyId at renderStepContent RoomSelection:-", propertyId),
           <RoomSelection 
             nextStep={nextStep} 
             prevStep={prevStep} 

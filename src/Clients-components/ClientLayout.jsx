@@ -34,6 +34,9 @@ import HostelInfrastructure from "./TenantList/HostelInfrastructure";
 import ClientPayments from "./payment/Payments";
 import PaymentChat from "./payment/PaymentChat";
 import ClientWalletHistory from "./payment/WalletHistory";
+// import AddBankAccount from "./Account/AddBankAccount";
+import BankAccountsList from "./Account/BankAccountsList ";
+import ListedProperties from "./ListedProperties";
 
 
 const ClientLayout = () => {
@@ -42,7 +45,7 @@ const ClientLayout = () => {
       {/* <Navbar /> */}
       <Routes>
         <Route path="/client-main" element={<Clientmain />} />
-        
+        <Route path="/register" element={<ListedProperties />} />
         <Route path="/client-login" element={<ClientLogin />} />
         <Route path="/client-otpverify" element={<OTPVerification />} />
         <Route path="/property/structure" element={<HostelInfrastructure />} />
@@ -57,6 +60,8 @@ const ClientLayout = () => {
         <Route path="/checkoutrequest" element={<TenantCheckoutRequest />} />
         <Route path="/approvecheckout/:id" element={<ApproveCheckout />} />
         <Route path="/confirm-booking/:id" element={<TanentConfirmbox />} />
+        {/* //Add Bank Account */}
+        <Route path="/add-bank-account" element={<BankAccountsList />} />
          {/* payment request to user*/}
          <Route path="/payment/:id" element={<ClientPayments />} />
         <Route path="/payment" element={<PaymentChat />} />

@@ -63,7 +63,7 @@
 //         <button className="flex items-center text-gray-400">
 //           <span className="text-xl mr-2">➕</span> Add a new branch
 //         </button>
-      
+
 //         {/* <div className="border border-gray-700 rounded-lg p-4 mt-2">
 //           <div className="flex justify-between items-start">
 //             <div>
@@ -198,7 +198,7 @@
 //     try {
 //       setLoading(true);
 //       setError(null);
-      
+
 //       const [propertyRes, mediaRes, roomRes, pgRes] = await Promise.all([
 //         propertyAPI.getProperty(),
 //         mediaAPI.getMedia(),
@@ -207,7 +207,7 @@
 //       ]);
 
 //       if (!propertyRes.data?.success) throw new Error("Failed to fetch property data");
-      
+
 //       setPropertyData(propertyRes.data.property);
 //       setMediaData(mediaRes.data?.media || null);
 //       setRoomData(roomRes.data?.roomTypes || null);
@@ -225,7 +225,7 @@
 //     } catch (err) {
 //       console.error("Error fetching property data:", err);
 //       setError(err.message);
-      
+
 //       // Fallback to localStorage if available
 //       try {
 //         const localData = JSON.parse(localStorage.getItem("propertyCompleteData"));
@@ -249,7 +249,7 @@
 
 //   const handleEdit = () => {
 //     if (!propertyData) return;
-    
+
 //     // Prepare all data for edit mode
 //     const editData = {
 //       property: propertyData,
@@ -257,10 +257,10 @@
 //       rooms: roomData,
 //       pg: pgData
 //     };
-    
+
 //     // Store in localStorage for the edit flow
 //     localStorage.setItem("editPropertyData", JSON.stringify(editData));
-    
+
 //     // Pass the property ID to the edit flow
 //     onNewProperty(propertyData._id);
 //     setEditMode(true);
@@ -343,25 +343,25 @@
 //                 }`}>
 //                   Status: {propertyData.status ? propertyData.status.charAt(0).toUpperCase() + propertyData.status.slice(1) : 'Pending'}
 //                 </span>
-                
+
 //                 {roomData && roomData.length > 0 && (
 //                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
 //                     Rooms: {roomData.length}
 //                   </span>
 //                 )}
-                
+
 //                 {pgData && (
 //                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
 //                     PG: Available
 //                   </span>
 //                 )}
 //               </div>
-              
+
 //               <div className="mt-2 text-sm text-gray-600">
 //                 <p>Registration ID: {propertyData.registrationId}</p>
 //                 <p>GST: {propertyData.gstNo}</p>
 //               </div>
-              
+
 //               {pgData && (
 //                 <div className="mt-2">
 //                   <p className="text-sm font-medium">PG Details:</p>
@@ -370,7 +370,7 @@
 //                 </div>
 //               )}
 //             </div>
-            
+
 //             <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
 //               {mediaData?.images?.[0]?.url ? (
 //                 <img
@@ -391,7 +391,7 @@
 //               )}
 //             </div>
 //           </div>
-          
+
 //           <div className="mt-4 flex space-x-3">
 //             <button
 //               onClick={handleEdit}
@@ -495,19 +495,19 @@
 //     try {
 //       setLoading(true);
 //       setError(null);
-      
+
 //       // Fetch all properties
 //       const propertyRes = await propertyAPI.getProperty();
 //       console.log("Properties API Response:", propertyRes); // Debug log
-      
+
 //       if (!propertyRes.data?.success) {
 //         throw new Error(propertyRes.data?.message || "Failed to fetch properties");
 //       }
-      
+
 //       // Extract properties array from response
 //       const propertiesArray = propertyRes.data.data.map(item => item.property) || [];
 //       console.log("Extracted Properties:", propertiesArray); // Debug log
-      
+
 //       if (propertiesArray.length === 0) {
 //         setProperties([]);
 //         setLoading(false);
@@ -557,14 +557,14 @@
 //           }
 //         })
 //       );
-      
+
 //       console.log("Final properties data:", propertiesWithDetails); // Debug log
 //       setProperties(propertiesWithDetails);
-      
+
 //     } catch (err) {
 //       console.error("Error in fetchAllProperties:", err);
 //       setError(err.message || "Failed to load properties");
-      
+
 //       // Check if we have cached data
 //       const cachedData = localStorage.getItem("propertyCompleteData");
 //       if (cachedData) {
@@ -590,9 +590,9 @@
 //       console.error("Property not found for editing:", propertyId);
 //       return;
 //     }
-    
+
 //     console.log("Editing property:", property); // Debug log
-    
+
 //     const editData = {
 //     property: {
 //         ...property,
@@ -608,7 +608,7 @@
 //       rooms: property.rooms,
 //       pg: property.pg
 //     };
-    
+
 //     localStorage.setItem("editPropertyData", JSON.stringify(editData));
 //     setPropertyId(propertyId);
 
@@ -620,17 +620,17 @@
 //     try {
 //       setLoading(true);
 //       console.log("Deleting property:", propertyId); // Debug log
-      
+
 //       // First delete associated data
 //       await Promise.all([
 //         mediaAPI.deleteMediaItem(propertyId).catch(e => console.error("Media delete error:", e)),
 //         roomAPI.deleteRoomType(propertyId).catch(e => console.error("Rooms delete error:", e)),
 //         pgAPI.deletePGProperty(propertyId).catch(e => console.error("PG delete error:", e))
 //       ]);
-      
+
 //       // Then delete the main property
 //       await propertyAPI.deleteProperty(propertyId);
-      
+
 //       // Refresh the list
 //       await fetchAllProperties();
 //     } catch (err) {
@@ -845,7 +845,7 @@
 import React, { useState, useEffect } from "react";
 import { mediaAPI, pgAPI, propertyAPI, roomAPI } from "../PropertyController";
 
-const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode = () => {}, setPropertyId = () => {} }) => {
+const HostelListing = ({ setShowTracker, onNewProperty = () => { }, setEditMode = () => { }, setPropertyId = () => { } }) => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [properties, setProperties] = useState([]);
@@ -856,17 +856,17 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
     try {
       setLoading(true);
       setError(null);
-      
+
       const propertyRes = await propertyAPI.getProperty();
       console.log("Properties API Response:", propertyRes);
-      
+
       if (!propertyRes.data?.success) {
         throw new Error(propertyRes.data?.message || "Failed to fetch properties");
       }
-      
+
       const propertiesArray = propertyRes.data.data.map(item => item.property) || [];
       console.log("Extracted Properties:", propertiesArray);
-      
+
       if (propertiesArray.length === 0) {
         setProperties([]);
         setLoading(false);
@@ -915,14 +915,14 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
           }
         })
       );
-      
+
       console.log("Final properties data:", propertiesWithDetails);
       setProperties(propertiesWithDetails);
-      
+
     } catch (err) {
       console.error("Error in fetchAllProperties:", err);
       setError(err.message || "Failed to load properties");
-      
+
       const cachedData = localStorage.getItem("propertyCompleteData");
       if (cachedData) {
         try {
@@ -941,7 +941,7 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
     fetchAllProperties();
   }, []);
 
- const handleEdit = (propertyId) => {
+  const handleEdit = (propertyId) => {
     const property = properties.find(p => p._id === propertyId);
     if (!property) {
       console.error("Property not found");
@@ -981,15 +981,15 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
   //   try {
   //     setLoading(true);
   //     console.log("Deleting property:", propertyId);
-      
+
   //     await Promise.all([
   //       mediaAPI.deleteMediaItem(propertyId).catch(e => console.error("Media delete error:", e)),
   //       roomAPI.deleteRoomType(propertyId).catch(e => console.error("Rooms delete error:", e)),
   //       pgAPI.deletePGProperty(propertyId).catch(e => console.error("PG delete error:", e))
   //     ]);
-      
+
   //     await propertyAPI.deleteProperty(propertyId);
-      
+
   //     await fetchAllProperties();
   //   } catch (err) {
   //     console.error("Error deleting property:", err);
@@ -1000,47 +1000,68 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
   //     setPropertyToDelete(null);
   //   }
   // };
- const handleDelete = async (propertyId) => {
+  const handleDelete = async (propertyId) => {
+    console.log(`🟡 Starting delete process for property: ${propertyId}`);
+
     try {
-      setLoading(true);
-      
-      // First delete dependent records
-      const [mediaRes, roomRes, pgRes] = await Promise.all([
-        mediaAPI.deleteMediaItem(propertyId).catch(e => ({ data: { success: false } })),
-        roomAPI.deleteRoomType(propertyId).catch(e => ({ data: { success: false } })),
-        pgAPI.deletePGProperty(propertyId).catch(e => ({ data: { success: false } }))
-      ]);
+      // 1️⃣ Delete related media
+//       try {
+//        const mediaRes = await mediaAPI.getMediaByProperty(propertyId);
+// const relatedMedia = mediaRes.data?.data?.media || mediaRes.data?.media;
 
-      // Check if all dependencies were deleted successfully
-      if (!mediaRes.data?.success || !roomRes.data?.success || !pgRes.data?.success) {
-        console.warn("Some dependent records couldn't be deleted, proceeding with property deletion");
+// const mediaItems = relatedMedia ? [relatedMedia] : []; // wrap single object in array
+
+
+// if (mediaItems.length > 0) {
+//   for (const media of mediaItems) {
+//     await mediaAPI.deleteMediaItem(media._id);
+//     console.log(`✅ Deleted media: ${media._id}`);
+//   }
+// } else {
+//   console.log("ℹ️ No media found for this property");
+// }
+
+//       } 
+//        catch (mediaErr) {
+//          console.error("❌ Failed deleting media:", mediaErr.response?.data || mediaErr);
+//        }
+
+      // 2️⃣ Delete related PG
+      // try {
+      //   const pgRes = await pgAPI.getPGProperty(propertyId);
+      //   if (pgRes?.data?.pg) {
+      //     await pgAPI.deletePGProperty(pgRes.data.pg._id);
+      //     console.log(`✅ Deleted PG: ${pgRes.data.pg._id}`);
+      //   } else {
+      //     console.log("ℹ️ No PG found for this property");
+      //   }
+      // } catch (pgErr) {
+      //   console.error("❌ Failed deleting PG:", pgErr.response?.data || pgErr);
+      // }
+
+      // 3️⃣ Delete the property itself
+      try {
+        const res = await propertyAPI.deleteProperty(propertyId);
+        if (res.data.success) {
+          console.log("✅ Deleted property:", propertyId);
+        } else {
+          // property not found or not owned
+          console.warn("⚠️ Property deletion skipped:", res.data.message);
+        }
+      } catch (propErr) {
+        if (propErr.response?.status === 404) {
+          console.warn("⚠️ Property not found, skipping:", propertyId);
+        } else {
+          console.error("❌ Failed deleting property:", propErr.response?.data || propErr);
+        }
       }
 
-      // Then delete the property itself
-      const deleteRes = await propertyAPI.deleteProperty(propertyId);
-      
-      if (!deleteRes.data?.success) {
-        throw new Error(deleteRes.data?.message || "Failed to delete property");
-      }
+      console.log("🎉 Delete process completed");
 
-      // Update UI state
-      setProperties(prev => prev.filter(p => p._id !== propertyId));
-      localStorage.removeItem('propertyCompleteData');
-      
     } catch (err) {
-      console.error("Delete failed:", err);
-      setError(err.response?.data?.message || err.message || "Failed to delete property. Please try again.");
-    } finally {
-      setLoading(false);
-      setShowDeletePopup(false);
-      setPropertyToDelete(null);
+      console.error("🚨 Unexpected error during delete process:", err);
     }
   };
-
-
-
-  
-
 
 
 
@@ -1066,8 +1087,8 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 max-w-md">
           <p className="font-medium">Error loading properties:</p>
           <p>{error}</p>
-          <button 
-            onClick={fetchAllProperties} 
+          <button
+            onClick={fetchAllProperties}
             className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm"
           >
             Retry
@@ -1099,11 +1120,10 @@ const HostelListing = ({ setShowTracker, onNewProperty = () => {}, setEditMode =
                     {[property.street, property.locality, property.city].filter(Boolean).join(', ')}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      property.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                      property.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${property.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        property.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                      }`}>
                       Status: {property.status?.charAt(0).toUpperCase() + property.status?.slice(1) || 'Pending'}
                     </span>
                     {property.rooms?.length > 0 && (

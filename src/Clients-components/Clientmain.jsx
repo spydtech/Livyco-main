@@ -9,7 +9,7 @@ const Clientmain = () => {
     return (
         <>
             <div>
-                <PropertyListings />
+                {/* <PropertyListings /> */}
                 <RecentlyListedProperties />
                 <TestimonialCard />
                 <FaqSection />

@@ -116,6 +116,12 @@ function UserLogin() {
           <span className="underline text-white cursor-pointer">Terms of Use</span> and{" "}
           <span className="underline text-white cursor-pointer">Privacy Policy</span>
         </p>
+        <Link to="/user/register">
+        <p className="  text-gray-300 mb-4"> 
+          If you don't have an account ? {" "}
+         <span className="underline text-white cursor-pointer">Rigister</span>
+          </p>
+          </Link>
 
         {/* Send OTP */}
         {/* <Link to="/user/otp-verification" > */}

@@ -113,18 +113,26 @@ const RecentlyListedProperties = () => {
         setLoading(true);
         const response = await propertyAPI.getCompletePropertyData();
         const data = response?.data;
+        console.log("Fetched property data:", data);
 
-        if (data?.success) {
-          // Transform API data to match our frontend needs
-          const transformedProperty = {
-            ...data.data.property,
-            images: data.data.media?.images || [],
-            videos: data.data.media?.videos || [],
-            startingPrice: data.data.pgProperty?.startingPrice || "0",
-            amenities: data.data.pgProperty?.amenities || [],
-            rating: data.data.property.rating || 0
-          };
-          setProperties([transformedProperty]);
+        if (data?.success && Array.isArray(data?.data)) {
+          const transformedProperties = data.data.map((item) => ({
+            id: item?._id,
+            title: item?.basicInfo?.name || "Property Title",
+            fullAddress: [
+              item?.basicInfo?.address?.street,
+              item?.basicInfo?.address?.locality,
+              item?.basicInfo?.address?.city,
+            ]
+              .filter(Boolean)
+              .join(", "),
+            images: item?.media?.images?.length ? item.media.images : [],
+            startingPrice: item?.pricing?.roomPrice || 0,
+            amenities: item?.pgDetails?.amenities || [],
+            rating: Number(item?.basicInfo?.rating) || 0,
+          }));
+
+          setProperties(transformedProperties);
         } else {
           setProperties([]);
         }
@@ -189,7 +197,7 @@ const RecentlyListedProperties = () => {
       </h2>
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center">
         {properties.map((property, idx) => (
-          <PropertyCard key={idx} property={property} />
+          <PropertyCard key={property.id || idx} property={property} />
         ))}
       </div>
     </div>

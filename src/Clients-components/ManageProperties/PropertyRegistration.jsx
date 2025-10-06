@@ -1502,58 +1502,65 @@ const PropertyRegistration = ({ nextStep, isEditMode, propertyId, propertyData }
   //     setSubmitLoading(false);
   //   }
   // };
-   const handleSubmit = async () => {
-    if (!validateForm()) return;
+  const handleSubmit = async () => {
+  if (!validateForm()) return;
 
-    setSubmitLoading(true);
-    setErrors({});
+  setSubmitLoading(true);
+  setErrors({});
 
-    try {
-      const submissionData = {
-        city: formData.city,
-        name: formData.name,
-        locality: formData.locality,
-        street: formData.street,
-        registrationId: formData.registrationId,
-        gstNo: formData.gstNo,
-        cgstNo: formData.cgstNo,
-        sgstNo: formData.sgstNo,
-        location:
-          formData.latitude && formData.longitude
-            ? {
-                type: "Point",
-                coordinates: [
-                  parseFloat(formData.longitude),
-                  parseFloat(formData.latitude),
-                ],
-              }
-            : undefined,
-      };
+  try {
+    const submissionData = {
+      city: formData.city,
+      name: formData.name,
+      locality: formData.locality,
+      street: formData.street,
+      registrationId: formData.registrationId,
+      gstNo: formData.gstNo,
+      cgstNo: formData.cgstNo,
+      sgstNo: formData.sgstNo,
+      location:
+        formData.latitude && formData.longitude
+          ? {
+              type: "Point",
+              coordinates: [
+                parseFloat(formData.longitude),
+                parseFloat(formData.latitude),
+              ],
+            }
+          : undefined,
+    };
 
-      let response;
-      if (isEditMode) {
-        response = await propertyAPI.updateProperty(propertyId, submissionData);
-      } else {
-        response = await propertyAPI.registerProperty(submissionData);
-      }
-
-      if (!response.data?.success) {
-        throw new Error(response.data?.message || "Operation failed");
-      }
-
-      localStorage.setItem(
-        "editPropertyData",
-        JSON.stringify({ property: response.data.property })
-      );
-
-      nextStep();
-    } catch (error) {
-      const apiError = handleApiError(error);
-      setErrors({ submit: apiError.message });
-    } finally {
-      setSubmitLoading(false);
+    let response;
+    if (isEditMode) {
+      response = await propertyAPI.updateProperty(propertyId, submissionData);
+    } else {
+      response = await propertyAPI.registerProperty(submissionData);
     }
-  };
+
+    console.log("API response:", response.data);
+
+    if (!response.data?.success) {
+      throw new Error(response.data?.message || "Operation failed");
+    }
+
+    // Determine where the property object is in the response
+    const newProperty = response.data.property || response.data.data;
+    if (!newProperty?._id) {
+      throw new Error("Property ID not found in API response");
+    }
+
+    localStorage.setItem("editPropertyData", JSON.stringify({ property: newProperty }));
+
+    // Pass new propertyId to Tracker
+    nextStep(newProperty._id);
+
+  } catch (error) {
+    const apiError = handleApiError(error);
+    setErrors({ submit: apiError.message });
+  } finally {
+    setSubmitLoading(false);
+  }
+};
 
   if (loading) {
     return (

@@ -309,13 +309,15 @@ const PGForm = ({ nextStep, prevStep, propertyId, isEditMode }) => {
 
 
   useEffect(() => {
-    if (propertyId && isEditMode) {
-      fetchPGData();
-    } else {
-      setFormData(getSavedFormData());
-      setIsLoading(false);
-    }
-  }, [propertyId, isEditMode, fetchPGData, getSavedFormData]);
+  if (propertyId && isEditMode) {
+    fetchPGData();
+  } else {
+    localStorage.removeItem("pgFormData"); // clear old saved data
+    setFormData(initialFormData);
+    setIsLoading(false);
+  }
+}, [propertyId, isEditMode, fetchPGData]);
+
 
   useEffect(() => {
     if (!propertyId && !isLoading) {

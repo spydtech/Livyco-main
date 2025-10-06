@@ -65,7 +65,7 @@ const ClientHomePage = () => {
 
       </div>
     </div>
-    <PropertyListing />
+    {/* <PropertyListing /> */}
     <RecentlyListedProperties />
     <TestimonialsCarousel />
     <FaqSection />

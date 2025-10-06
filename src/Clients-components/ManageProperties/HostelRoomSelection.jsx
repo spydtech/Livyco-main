@@ -309,19 +309,19 @@
 //         setInitialLoad(false);
 //         return;
 //       }
-      
+
 //       try {
 //         setIsSaving(true);
 //         const response = await roomAPI.getFloorData(propertyId);
-        
+
 //         if (response.data.success) {
 //           const floors = response.data.floors || {};
 //           setFloorData(floors);
-          
+
 //           // Set number of floors
 //           const floorCount = Object.keys(floors).length;
 //           setFloors(floorCount > 0 ? floorCount : 1);
-          
+
 //           // Pre-fill room numbers for first floor if available
 //           if (floors[1]) {
 //             setRoomNumbers(floors[1]);
@@ -512,7 +512,7 @@
 //         >
 //           Back
 //         </button>
-        
+
 //         <button
 //           className={`bg-yellow-400 text-black py-2 px-6 rounded-md hover:bg-yellow-500 ${
 //             isSaving ? 'opacity-50 cursor-not-allowed' : ''
@@ -548,7 +548,7 @@
 //       try {
 //         setIsSaving(true);
 //         let existingData = {};
-        
+
 //         // Load existing data in edit mode
 //         if (propertyId && isEditMode) {
 //           const response = await roomAPI.getRoomRentData(propertyId);
@@ -576,9 +576,9 @@
 //         selectedRooms.forEach(room => {
 //           const roomType = roomTypes.find(r => r.type === room.type);
 //           initializedData[room.type] = {
-//             price: roomType?.price || 0,
-//             deposit: roomType?.deposit || 0,
-//             availableCount: roomType?.availableCount || 0,
+//             price: roomType?.price ,
+//             deposit: roomType?.deposit ,
+//             availableCount: roomType?.availableCount ,
 //             amenities: {
 //               AC: false,
 //               WiFi: false,
@@ -618,7 +618,7 @@
 //       ...prev,
 //       [currentRoom.type]: {
 //         ...prev[currentRoom.type],
-//         [field]: Number(value) || 0
+//         [field]: Number(value) 
 //       }
 //     }));
 //   };
@@ -650,7 +650,7 @@
 //   const handleSave = async () => {
 //     setIsSaving(true);
 //     setError(null);
-    
+
 //     try {
 //       // Validate required fields
 //       const validationErrors = [];
@@ -753,7 +753,7 @@
 //           <input
 //             type="number"
 //             className="w-full p-2 border rounded-md"
-//             value={currentData.price || 0}
+//             value={currentData.price }
 //             onChange={(e) => handleChange("price", e.target.value)}
 //             min="1"
 //             required
@@ -765,7 +765,7 @@
 //           <input
 //             type="number"
 //             className="w-full p-2 border rounded-md"
-//             value={currentData.deposit || 0}
+//             value={currentData.deposit }
 //             onChange={(e) => handleChange("deposit", e.target.value)}
 //             min="0"
 //             required
@@ -777,7 +777,7 @@
 //           <input
 //             type="number"
 //             className="w-full p-2 border rounded-md"
-//             value={currentData.availableCount || 0}
+//             value={currentData.availableCount }
 //             onChange={(e) => handleChange("availableCount", e.target.value)}
 //             min="0"
 //             required
@@ -856,7 +856,7 @@
 //       label: room.label,
 //       type: room.type,
 //       capacity: room.capacity
-      
+
 //     }));
 
 //   useEffect(() => {
@@ -865,19 +865,19 @@
 //         setInitialLoad(false);
 //         return;
 //       }
-      
+
 //       try {
 //         setIsSaving(true);
 //         const response = await roomAPI.getFloorData(propertyId);
-        
+
 //         if (response.data?.success) {
 //           const data = response.data;
 //           setFloorData(data.floors || {});
-          
+
 //           // Set number of floors
 //           const floorCount = Object.keys(data.floors || {}).length;
 //           setFloors(floorCount > 0 ? floorCount : 1);
-          
+
 //           // Initialize with first floor data if available
 //           if (data.floors?.[1]) {
 //             setRoomNumbers(data.floors[1]);
@@ -936,7 +936,7 @@
 //   try {
 //     // Prepare floors data for API - ensure proper structure
 //     const floorsToSave = [];
-    
+
 //     for (let i = 1; i <= floors; i++) {
 //       floorsToSave.push({
 //         floor: i, // This is the required field
@@ -1103,7 +1103,7 @@
 //       try {
 //         setIsSaving(true);
 //         let existingData = {};
-        
+
 //         if (propertyId) {
 //           const response = await roomAPI.getRoomRentData(propertyId);
 //           if (response.data?.success) {
@@ -1127,18 +1127,18 @@
 //           const roomType = roomTypes.find(r => r.type === room.type);
 //           if (!roomType) {
 //             console.warn(`Room type ${room.type} not found in roomTypes`);
-            
+
 //             return;
 //           }
-          
-          
+
+
 //           // Start with all standard amenities set to false
 //           const defaultAmenities = standardAmenities.reduce((acc, amenity) => {
 
 //             acc[amenity] = false;
 //             return acc;
 //           }, {});
-          
+
 //           // Merge with existing amenities from database
 //           const mergedAmenities = {
 //             ...defaultAmenities,
@@ -1150,9 +1150,9 @@
 //           };
 
 //           initializedData[room.type] = {
-//             price: roomType?.price || 0,
-//             deposit: roomType?.deposit || 0,
-//             availableCount: roomType?.availableCount || 0,
+//             price: roomType?.price ,
+//             deposit: roomType?.deposit ,
+//             availableCount: roomType?.availableCount ,
 //             amenities: mergedAmenities,
 //             ...existingData[room.type]
 //           };
@@ -1177,14 +1177,14 @@
 //   // Get all unique amenities from both standard and existing data
 //   const getAllAmenities = () => {
 //     const allAmenities = new Set(standardAmenities);
-    
+
 //     // Add any custom amenities that might exist in the data
 //     if (currentData.amenities) {
 //       Object.keys(currentData.amenities).forEach(amenity => {
 //         allAmenities.add(amenity);
 //       });
 //     }
-    
+
 //     return Array.from(allAmenities).sort();
 //   };
 
@@ -1193,7 +1193,7 @@
 //       ...prev,
 //       [currentRoom.type]: {
 //         ...prev[currentRoom.type],
-//         [field]: Number(value) || 0
+//         [field]: Number(value) 
 //       }
 //     }));
 //   };
@@ -1230,7 +1230,7 @@
 //     if (currentData.amenities[amenity]) {
 //       const newAmenities = {...currentData.amenities};
 //       delete newAmenities[amenity];
-      
+
 //       setRoomData(prev => ({
 //         ...prev,
 //         [currentRoom.type]: {
@@ -1252,7 +1252,7 @@
 //   const handleSave = async () => {
 //     setIsSaving(true);
 //     setError(null);
-    
+
 //     try {
 //       const rentData = selectedRooms.map(room => ({
 //         roomType: room.type,
@@ -1314,7 +1314,7 @@
 //           <input
 //             type="number"
 //             className="w-full p-2 border rounded-md"
-//             value={currentData.price || 0}
+//             value={currentData.price }
 //             onChange={(e) => handleChange("price", e.target.value)}
 //             min="1"
 //             required
@@ -1326,7 +1326,7 @@
 //           <input
 //             type="number"
 //             className="w-full p-2 border rounded-md"
-//             value={currentData.deposit || 0}
+//             value={currentData.deposit }
 //             onChange={(e) => handleChange("deposit", e.target.value)}
 //             min="0"
 //             required
@@ -1338,7 +1338,7 @@
 //           <input
 //             type="number"
 //             className="w-full p-2 border rounded-md"
-//             value={currentData.availableCount || 0}
+//             value={currentData.availableCount }
 //             onChange={(e) => handleChange("availableCount", e.target.value)}
 //             min="0"
 //             required
@@ -1347,7 +1347,7 @@
 
 //         <div>
 //           <label className="block text-sm font-medium mb-2">Amenities</label>
-          
+
 //           {/* Add new amenity input */}
 //           <div className="flex mb-4">
 //             <input
@@ -1372,7 +1372,7 @@
 //               Add
 //             </button>
 //           </div>
-          
+
 //           {/* Amenities grid with remove option */}
 //           <div className="grid grid-cols-2 gap-2">
 //             {getAllAmenities().map(amenity => (
@@ -1431,9 +1431,9 @@ import { useState, useEffect } from "react";
 import { Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import { roomAPI } from "../PropertyController";
 
-const HostelRoomSelection = ({ 
-  selectedRooms, 
-  nextStep, 
+const HostelRoomSelection = ({
+  selectedRooms,
+  nextStep,
   prevStep,
   roomTypes,
   propertyId,
@@ -1457,42 +1457,52 @@ const HostelRoomSelection = ({
       capacity: room.capacity
     }));
 
-  useEffect(() => {
-    const loadFloorData = async () => {
-      if (!propertyId) {
-        setInitialLoad(false);
-        return;
-      }
-      try {
-        setIsSaving(true);
-        const response = await roomAPI.getRoomTypes(propertyId);
-        const roomConfig = response.data?.roomConfig || {};
-        const floorConfig = roomConfig.floorConfig || {};
+ useEffect(() => {
+  const loadFloorData = async () => {
+    if (!propertyId) {
+      setInitialLoad(false);
+      return;
+    }
+    try {
+      setIsSaving(true);
+      const response = await roomAPI.getRoomTypes(propertyId);
+      const roomConfig = response.data?.roomConfig || {};
+      const floorConfig = roomConfig.floors || [];
 
-        const floorsData = {};
-        if (floorConfig.floors && Array.isArray(floorConfig.floors)) {
-          floorConfig.floors.forEach(floor => {
-            const rooms = {};
-            Object.entries(floor.rooms || {}).forEach(([roomType, roomNumbers]) => {
-              rooms[roomType] = roomNumbers.split(',').map(num => num.trim()).join(', ');
-            });
-            floorsData[floor.floor] = rooms;
-          });
-          setFloors(floorConfig.floors.length);
-        }
+      console.log("room config-", roomConfig);
+      console.log("floor config-", floorConfig);
 
-        setFloorData(floorsData);
-        setRoomNumbers(floorsData[1] || {});
-      } catch (err) {
-        console.error("Failed to load floor data:", err);
-        setError("Failed to load existing floor configuration");
-      } finally {
-        setIsSaving(false);
-        setInitialLoad(false);
-      }
-    };
-    loadFloorData();
-  }, [propertyId]);
+      const floorsData = {};
+
+      floorConfig.forEach(floor => {
+        const rooms = {};
+        // Convert Map or object safely
+        const roomEntries = floor.rooms instanceof Map ? Object.fromEntries(floor.rooms) : floor.rooms || {};
+        Object.entries(roomEntries).forEach(([roomType, roomNumbers]) => {
+          // roomNumbers may be array or string
+          if (Array.isArray(roomNumbers)) {
+            rooms[roomType] = roomNumbers.join(', ');
+          } else if (typeof roomNumbers === 'string') {
+            rooms[roomType] = roomNumbers.split(',').map(num => num.trim()).join(', ');
+          }
+        });
+        floorsData[floor.floor] = rooms;
+      });
+
+      setFloors(floorConfig.length || 1);
+      setFloorData(floorsData);
+      setRoomNumbers(floorsData[1] || {});
+    } catch (err) {
+      console.error("Failed to load floor data:", err);
+      setError("Failed to load existing floor configuration");
+    } finally {
+      setIsSaving(false);
+      setInitialLoad(false);
+    }
+  };
+  loadFloorData();
+}, [propertyId]);
+
 
   const handleRoomNumberChange = (roomType, value) => {
     setRoomNumbers(prev => ({ ...prev, [roomType]: value }));
@@ -1517,58 +1527,69 @@ const HostelRoomSelection = ({
     setCurrentFloor(newFloor);
   };
 
-  const handleFinalSave = async () => {
-    setIsSaving(true);
-    setError(null);
-    saveCurrentFloor();
-    try {
-      filteredRooms.forEach(room => {
-        for (let i = 1; i <= floors; i++) {
-          if (!floorData[i]?.[room.type]) {
-            throw new Error(`Please enter room numbers for ${room.label} on floor ${i}`);
-          }
-        }
-      });
+ const handleFinalSave = async () => {
+  setIsSaving(true);
+  setError(null);
 
-      const floorsToSave = [];
-
-      for (let i = 1; i <= floors; i++) {
-        const floorObj = {
-          floor: i,
-          rooms: []
-        };
-        filteredRooms.forEach(room => {
-          const roomNumbers = floorData[i]?.[room.type]?.split(",").map(num => num.trim());
-          if (roomNumbers && roomNumbers.length > 0) {
-            roomNumbers.forEach((roomNumber) => {
-              floorObj.rooms.push({
-                roomNumber,
-                type: room.type
-              });
-            });
-          }
-        });
-        floorsToSave.push(floorObj);
-      }
-
-      if (propertyId) {
-        const response = await roomAPI.saveFloorData(propertyId, {
-          selectedRooms: filteredRooms.map(room => room.type),
-          floors: floorsToSave
-        });
-        if (!response.data.success) {
-          throw new Error(response.data.message || "Failed to save floor configuration");
-        }
-      }
-
-      setShowRoomRent(true);
-    } catch (err) {
-      console.error("Failed to save floor data:", err);
-      setError(err.response?.data?.message || err.message || "Failed to save floor configuration");
-    } finally {
-      setIsSaving(false);
+  // Create a copy of floorData including the latest current floor
+  const updatedFloorData = {
+    ...floorData,
+    [currentFloor]: {
+      ...roomNumbers
     }
   };
+
+  try {
+    // Validation using updatedFloorData
+    filteredRooms.forEach(room => {
+      for (let i = 1; i <= floors; i++) {
+        if (!updatedFloorData[i]?.[room.type]) {
+          throw new Error(`Please enter room numbers for ${room.label} on floor ${i}`);
+        }
+      }
+    });
+
+    const floorsToSave = [];
+
+    for (let i = 1; i <= floors; i++) {
+      const floorObj = {
+        floor: i,
+        rooms: []
+      };
+      filteredRooms.forEach(room => {
+        const roomNumbersStr = updatedFloorData[i]?.[room.type] || "";
+        const roomNumbersArr = roomNumbersStr.split(",").map(num => num.trim()).filter(Boolean);
+        roomNumbersArr.forEach(roomNumber => {
+          floorObj.rooms.push({
+            roomNumber,
+            type: room.type
+          });
+        });
+      });
+      floorsToSave.push(floorObj);
+    }
+
+    if (propertyId) {
+      const response = await roomAPI.saveFloorData(propertyId, {
+        selectedRooms: filteredRooms.map(room => room.type),
+        floors: floorsToSave
+      });
+      if (!response.data.success) {
+        throw new Error(response.data.message || "Failed to save floor configuration");
+      }
+    }
+
+    // Update state with saved data
+    setFloorData(updatedFloorData);
+    setShowRoomRent(true);
+  } catch (err) {
+    console.error("Failed to save floor data:", err);
+    setError(err.response?.data?.message || err.message || "Failed to save floor configuration");
+  } finally {
+    setIsSaving(false);
+  }
+};
+
 
   if (initialLoad) {
     return <div className="text-center p-8">Loading floor configuration...</div>;
@@ -1674,9 +1695,8 @@ const HostelRoomSelection = ({
           Back
         </button>
         <button
-          className={`bg-yellow-400 text-black py-2 px-6 rounded-md hover:bg-yellow-500 ${
-            isSaving ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
+          className={`bg-yellow-400 text-black py-2 px-6 rounded-md hover:bg-yellow-500 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           onClick={handleFinalSave}
           disabled={isSaving}
         >
@@ -1687,9 +1707,9 @@ const HostelRoomSelection = ({
   );
 };
 
-const RoomRent = ({ 
-  selectedRooms, 
-  nextStep, 
+const RoomRent = ({
+  selectedRooms,
+  nextStep,
   prevStep,
   roomTypes,
   propertyId,
@@ -1712,12 +1732,12 @@ const RoomRent = ({
       try {
         setIsSaving(true);
         let existingData = {};
-        
+
         if (propertyId) {
           const response = await roomAPI.getRoomTypes(propertyId);
           const roomConfig = response.data?.roomConfig || {};
           const fetchedRoomTypes = roomConfig.roomTypes || [];
-          
+
           fetchedRoomTypes.forEach(room => {
             existingData[room.type] = {
               price: room.price,
@@ -1735,18 +1755,18 @@ const RoomRent = ({
         const initializedData = {};
         selectedRooms.forEach(room => {
           const roomType = roomTypes.find(r => r.type === room.type) || {};
-          
+
           // Start with all standard amenities set to false
           const defaultAmenities = standardAmenities.reduce((acc, amenity) => {
             acc[amenity] = false;
             return acc;
           }, {});
-          
+
           // Merge with existing data
           initializedData[room.type] = {
-            price: roomType.price || 0,
-            deposit: roomType.deposit || 0,
-            availableCount: roomType.availableCount || 0,
+            price: roomType.price,
+            deposit: roomType.deposit,
+            availableCount: roomType.availableCount,
             amenities: {
               ...defaultAmenities,
               ...existingData[room.type]?.amenities
@@ -1772,13 +1792,13 @@ const RoomRent = ({
 
   const getAllAmenities = () => {
     const allAmenities = new Set(standardAmenities);
-    
+
     if (currentData.amenities) {
       Object.keys(currentData.amenities).forEach(amenity => {
         allAmenities.add(amenity);
       });
     }
-    
+
     return Array.from(allAmenities).sort();
   };
 
@@ -1787,8 +1807,8 @@ const RoomRent = ({
       ...prev,
       [currentRoom.type]: {
         ...prev[currentRoom.type],
-        [field]: Number(value) || 0
-      }
+        [field]: value === "" ? "" : Number(value), // allow clearing
+      },
     }));
   };
 
@@ -1822,9 +1842,9 @@ const RoomRent = ({
 
   const handleRemoveAmenity = (amenity) => {
     if (currentData.amenities[amenity]) {
-      const newAmenities = {...currentData.amenities};
+      const newAmenities = { ...currentData.amenities };
       delete newAmenities[amenity];
-      
+
       setRoomData(prev => ({
         ...prev,
         [currentRoom.type]: {
@@ -1836,9 +1856,9 @@ const RoomRent = ({
   };
 
   const navigateRoom = (direction) => {
-    setCurrentIndex(prev => 
-      direction === 'next' 
-        ? (prev + 1) % selectedRooms.length 
+    setCurrentIndex(prev =>
+      direction === 'next'
+        ? (prev + 1) % selectedRooms.length
         : prev === 0 ? selectedRooms.length - 1 : prev - 1
     );
   };
@@ -1846,7 +1866,7 @@ const RoomRent = ({
   const handleSave = async () => {
     setIsSaving(true);
     setError(null);
-    
+
     try {
       const rentData = selectedRooms.map(room => ({
         roomType: room.type,
@@ -1907,9 +1927,10 @@ const RoomRent = ({
           <input
             type="number"
             className="w-full p-2 border rounded-md"
-            value={currentData.price || 0}
+            value={currentData.price ?? ""}
             onChange={(e) => handleChange("price", e.target.value)}
-            min="1"
+            min="0"
+            placeholder="0"
             required
           />
         </div>
@@ -1919,9 +1940,10 @@ const RoomRent = ({
           <input
             type="number"
             className="w-full p-2 border rounded-md"
-            value={currentData.deposit || 0}
+            value={currentData.deposit ?? ""}
             onChange={(e) => handleChange("deposit", e.target.value)}
             min="0"
+            placeholder="0"
             required
           />
         </div>
@@ -1931,16 +1953,17 @@ const RoomRent = ({
           <input
             type="number"
             className="w-full p-2 border rounded-md"
-            value={currentData.availableCount || 0}
+            value={currentData.availableCount ?? ""}
             onChange={(e) => handleChange("availableCount", e.target.value)}
             min="0"
+            placeholder="0"
             required
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Amenities</label>
-          
+
           <div className="flex mb-4">
             <input
               type="text"
@@ -1964,7 +1987,7 @@ const RoomRent = ({
               Add
             </button>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2">
             {getAllAmenities().map(amenity => (
               <div key={amenity} className="flex items-center justify-between">
@@ -1978,7 +2001,7 @@ const RoomRent = ({
                   <span>{amenity}</span>
                 </label>
                 {!standardAmenities.includes(amenity) && (
-                  <button 
+                  <button
                     onClick={() => handleRemoveAmenity(amenity)}
                     className="text-red-500 hover:text-red-700"
                   >
@@ -1999,9 +2022,8 @@ const RoomRent = ({
           Back
         </button>
         <button
-          className={`bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-6 rounded-md ${
-            isSaving ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
+          className={`bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-6 rounded-md ${isSaving ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           onClick={handleSave}
           disabled={isSaving}
         >

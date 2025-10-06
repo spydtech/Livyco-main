@@ -18,7 +18,7 @@ const ProfilePage = () => {
   const menuItems = [
     // { label: "My Profile", hasArrow: false },
       { label: "Theme", hasArrow: false },
-    { label: "Account Info", hasArrow: false },
+    { label: "Account Info", hasArrow: false, link: "/client/add-bank-account" },
   
     { label: "Manage Properties", hasArrow: true, link: "/client/tenantlist" },
     { label: "Booking Dashboard", hasArrow: true, link: "/client/tenantrequest" },

@@ -61,6 +61,7 @@ import Paymenthistory from "./Components/paymentGateway/Paymenthistory"; // Impo
 import PayRent from "./Components/paymentGateway/PayRent";
 import { Cancel } from "./Components/paymentGateway/Cancel";
 import RiseConcern from "./Components/raiseConcern/RiseConcern";
+import UserRegister from "./Components/userLogin/UserRegister"
 
 
 
@@ -72,6 +73,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
+          <Route path="/user/register" element={<UserRegister />} />
           <Route path="/user/login" element={<UserLogin />} />
           <Route path="/user/otp-verification" element={<UserOtpVerfication />} />
           <Route path="/user/pgsearch" element={<PgSearch />} />

@@ -702,9 +702,9 @@
 //             <button onClick={() => setShowVideoSection(false)} className="flex-1 bg-gray-300 text-black px-6 py-2 rounded-md hover:bg-gray-400 transition">
 //               Back to Images
 //             </button>
-//             <button onClick={nextStep} className="flex-1 bg-yellow-400 text-black px-6 py-2 rounded-md hover:bg-yellow-500 transition" disabled={uploading}>
+//             <buttononClick={() => nextStep(propertyId)}className="flex-1 bg-yellow-400 text-black px-6 py-2 rounded-md hover:bg-yellow-500 transition" disabled={uploading}>
 //               Finish
-//             </button>
+//             </buttononClick=>
 //           </div>
 //           <button className="mt-2 text-gray-500 hover:text-gray-700" onClick={nextStep}>
 //             Skip Videos
@@ -736,34 +736,69 @@ export default function AddMedia({ nextStep, prevStep, propertyId, isEditMode })
   const [isTempMode, setIsTempMode] = useState(!isValidObjectId(propertyId));
 
   // Initialize media based on propertyId status
-  useEffect(() => {
-    const initializeMedia = async () => {
-      if (isValidObjectId(propertyId)) {
-        setIsTempMode(false);
-        try {
-          const response = await mediaAPI.getMediaByProperty(propertyId);
-          console.log("Media fetch response:", response);
-          if (response.data.success) {
+useEffect(() => {
+  const initializeAndMigrate = async () => {
+    if (isValidObjectId(propertyId)) {
+      setIsTempMode(false);
 
+      try {
+        const response = await mediaAPI.getMediaByProperty(propertyId);
+        if (response.data.success) {
+          setMedia({
+            images: response.data.media?.images || [],
+            videos: response.data.media?.videos || [],
+          });
+        }
+      } catch (err) {
+        console.error("Media fetch error:", err);
+        setError("Failed to load media");
+      }
+
+      // Auto-migrate temp media
+      if (tempMedia.images.length + tempMedia.videos.length > 0) {
+        setUploading(true);
+        try {
+          const formData = new FormData();
+          formData.append("propertyId", propertyId);
+
+          const allFiles = [
+            ...tempMedia.images.filter(img => img.file),
+            ...tempMedia.videos.filter(vid => vid.file),
+          ].map(item => item.file);
+
+          allFiles.forEach(file => formData.append("files", file));
+
+          const uploadResponse = await mediaAPI.uploadMedia(formData);
+
+          if (uploadResponse.data.success) {
             setMedia({
-              images: response.data.media?.images || [],
-              videos: response.data.media?.videos || []
+              images: uploadResponse.data.media?.images || [],
+              videos: uploadResponse.data.media?.videos || [],
             });
+            setTempMedia({ images: [], videos: [] });
+            localStorage.removeItem("tempImages");
+            localStorage.removeItem("tempVideos");
+            setIsTempMode(false);
           }
         } catch (err) {
-          setError("Failed to load media");
-          console.error("Media fetch error:", err);
+          console.error("Migration failed:", err);
+          setError("Failed to save temporary media.");
+        } finally {
+          setUploading(false);
         }
-      } else {
-        setIsTempMode(true);
-        const storedImages = JSON.parse(localStorage.getItem("tempImages")) || [];
-        const storedVideos = JSON.parse(localStorage.getItem("tempVideos")) || [];
-        setTempMedia({ images: storedImages, videos: storedVideos });
       }
-    };
+    } else {
+      // Temp storage
+      setIsTempMode(true);
+      const storedImages = JSON.parse(localStorage.getItem("tempImages")) || [];
+      const storedVideos = JSON.parse(localStorage.getItem("tempVideos")) || [];
+      setTempMedia({ images: storedImages, videos: storedVideos });
+    }
+  };
 
-    initializeMedia();
-  }, [propertyId]);
+  initializeAndMigrate();
+}, [propertyId]);
+
 
   // Save temp media to localStorage when it changes
   useEffect(() => {
@@ -978,7 +1013,7 @@ export default function AddMedia({ nextStep, prevStep, propertyId, isEditMode })
       </div>
     );
   };
-
+console.log("propertyId in AddMedia:", propertyId);
   // Function to migrate temp media to actual property
   const migrateTempMedia = async () => {
     if (!isValidObjectId(propertyId) || tempMedia.images.length + tempMedia.videos.length === 0) {
@@ -1111,7 +1146,7 @@ export default function AddMedia({ nextStep, prevStep, propertyId, isEditMode })
               Back to Images
             </button>
             <button 
-              onClick={nextStep} 
+             onClick={() => nextStep(propertyId)}
               className="flex-1 bg-yellow-400 text-black px-6 py-2 rounded-md hover:bg-yellow-500 transition" 
               disabled={uploading}
             >
@@ -1120,7 +1155,7 @@ export default function AddMedia({ nextStep, prevStep, propertyId, isEditMode })
           </div>
           <button 
             className="mt-2 text-gray-500 hover:text-gray-700 text-sm" 
-            onClick={nextStep}
+           onClick={() => nextStep(propertyId)}
           >
             {isTempMode ? "I'll add media later" : "Skip Videos"}
           </button>

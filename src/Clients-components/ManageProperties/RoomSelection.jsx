@@ -206,11 +206,11 @@
 //       try {
 //         setLoading(true);
 //         setError(null);
-        
+
 //         if (propertyId) {
 //           const response = await roomAPI.getRoomTypes(propertyId);
 //           const fetchedRoomTypes = response.data.roomTypes || [];
-          
+
 //           // Merge with defaults, avoiding duplicates
 //           const mergedTypes = [
 //             ...defaultRoomTypes.filter(
@@ -218,13 +218,13 @@
 //             ),
 //             ...fetchedRoomTypes
 //           ];
-          
+
 //           setRoomTypes(mergedTypes);
-          
+
 //           // In edit mode, select all existing room types by default
 //           if (isEditMode) {
 //             setSelectedRooms(fetchedRoomTypes.map(room => room.type));
-            
+
 //             // Also ensure floor configuration is initialized
 //             try {
 //               const floorResponse = await roomAPI.getFloorData(propertyId);
@@ -253,7 +253,7 @@
 //         setLoading(false);
 //       }
 //     };
-    
+
 //     fetchRoomTypes();
 //   }, [propertyId, isEditMode]);
 
@@ -281,7 +281,7 @@
 //       if (propertyId) {
 //         // First save the room types
 //         await roomAPI.createRoomTypes(propertyId, { roomTypes: roomsToSave });
-        
+
 //         // Then save the selected rooms in floorConfig
 //         await roomAPI.saveFloorData(propertyId, {
 //           selectedRooms,
@@ -358,7 +358,7 @@
 //               {selectedRooms.length} selected
 //             </div>
 //           </div>
-          
+
 //           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
 //             {roomTypes.map(room => (
 //               <div
@@ -453,7 +453,7 @@
 //       try {
 //         setLoading(true);
 //         setError(null);
-        
+
 //         if (propertyId) {
 //           const response = await roomAPI.getRoomTypes(propertyId);
 //           const fetchedRoomTypes = response.data.roomTypes || [];
@@ -472,7 +472,7 @@
 //           });
 
 //           setRoomTypes(mergedTypes);
-          
+
 //           if (isEditMode) {
 //             setSelectedRooms(fetchedRoomTypes.map(room => room.type));
 //           }
@@ -489,7 +489,7 @@
 //         setLoading(false);
 //       }
 //     };
-    
+
 //     fetchRoomTypes();
 //   }, [propertyId, isEditMode]);
 
@@ -516,7 +516,7 @@
 //     if (propertyId) {
 //       // First save the room types
 //       await roomAPI.createRoomTypes(propertyId, { roomTypes: roomsToSave });
-      
+
 //       // Then save the selected rooms in floorConfig
 //       await roomAPI.saveFloorData(propertyId, {
 //         selectedRooms,
@@ -587,7 +587,7 @@
 //               {selectedRooms.length} selected
 //             </div>
 //           </div>
-          
+
 //           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
 //             {roomTypes.map(room => (
 //               <div
@@ -661,6 +661,7 @@ import { roomAPI } from "../PropertyController";
 import HostelRoomSelection from "./HostelRoomSelection";
 
 const RoomSelection = ({ nextStep, prevStep, propertyId, isEditMode }) => {
+
   const [selectedRooms, setSelectedRooms] = useState([]);
   const [proceed, setProceed] = useState(false);
   const [roomTypes, setRoomTypes] = useState([]);
@@ -682,19 +683,20 @@ const RoomSelection = ({ nextStep, prevStep, propertyId, isEditMode }) => {
       try {
         setLoading(true);
         setError(null);
-        
+
         if (propertyId) {
+          // Property exists, fetch from API
           const response = await roomAPI.getRoomTypes(propertyId);
           const roomConfig = response.data?.roomConfig || {};
           const fetchedRoomTypes = roomConfig.roomTypes || [];
-          
-          // Merge with defaults
+
+          // Merge with default room types
           const mergedTypes = defaultRoomTypes.map(defaultType => {
             const fetchedType = fetchedRoomTypes.find(f => f.type === defaultType.type);
             return fetchedType || defaultType;
           });
 
-          // Add custom types
+          // Add any custom types not in default
           fetchedRoomTypes.forEach(fetchedType => {
             if (!defaultRoomTypes.some(d => d.type === fetchedType.type)) {
               mergedTypes.push(fetchedType);
@@ -702,13 +704,15 @@ const RoomSelection = ({ nextStep, prevStep, propertyId, isEditMode }) => {
           });
 
           setRoomTypes(mergedTypes);
-          
+
           if (isEditMode) {
             setSelectedRooms(fetchedRoomTypes.map(room => room.type));
           }
         } else {
+          // Temp mode: use defaults and localStorage
           setRoomTypes(defaultRoomTypes);
-          const storedRooms = localStorage.getItem("selectedRooms");
+
+          const storedRooms = localStorage.getItem("tempSelectedRooms");
           setSelectedRooms(storedRooms ? JSON.parse(storedRooms) : []);
         }
       } catch (err) {
@@ -719,10 +723,18 @@ const RoomSelection = ({ nextStep, prevStep, propertyId, isEditMode }) => {
         setLoading(false);
       }
     };
-    
+
     fetchRoomTypes();
   }, [propertyId, isEditMode]);
 
+  // Save temp room selections if propertyId is not yet created
+  useEffect(() => {
+    if (!propertyId) {
+      localStorage.setItem("tempSelectedRooms", JSON.stringify(selectedRooms));
+    }
+  }, [selectedRooms, propertyId]);
+
+  console.log("propertyId in RoomSelection:-", propertyId);
   const saveRoomSelection = async () => {
     setIsSaving(true);
     try {
@@ -763,7 +775,7 @@ const RoomSelection = ({ nextStep, prevStep, propertyId, isEditMode }) => {
   };
 
   const toggleSelection = (type) => {
-    setSelectedRooms(prev => 
+    setSelectedRooms(prev =>
       prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
     );
   };
@@ -811,27 +823,24 @@ const RoomSelection = ({ nextStep, prevStep, propertyId, isEditMode }) => {
               {selectedRooms.length} selected
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {roomTypes.map(room => (
               <div
                 key={room.type}
-                className={`border rounded-lg p-4 flex flex-col items-center cursor-pointer transition-all ${
-                  selectedRooms.includes(room.type) 
-                    ? "bg-yellow-100 border-yellow-400 shadow-md" 
+                className={`border rounded-lg p-4 flex flex-col items-center cursor-pointer transition-all ${selectedRooms.includes(room.type)
+                    ? "bg-yellow-100 border-yellow-400 shadow-md"
                     : "hover:bg-gray-50"
-                }`}
+                  }`}
                 onClick={() => toggleSelection(room.type)}
               >
-                <div className={`grid grid-cols-2 gap-1 w-16 h-16 ${
-                  selectedRooms.includes(room.type) ? "bg-yellow-200" : "bg-gray-100"
-                } rounded-md p-1`}>
+                <div className={`grid grid-cols-2 gap-1 w-16 h-16 ${selectedRooms.includes(room.type) ? "bg-yellow-200" : "bg-gray-100"
+                  } rounded-md p-1`}>
                   {[...Array(Math.min(room.capacity, 4))].map((_, i) => (
                     <div
                       key={i}
-                      className={`${
-                        selectedRooms.includes(room.type) ? "bg-yellow-500" : "bg-gray-300"
-                      } w-full h-full rounded-sm`}
+                      className={`${selectedRooms.includes(room.type) ? "bg-yellow-500" : "bg-gray-300"
+                        } w-full h-full rounded-sm`}
                     />
                   ))}
                   {room.capacity > 4 && (
@@ -863,9 +872,8 @@ const RoomSelection = ({ nextStep, prevStep, propertyId, isEditMode }) => {
             <button
               onClick={handleContinue}
               disabled={selectedRooms.length === 0 || isSaving}
-              className={`bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-6 rounded-md ${
-                selectedRooms.length === 0 || isSaving ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-6 rounded-md ${selectedRooms.length === 0 || isSaving ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               {isSaving ? 'Saving...' : 'Continue'}
             </button>
