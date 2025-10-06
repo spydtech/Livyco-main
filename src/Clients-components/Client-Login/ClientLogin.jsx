@@ -20,18 +20,58 @@ const ClientLogin = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-   const setupRecaptcha = () => {
-  if (!window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(auth,'recaptcha-container', {
-      'size': 'invisible',
-      'callback': (response) => {
-        console.log("reCAPTCHA verified", response);
-      },
-      'expired-callback': () => {
-        console.log("reCAPTCHA expired");
+//    const setupRecaptcha = () => {
+//   if (!window.recaptchaVerifier) {
+//     window.recaptchaVerifier = new RecaptchaVerifier(auth,'recaptcha-container', {
+//       'size': 'invisible',
+//       'callback': (response) => {
+//         console.log("reCAPTCHA verified", response);
+//       },
+//       'expired-callback': () => {
+//         console.log("reCAPTCHA expired");
+//       }
+//     });
+//   }
+// };
+
+  const setupRecaptcha = () => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Clear existing reCAPTCHA if any
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
       }
-    });
-  }
+
+      console.log("Initializing reCAPTCHA...");
+      
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+          console.log("reCAPTCHA verified successfully", response);
+          resolve(response);
+        },
+        'expired-callback': () => {
+          console.log("reCAPTCHA expired");
+          reject(new Error("reCAPTCHA expired. Please try again."));
+        },
+        'error-callback': (error) => {
+          console.error("reCAPTCHA error:", error);
+          reject(new Error("Security verification failed."));
+        }
+      });
+
+      // Render the reCAPTCHA
+      window.recaptchaVerifier.render().then((widgetId) => {
+        console.log("reCAPTCHA widget rendered:", widgetId);
+        resolve(widgetId);
+      }).catch(reject);
+
+    } catch (error) {
+      console.error("Error setting up reCAPTCHA:", error);
+      reject(error);
+    }
+  });
 };
 
 
