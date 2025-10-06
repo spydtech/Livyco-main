@@ -75,48 +75,115 @@ const ClientLogin = () => {
 };
 
 
-   const handleSubmit = async (e) => {
-    e.preventDefault();
+  //  const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setError("");
+
+  //   if (!phone || phone.length !== 10) {
+  //     setError("Please enter a valid 10-digit phone number.");
+  //     return;
+  //   }
+
+  //   try {
+  //     setLoading(true);
+
+  //     // 1. Check with backend if phone exists
+  //     const response = await axios.post(`${API_BASE_URL}/api/auth/send-otp`, { phone });
+      
+  //     if (!response.data.success) {
+  //       setError(response.data.message || "Phone number not registered. Please register first.");
+  //       return;
+  //     }
+
+  //     // 2. Setup Firebase Recaptcha and send OTP
+  //     const phoneNumber = "+91" + phone;
+  //     setupRecaptcha();
+  //     const appVerifier = window.recaptchaVerifier;
+  //     const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+  //     window.confirmationResult = confirmation;
+
+  //     // Store minimal data in sessionStorage for OTP verification
+  //     sessionStorage.setItem('otpVerificationData', JSON.stringify({
+  //       phone,
+  //       userData: response.data.user
+  //     }));
+
+  //     navigate("/client/client-otpverify");
+
+  //   } catch (err) {
+  //     console.error("Error:", err);
+  //     setError(err.response?.data?.message || "Failed to send OTP. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  if (!phone || phone.length !== 10) {
+    setError("Please enter a valid 10-digit phone number.");
+    return;
+  }
+
+  try {
+    setLoading(true);
     setError("");
 
-    if (!phone || phone.length !== 10) {
-      setError("Please enter a valid 10-digit phone number.");
+    // 1. Check with backend if phone exists
+    const response = await axios.post(`${API_BASE_URL}/api/auth/send-otp`, { phone });
+    
+    if (!response.data.success) {
+      setError(response.data.message || "Phone number not registered. Please register first.");
       return;
     }
 
-    try {
-      setLoading(true);
+    // 2. Setup reCAPTCHA with proper error handling
+    await setupRecaptcha();
+    
+    const phoneNumber = "+91" + phone;
+    const appVerifier = window.recaptchaVerifier;
+    
+    // 3. Send OTP via Firebase
+    const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+    window.confirmationResult = confirmation;
 
-      // 1. Check with backend if phone exists
-      const response = await axios.post(`${API_BASE_URL}/api/auth/send-otp`, { phone });
-      
-      if (!response.data.success) {
-        setError(response.data.message || "Phone number not registered. Please register first.");
-        return;
-      }
+    // Store data for OTP verification
+    sessionStorage.setItem('otpVerificationData', JSON.stringify({
+      phone,
+      userData: response.data.user
+    }));
 
-      // 2. Setup Firebase Recaptcha and send OTP
-      const phoneNumber = "+91" + phone;
-      setupRecaptcha();
-      const appVerifier = window.recaptchaVerifier;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-      window.confirmationResult = confirmation;
+    navigate("/client/client-otpverify");
 
-      // Store minimal data in sessionStorage for OTP verification
-      sessionStorage.setItem('otpVerificationData', JSON.stringify({
-        phone,
-        userData: response.data.user
-      }));
-
-      navigate("/client/client-otpverify");
-
-    } catch (err) {
-      console.error("Error:", err);
+  } catch (err) {
+    console.error("Error:", err);
+    
+    // Handle specific Firebase errors
+    if (err.code === 'auth/invalid-phone-number') {
+      setError("Invalid phone number format.");
+    } else if (err.code === 'auth/quota-exceeded') {
+      setError("Too many attempts. Please try again later.");
+    } else if (err.message?.includes('site key') || err.message?.includes('api.js')) {
+      setError("Security system error. Please refresh the page.");
+    } else {
       setError(err.response?.data?.message || "Failed to send OTP. Please try again.");
-    } finally {
-      setLoading(false);
     }
-  };
+    
+    // Clean up reCAPTCHA on error
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      } catch (cleanupError) {
+        console.error("Error cleaning reCAPTCHA:", cleanupError);
+      }
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
