@@ -598,7 +598,7 @@ const ClientLogin = () => {
             Sign up with Google
           </button>
            <div id="recaptcha-container" className="mt-4 mb-4"></div>
-
+          <div class="g-recaptcha" data-sitekey="6LcoCoorAAAAADiEb6OVg_NZSX8kNIZl91NYhToW" data-action="LOGIN"></div>
         </div>
       </div>
     </div>
