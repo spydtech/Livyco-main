@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator, initializeRecaptchaConfig  } from "firebase/auth";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator  } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBxKGVr5ffZ5q_KglebLOQPKCjdoCzdpMY",
@@ -14,9 +14,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 // Initialize reCAPTCHA configuration
-initializeRecaptchaConfig(auth, {
-  siteKey: "gMY32VUo5l4IzxwtaIPiflcRuialfKBkVXVRDECMgGaCZ0hlfq", // Get this from Firebase Console
-});
+// initializeRecaptchaConfig(auth, {
+//   siteKey: "gMY32VUo5l4IzxwtaIPiflcRuialfKBkVXVRDECMgGaCZ0hlfq", // Get this from Firebase Console
+// });
 
 // if (window.location.hostname === 'localhost') {
 //   connectAuthEmulator(auth, 'http://localhost:9099');
