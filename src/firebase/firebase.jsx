@@ -53,7 +53,7 @@ const auth = getAuth(app);
 // Initialize App Check for production
 if (process.env.NODE_ENV === 'production') {
   const appCheck = initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider('your-recaptcha-v3-site-key-from-firebase-console'),
+    provider: new ReCaptchaV3Provider('763BD0D6-8557-40D1-B764-2E81C4D2DE98'),
     isTokenAutoRefreshEnabled: true
   });
 }
