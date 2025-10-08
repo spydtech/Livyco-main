@@ -597,8 +597,8 @@ const ClientLogin = () => {
             <FcGoogle className="text-2xl mr-2" />
             Sign up with Google
           </button>
-           <div id="recaptcha-container" className="mt-4 mb-4"></div>
-          <div class="g-recaptcha" data-sitekey="6LcoCoorAAAAADiEb6OVg_NZSX8kNIZl91NYhToW" data-action="LOGIN"></div>
+           <div id="recaptcha-container" data-sitekey="6LcoCoorAAAAADiEb6OVg_NZSX8kNIZl91NYhToW" className="mt-4 mb-4"></div>
+          {/* <div class="g-recaptcha" data-sitekey="6LcoCoorAAAAADiEb6OVg_NZSX8kNIZl91NYhToW" data-action="LOGIN"></div> */}
         </div>
       </div>
     </div>
