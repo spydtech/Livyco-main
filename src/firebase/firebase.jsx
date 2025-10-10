@@ -14,6 +14,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Initialize App Check for production
+if (process.env.NODE_ENV === 'production') {
+  const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('763BD0D6-8557-40D1-B764-2E81C4D2DE98'),
+    isTokenAutoRefreshEnabled: true
+  });
+}
+
+// Emulator only in development
 if (window.location.hostname === 'localhost') {
   connectAuthEmulator(auth, 'http://localhost:9099');
 }
@@ -64,3 +73,6 @@ console.log("FIREBASE CONFIG:", firebaseConfig); // should NOT be undefined
 // }
 
 // export { auth, RecaptchaVerifier, signInWithPhoneNumber };
+
+// export { auth, RecaptchaVerifier, signInWithPhoneNumber };
+
