@@ -719,12 +719,10 @@
 // export default OTPVerification;
 
 
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";
 import { API_BASE_URL } from "../PropertyController";
-import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase/firebase";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -840,29 +838,16 @@ const OTPVerification = () => {
         throw new Error(checkResponse.data.message || "User not found");
       }
 
-      // Setup recaptcha for resend
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-      }
-
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        'recaptcha-container-resend',
-        {
-          'size': 'invisible',
-        },
-        auth
-      );
-
-      const phoneNumberWithCode = "+91" + phoneNumber;
-      const confirmation = await signInWithPhoneNumber(
-        auth, 
-        phoneNumberWithCode, 
-        window.recaptchaVerifier
-      );
+      // Navigate back to login to resend OTP
+      sessionStorage.setItem('otpVerificationData', JSON.stringify({
+        phone: phoneNumber,
+        userData: checkResponse.data.user
+      }));
       
-      window.confirmationResult = confirmation;
-      setCountdown(60);
-      setError("success:OTP resent successfully!");
+      setError("success:Redirecting to resend OTP...");
+      setTimeout(() => {
+        navigate("/client/client-login");
+      }, 1000);
 
     } catch (err) {
       console.error("Error resending OTP", err);
@@ -992,9 +977,6 @@ const OTPVerification = () => {
             <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
             <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
           </p>
-
-          {/* Hidden reCAPTCHA container for resend */}
-          <div id="recaptcha-container-resend" className="hidden"></div>
         </div>
       </div>
     </div>

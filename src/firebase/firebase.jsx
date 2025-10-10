@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+// import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator  } from "firebase/auth";
 
 const firebaseConfig = {
@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Configure auth settings
-auth.settings.appVerificationDisabledForTesting = false; // Set to true only for testing
+// auth.settings.appVerificationDisabledForTesting = false; // Set to true only for testing
 
 console.log("Firebase initialized successfully");
 console.log("Auth instance:", auth);
