@@ -434,6 +434,294 @@
 
 
 
+// import React, { useState, useEffect } from 'react';
+// import { useNavigate, Link } from 'react-router-dom';
+// import axios from "axios";
+// import { API_BASE_URL } from "../PropertyController";
+
+// const OTPVerification = () => {
+//   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [phoneNumber, setPhoneNumber] = useState("");
+//   const [userData, setUserData] = useState(null);
+//   const [countdown, setCountdown] = useState(0);
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
+//     if (!otpData || !otpData.phone) {
+//       navigate("/client/client-login");
+//       return;
+//     }
+    
+//     setPhoneNumber(otpData.phone);
+//     setUserData(otpData.userData || {});
+//     setCountdown(60); 
+//   }, [navigate]);
+
+//   // Countdown timer for resend OTP
+//   useEffect(() => {
+//     if (countdown > 0) {
+//       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+//       return () => clearTimeout(timer);
+//     }
+//   }, [countdown]);
+
+//   const handleVerify = async (e) => {
+//     e.preventDefault();
+//     setError("");
+
+//     const otpValue = otp.join('');
+//     if (otpValue.length !== 6) {
+//       setError("Please enter a valid 6-digit OTP.");
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+      
+//       // Verify OTP with Firebase
+//       if (!window.confirmationResult) {
+//         throw new Error("OTP session expired. Please request a new OTP.");
+//       }
+
+//       console.log("Verifying OTP with Firebase...");
+      
+//       // Confirm OTP with Firebase
+//       const result = await window.confirmationResult.confirm(otpValue);
+      
+//       // Get Firebase ID token
+//       const idToken = await result.user.getIdToken();
+//       console.log("Firebase ID token received");
+      
+//       // Verify with your backend
+//       const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-otp`, {
+//         idToken
+//       });
+
+//       if (!response.data.success) {
+//         throw new Error(response.data.message || "OTP verification failed");
+//       }
+
+//       // Store tokens and user data
+//       localStorage.setItem('token', response.data.token);
+//       localStorage.setItem('user', JSON.stringify(response.data.user));
+
+//       // Clear OTP verification data
+//       sessionStorage.removeItem('otpVerificationData');
+//       window.confirmationResult = null;
+
+//       // Show success message
+//       setError("success:Login successful! Redirecting...");
+      
+//       // Redirect to dashboard after short delay
+//       setTimeout(() => {
+//         navigate("/client/dashboard");
+//       }, 1500);
+
+//     } catch (err) {
+//       console.error("OTP verification failed", err);
+      
+//       // Handle Firebase specific errors
+//       if (err.code === 'auth/invalid-verification-code') {
+//         setError("Invalid OTP. Please try again.");
+//       } else if (err.code === 'auth/code-expired') {
+//         setError("OTP has expired. Please request a new one.");
+//       } else if (err.code === 'auth/too-many-requests') {
+//         setError("Too many attempts. Please try again later.");
+//       } else {
+//         setError(err.response?.data?.message || err.message || "Invalid OTP. Please try again.");
+//       }
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleResend = async () => {
+//     if (countdown > 0) return;
+    
+//     setError("");
+//     setLoading(true);
+
+//     try {
+//       if (!phoneNumber) {
+//         throw new Error("Phone number not found.");
+//       }
+
+//       // Check user exists again
+//       const checkResponse = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { 
+//         phone: phoneNumber 
+//       });
+
+//       if (!checkResponse.data.success) {
+//         throw new Error(checkResponse.data.message || "User not found");
+//       }
+
+//       // Resend OTP via Firebase
+//       if (window.confirmationResult) {
+//         // For resend, we need to set up recaptcha again
+//         if (window.recaptchaVerifier) {
+//           window.recaptchaVerifier.clear();
+//           window.recaptchaVerifier = null;
+//         }
+
+//         // Setup recaptcha again
+//         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+//           'size': 'invisible',
+//         });
+        
+//         await window.recaptchaVerifier.render();
+        
+//         const phoneNumberWithCode = "+91" + phoneNumber;
+//         const appVerifier = window.recaptchaVerifier;
+        
+//         const confirmation = await signInWithPhoneNumber(auth, phoneNumberWithCode, appVerifier);
+//         window.confirmationResult = confirmation;
+        
+//         setCountdown(60); // Reset countdown
+//         setError("success:OTP resent successfully!");
+//       } else {
+//         throw new Error("Unable to resend OTP. Please try logging in again.");
+//       }
+//     } catch (err) {
+//       console.error("Error resending OTP", err);
+//       setError(err.response?.data?.message || err.message || "Failed to resend OTP. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleOtpChange = (element, index) => {
+//     if (isNaN(element.value)) return false;
+
+//     const newOtp = [...otp];
+//     newOtp[index] = element.value;
+//     setOtp(newOtp);
+
+//     // Auto-focus next input
+//     if (element.value && element.nextSibling) {
+//       element.nextSibling.focus();
+//     }
+
+//     // Auto-submit when all fields are filled
+//     if (element.value && index === 5) {
+//       const otpValue = newOtp.join('');
+//       if (otpValue.length === 6) {
+//         document.getElementById('verify-btn').click();
+//       }
+//     }
+//   };
+
+//   if (!phoneNumber) {
+//     return (
+//       <div className="h-screen flex items-center justify-center bg-blue-900">
+//         <div className="text-white text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+//           <p>Loading...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="h-screen flex items-center justify-center bg-blue-900">
+//       <div className="flex items-center justify-center max-w-5xl w-full px-6">
+//         {/* OTP Verification Box */}
+//         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+//           <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
+//           <p className="text-gray-700 text-center font-semibold">OTP Verification</p>
+//           <p className="text-gray-600 text-center mb-6">
+//             Enter 6-digit OTP sent to <span className="font-semibold">+91 {phoneNumber}</span>
+//           </p>
+
+//           {error && (
+//             <div className={`p-3 rounded mb-4 text-center ${
+//               error.includes("success") 
+//                 ? "bg-green-100 border border-green-400 text-green-700" 
+//                 : "bg-red-100 border border-red-400 text-red-700"
+//             }`}>
+//               {error.replace("success:", "")}
+//             </div>
+//           )}
+
+//           <form onSubmit={handleVerify} className="space-y-6">
+//             <div className="flex justify-between space-x-2">
+//               {otp.map((data, index) => (
+//                 <input
+//                   key={index}
+//                   type="text"
+//                   maxLength="1"
+//                   value={data}
+//                   onChange={(e) => handleOtpChange(e.target, index)}
+//                   onKeyDown={(e) => {
+//                     // Handle backspace
+//                     if (e.key === 'Backspace' && !otp[index] && index > 0) {
+//                       const prevInput = document.querySelector(`input[data-index="${index - 1}"]`);
+//                       if (prevInput) prevInput.focus();
+//                     }
+//                   }}
+//                   data-index={index}
+//                   className="w-12 h-12 border-2 rounded text-center text-xl font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+//                   disabled={loading}
+//                 />
+//               ))}
+//             </div>
+
+//             <div className="text-center">
+//               {countdown > 0 ? (
+//                 <p className="text-gray-600">
+//                   Resend OTP in {countdown} seconds
+//                 </p>
+//               ) : (
+//                 <button
+//                   type="button"
+//                   onClick={handleResend}
+//                   disabled={loading}
+//                   className="text-blue-600 hover:text-blue-800 disabled:opacity-50 font-medium"
+//                 >
+//                   Resend OTP
+//                 </button>
+//               )}
+//             </div>
+
+//             <button
+//               id="verify-btn"
+//               type="submit"
+//               disabled={loading || otp.join('').length !== 6}
+//               className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
+//             >
+//               {loading ? 'Verifying...' : 'VERIFY OTP'}
+//             </button>
+
+//             <Link to="/client/client-login">
+//               <button
+//                 type="button"
+//                 disabled={loading}
+//                 className="w-full bg-gray-200 hover:bg-gray-300 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
+//               >
+//                 Back to Login
+//               </button>
+//             </Link>
+//           </form>
+
+//           <p className="text-xs text-gray-500 mt-6 text-center">
+//             By signing up, you agree to our{" "}
+//             <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
+//             <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
+//           </p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default OTPVerification;
+
+
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";

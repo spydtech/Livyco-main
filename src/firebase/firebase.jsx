@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator  } from "firebase/auth";
 
 const firebaseConfig = {
