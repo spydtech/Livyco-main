@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Configure auth settings
-auth.settings.appVerificationDisabledForTesting = false; // Set to true only for testing
+// auth.settings.appVerificationDisabledForTesting = false; // Set to true only for testing
 
 console.log("Firebase initialized successfully");
 console.log("Auth instance:", auth);
