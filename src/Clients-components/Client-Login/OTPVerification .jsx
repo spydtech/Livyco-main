@@ -721,11 +721,11 @@
 
 
 
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";
 import { API_BASE_URL } from "../PropertyController";
+import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase/firebase";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -846,32 +846,29 @@ const OTPVerification = () => {
         throw new Error(checkResponse.data.message || "User not found");
       }
 
-      // Resend OTP via Firebase
-      if (window.confirmationResult) {
-        // For resend, we need to set up recaptcha again
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = null;
-        }
-
-        // Setup recaptcha again
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      // Setup recaptcha for resend
+      const recaptchaVerifier = new RecaptchaVerifier(
+        'recaptcha-container-resend', 
+        {
           'size': 'invisible',
-        });
-        
-        await window.recaptchaVerifier.render();
-        
-        const phoneNumberWithCode = "+91" + phoneNumber;
-        const appVerifier = window.recaptchaVerifier;
-        
-        const confirmation = await signInWithPhoneNumber(auth, phoneNumberWithCode, appVerifier);
-        window.confirmationResult = confirmation;
-        
-        setCountdown(60); // Reset countdown
-        setError("success:OTP resent successfully!");
-      } else {
-        throw new Error("Unable to resend OTP. Please try logging in again.");
-      }
+        }, 
+        auth
+      );
+
+      const phoneNumberWithCode = "+91" + phoneNumber;
+      const appVerifier = recaptchaVerifier;
+      
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumberWithCode, appVerifier);
+      window.confirmationResult = confirmation;
+      
+      setCountdown(60); // Reset countdown
+      setError("success:OTP resent successfully!");
+
+      // Cleanup recaptcha
+      setTimeout(() => {
+        recaptchaVerifier.clear();
+      }, 1000);
+
     } catch (err) {
       console.error("Error resending OTP", err);
       setError(err.response?.data?.message || err.message || "Failed to resend OTP. Please try again.");
@@ -896,8 +893,16 @@ const OTPVerification = () => {
     if (element.value && index === 5) {
       const otpValue = newOtp.join('');
       if (otpValue.length === 6) {
-        document.getElementById('verify-btn').click();
+        handleVerify(new Event('submit'));
       }
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      // Move focus to previous input on backspace
+      const prevInput = document.querySelector(`input[data-index="${index - 1}"]`);
+      if (prevInput) prevInput.focus();
     }
   };
 
@@ -939,19 +944,16 @@ const OTPVerification = () => {
                 <input
                   key={index}
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength="1"
                   value={data}
                   onChange={(e) => handleOtpChange(e.target, index)}
-                  onKeyDown={(e) => {
-                    // Handle backspace
-                    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-                      const prevInput = document.querySelector(`input[data-index="${index - 1}"]`);
-                      if (prevInput) prevInput.focus();
-                    }
-                  }}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
                   data-index={index}
-                  className="w-12 h-12 border-2 rounded text-center text-xl font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                  className="w-12 h-12 border-2 border-gray-300 rounded text-center text-xl font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
                   disabled={loading}
+                  autoFocus={index === 0}
                 />
               ))}
             </div>
@@ -974,7 +976,6 @@ const OTPVerification = () => {
             </div>
 
             <button
-              id="verify-btn"
               type="submit"
               disabled={loading || otp.join('').length !== 6}
               className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
@@ -998,6 +999,9 @@ const OTPVerification = () => {
             <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
             <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
           </p>
+
+          {/* Hidden reCAPTCHA container for resend */}
+          <div id="recaptcha-container-resend" className="hidden"></div>
         </div>
       </div>
     </div>

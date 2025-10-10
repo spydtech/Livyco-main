@@ -619,9 +619,7 @@
 
 
 
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { auth } from "../../firebase/firebase";
@@ -634,40 +632,39 @@ const ClientLogin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const recaptchaVerifierRef = useRef(null);
 
-  // Initialize reCAPTCHA
+  // Initialize reCAPTCHA - SIMPLIFIED VERSION
   const setupRecaptcha = () => {
     return new Promise((resolve, reject) => {
       try {
-        // Clear existing reCAPTCHA if any
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = null;
+        console.log("Setting up reCAPTCHA...");
+        
+        // Clear any existing reCAPTCHA
+        if (recaptchaVerifierRef.current) {
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
         }
 
-        console.log("Initializing reCAPTCHA...");
-        
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible',
-          'callback': (response) => {
-            console.log("reCAPTCHA verified successfully", response);
-            resolve(response);
-          },
-          'expired-callback': () => {
-            console.log("reCAPTCHA expired");
-            reject(new Error("reCAPTCHA expired. Please try again."));
-          },
-          'error-callback': (error) => {
-            console.error("reCAPTCHA error:", error);
-            reject(new Error("Security verification failed."));
-          }
-        });
+        // Create new reCAPTCHA verifier
+        recaptchaVerifierRef.current = new RecaptchaVerifier(
+          'recaptcha-container', 
+          {
+            'size': 'invisible',
+            'callback': (response) => {
+              console.log("reCAPTCHA solved:", response);
+              resolve(response);
+            },
+            'expired-callback': () => {
+              console.log("reCAPTCHA expired");
+              reject(new Error("reCAPTCHA expired. Please try again."));
+            }
+          }, 
+          auth
+        );
 
-        // Render the reCAPTCHA
-        window.recaptchaVerifier.render().then((widgetId) => {
-          console.log("reCAPTCHA widget rendered:", widgetId);
-          resolve(widgetId);
-        }).catch(reject);
+        console.log("reCAPTCHA verifier created");
+        resolve(recaptchaVerifierRef.current);
 
       } catch (error) {
         console.error("Error setting up reCAPTCHA:", error);
@@ -690,6 +687,7 @@ const ClientLogin = () => {
       setError("");
 
       // 1. Check with backend if user exists and is a client
+      console.log("Checking user existence...");
       const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { phone });
       
       if (!response.data.success) {
@@ -697,11 +695,13 @@ const ClientLogin = () => {
         return;
       }
 
+      console.log("User found, setting up reCAPTCHA...");
+
       // 2. Setup reCAPTCHA
       await setupRecaptcha();
       
       const phoneNumber = "+91" + phone;
-      const appVerifier = window.recaptchaVerifier;
+      const appVerifier = recaptchaVerifierRef.current;
       
       // 3. Send OTP via Firebase
       console.log("Sending OTP to:", phoneNumber);
@@ -718,7 +718,7 @@ const ClientLogin = () => {
       navigate("/client/client-otpverify");
 
     } catch (err) {
-      console.error("Error:", err);
+      console.error("Error in handleSubmit:", err);
       
       // Handle specific Firebase errors
       if (err.code === 'auth/invalid-phone-number') {
@@ -727,17 +727,19 @@ const ClientLogin = () => {
         setError("Too many attempts. Please try again later.");
       } else if (err.code === 'auth/too-many-requests') {
         setError("Too many requests. Please try again later.");
-      } else if (err.message?.includes('site key') || err.message?.includes('api.js')) {
-        setError("Security system error. Please refresh the page.");
+      } else if (err.code === 'auth/network-request-failed') {
+        setError("Network error. Please check your internet connection.");
+      } else if (err.message?.includes('reCAPTCHA')) {
+        setError("Security verification failed. Please refresh the page and try again.");
       } else {
         setError(err.response?.data?.message || err.message || "Failed to send OTP. Please try again.");
       }
       
       // Clean up reCAPTCHA on error
-      if (window.recaptchaVerifier) {
+      if (recaptchaVerifierRef.current) {
         try {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = null;
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
         } catch (cleanupError) {
           console.error("Error cleaning reCAPTCHA:", cleanupError);
         }
@@ -747,11 +749,20 @@ const ClientLogin = () => {
     }
   };
 
+  // Cleanup on component unmount
+  React.useEffect(() => {
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+      }
+    };
+  }, []);
+
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
-      <div className="flex items-center md:max-w-5xl w-full lg:px-6 md:px-6  md:space-x-20 lg:space-x-40">
+      <div className="flex items-center md:max-w-5xl w-full lg:px-6 md:px-6 md:space-x-20 lg:space-x-40">
         {/* Left Side Image */}
-        <div className="w-1/2 hidden md:block md:-ml-10 -ml-0" >
+        <div className="w-1/2 hidden md:block md:-ml-10 -ml-0">
           {/* Add your image here */}
         </div>
         
@@ -759,18 +770,22 @@ const ClientLogin = () => {
         <div className="bg-white p-8 rounded-lg shadow-lg w-full md:w-1/3">
           <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <label className="text-sm text-gray-700">Mobile Number</label>
+            <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
             <input
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
               placeholder="Enter your 10-digit mobile number"
-              className="w-full p-2 border rounded mt-1"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               maxLength={10}
               required
             />
             
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
             
             <p className="text-xs text-gray-500 mt-2">
               By signing up, you agree to our{" "}
@@ -779,8 +794,8 @@ const ClientLogin = () => {
             </p>
             
             <Link to="/client/register">
-              <p className="text-xs text-gray-500" >
-                If you don't have an account? {""}
+              <p className="text-xs text-gray-500 text-center mt-2">
+                If you don't have an account?{" "}
                 <span className="text-blue-500 cursor-pointer hover:underline">Register</span>
               </p>
             </Link>
@@ -788,9 +803,19 @@ const ClientLogin = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 mt-4 rounded disabled:opacity-50"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded-lg disabled:opacity-50 transition duration-200"
             >
-              {loading ? 'Sending OTP...' : 'SEND OTP'}
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Sending OTP...
+                </span>
+              ) : (
+                'SEND OTP'
+              )}
             </button>
           </form>
 
@@ -800,12 +825,16 @@ const ClientLogin = () => {
             <hr className="flex-grow border-gray-300" />
           </div>
 
-          <button className="w-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-black font-semibold py-2 rounded">
+          <button 
+            type="button"
+            className="w-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg transition duration-200"
+          >
             <FcGoogle className="text-2xl mr-2" />
             Sign up with Google
           </button>
           
-          <div id="recaptcha-container" className="mt-4 mb-4"></div>
+          {/* reCAPTCHA Container - Make sure it exists in DOM */}
+          <div id="recaptcha-container" className="mt-4"></div>
         </div>
       </div>
     </div>

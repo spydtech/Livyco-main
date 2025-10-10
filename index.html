@@ -1,5 +1,5 @@
-<!doctype html>
-<html lang="en">
+{% comment %} <!doctype html> {% endcomment %}
+{% comment %} <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -15,7 +15,27 @@
     <script src="https://www.google.com/recaptcha/enterprise.js?render=6LexXjIrAAAAADbUaM8y-MnpuHsWiARH-OVq37do"></script> {% endcomment %}
     <!-- Your code -->
    
-  
+  {% comment %} </body>
+</html> {% endcomment %} {% endcomment %}
 
+
+
+
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Livyco</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- reCAPTCHA containers -->
+    <div id="recaptcha-container"></div>
+    <div id="recaptcha-container-resend" style="display: none;"></div>
+    
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
