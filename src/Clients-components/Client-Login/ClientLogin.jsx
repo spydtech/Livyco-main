@@ -618,8 +618,7 @@
 
 
 
-
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { auth } from "../../firebase/firebase";
@@ -632,23 +631,18 @@ const ClientLogin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const recaptchaVerifierRef = useRef(null);
 
-  // Initialize reCAPTCHA - SIMPLIFIED VERSION
-  const setupRecaptcha = () => {
+  const setupRecaptcha = (phoneNumber) => {
     return new Promise((resolve, reject) => {
       try {
-        console.log("Setting up reCAPTCHA...");
-        
         // Clear any existing reCAPTCHA
-        if (recaptchaVerifierRef.current) {
-          recaptchaVerifierRef.current.clear();
-          recaptchaVerifierRef.current = null;
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
         }
 
         // Create new reCAPTCHA verifier
-        recaptchaVerifierRef.current = new RecaptchaVerifier(
-          'recaptcha-container', 
+        window.recaptchaVerifier = new RecaptchaVerifier(
+          'recaptcha-container',
           {
             'size': 'invisible',
             'callback': (response) => {
@@ -656,18 +650,15 @@ const ClientLogin = () => {
               resolve(response);
             },
             'expired-callback': () => {
-              console.log("reCAPTCHA expired");
               reject(new Error("reCAPTCHA expired. Please try again."));
             }
-          }, 
+          },
           auth
         );
 
-        console.log("reCAPTCHA verifier created");
-        resolve(recaptchaVerifierRef.current);
-
+        resolve(window.recaptchaVerifier);
       } catch (error) {
-        console.error("Error setting up reCAPTCHA:", error);
+        console.error("reCAPTCHA setup error:", error);
         reject(error);
       }
     });
@@ -687,7 +678,6 @@ const ClientLogin = () => {
       setError("");
 
       // 1. Check with backend if user exists and is a client
-      console.log("Checking user existence...");
       const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { phone });
       
       if (!response.data.success) {
@@ -695,16 +685,13 @@ const ClientLogin = () => {
         return;
       }
 
-      console.log("User found, setting up reCAPTCHA...");
-
       // 2. Setup reCAPTCHA
       await setupRecaptcha();
       
       const phoneNumber = "+91" + phone;
-      const appVerifier = recaptchaVerifierRef.current;
+      const appVerifier = window.recaptchaVerifier;
       
       // 3. Send OTP via Firebase
-      console.log("Sending OTP to:", phoneNumber);
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmation;
 
@@ -714,11 +701,10 @@ const ClientLogin = () => {
         userData: response.data.user
       }));
 
-      console.log("OTP sent successfully, navigating to verification...");
       navigate("/client/client-otpverify");
 
     } catch (err) {
-      console.error("Error in handleSubmit:", err);
+      console.error("Error:", err);
       
       // Handle specific Firebase errors
       if (err.code === 'auth/invalid-phone-number') {
@@ -736,27 +722,13 @@ const ClientLogin = () => {
       }
       
       // Clean up reCAPTCHA on error
-      if (recaptchaVerifierRef.current) {
-        try {
-          recaptchaVerifierRef.current.clear();
-          recaptchaVerifierRef.current = null;
-        } catch (cleanupError) {
-          console.error("Error cleaning reCAPTCHA:", cleanupError);
-        }
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
       }
     } finally {
       setLoading(false);
     }
   };
-
-  // Cleanup on component unmount
-  React.useEffect(() => {
-    return () => {
-      if (recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current.clear();
-      }
-    };
-  }, []);
 
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
@@ -833,7 +805,7 @@ const ClientLogin = () => {
             Sign up with Google
           </button>
           
-          {/* reCAPTCHA Container - Make sure it exists in DOM */}
+          {/* reCAPTCHA Container */}
           <div id="recaptcha-container" className="mt-4"></div>
         </div>
       </div>

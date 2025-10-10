@@ -720,7 +720,6 @@
 
 
 
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";
@@ -732,7 +731,6 @@ const OTPVerification = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [userData, setUserData] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
 
@@ -744,7 +742,6 @@ const OTPVerification = () => {
     }
     
     setPhoneNumber(otpData.phone);
-    setUserData(otpData.userData || {});
     setCountdown(60); 
   }, [navigate]);
 
@@ -757,7 +754,7 @@ const OTPVerification = () => {
   }, [countdown]);
 
   const handleVerify = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
 
     const otpValue = otp.join('');
@@ -774,14 +771,11 @@ const OTPVerification = () => {
         throw new Error("OTP session expired. Please request a new OTP.");
       }
 
-      console.log("Verifying OTP with Firebase...");
-      
       // Confirm OTP with Firebase
       const result = await window.confirmationResult.confirm(otpValue);
       
       // Get Firebase ID token
       const idToken = await result.user.getIdToken();
-      console.log("Firebase ID token received");
       
       // Verify with your backend
       const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-otp`, {
@@ -847,27 +841,28 @@ const OTPVerification = () => {
       }
 
       // Setup recaptcha for resend
-      const recaptchaVerifier = new RecaptchaVerifier(
-        'recaptcha-container-resend', 
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        'recaptcha-container-resend',
         {
           'size': 'invisible',
-        }, 
+        },
         auth
       );
 
       const phoneNumberWithCode = "+91" + phoneNumber;
-      const appVerifier = recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(
+        auth, 
+        phoneNumberWithCode, 
+        window.recaptchaVerifier
+      );
       
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumberWithCode, appVerifier);
       window.confirmationResult = confirmation;
-      
-      setCountdown(60); // Reset countdown
+      setCountdown(60);
       setError("success:OTP resent successfully!");
-
-      // Cleanup recaptcha
-      setTimeout(() => {
-        recaptchaVerifier.clear();
-      }, 1000);
 
     } catch (err) {
       console.error("Error resending OTP", err);
@@ -893,14 +888,13 @@ const OTPVerification = () => {
     if (element.value && index === 5) {
       const otpValue = newOtp.join('');
       if (otpValue.length === 6) {
-        handleVerify(new Event('submit'));
+        handleVerify();
       }
     }
   };
 
   const handleKeyDown = (e, index) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      // Move focus to previous input on backspace
       const prevInput = document.querySelector(`input[data-index="${index - 1}"]`);
       if (prevInput) prevInput.focus();
     }
@@ -920,7 +914,6 @@ const OTPVerification = () => {
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
       <div className="flex items-center justify-center max-w-5xl w-full px-6">
-        {/* OTP Verification Box */}
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
           <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
           <p className="text-gray-700 text-center font-semibold">OTP Verification</p>
