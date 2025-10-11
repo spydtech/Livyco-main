@@ -988,7 +988,6 @@
 
 
 
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";
@@ -999,7 +998,6 @@ const OTPVerification = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [userData, setUserData] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
 
@@ -1011,7 +1009,6 @@ const OTPVerification = () => {
     }
     
     setPhoneNumber(otpData.phone);
-    setUserData(otpData.userData || {});
     setCountdown(60); 
   }, [navigate]);
 
@@ -1036,23 +1033,23 @@ const OTPVerification = () => {
     try {
       setLoading(true);
       
-      // Get confirmation result from session storage
+      // Get confirmation result
       const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
       if (!otpData || !window.confirmationResult) {
         throw new Error("OTP session expired. Please request a new OTP.");
       }
 
-      console.log("Verifying OTP with Firebase...");
+      console.log("🔐 Verifying OTP with Firebase...");
       
       // Confirm OTP with Firebase
       const result = await window.confirmationResult.confirm(otpValue);
       
       // Get Firebase ID token
       const idToken = await result.user.getIdToken();
-      console.log("Firebase ID token received:", idToken);
+      console.log("✅ Firebase ID token received");
       
       // Verify with your backend
-      console.log("Sending to backend for verification...");
+      console.log("🔄 Sending to backend for verification...");
       const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-otp`, {
         idToken
       });
@@ -1069,58 +1066,41 @@ const OTPVerification = () => {
       sessionStorage.removeItem('otpVerificationData');
       window.confirmationResult = null;
 
-      // Show success message
+      console.log("✅ Login successful!");
       setError("success:Login successful! Redirecting...");
       
-      // Redirect to dashboard after short delay
+      // Redirect to dashboard
       setTimeout(() => {
         navigate("/client/dashboard");
-      }, 2500);
+      }, 2000);
 
     } catch (err) {
-      console.error("OTP verification failed", err);
+      console.error("❌ OTP verification failed", err);
       
-      // Handle Firebase specific errors
+      let errorMessage = "OTP verification failed";
+      
       if (err.code === 'auth/invalid-verification-code') {
-        setError("Invalid OTP. Please try again.");
+        errorMessage = "Invalid OTP. Please check and try again.";
       } else if (err.code === 'auth/code-expired') {
-        setError("OTP has expired. Please request a new one.");
+        errorMessage = "OTP has expired. Please request a new one.";
       } else if (err.code === 'auth/too-many-requests') {
-        setError("Too many attempts. Please try again later.");
-      } else if (err.code === 'auth/error-code:-39') {
-        setError("Service temporarily unavailable. Please try again.");
+        errorMessage = "Too many attempts. Please try again in 5 minutes.";
       } else if (err.response?.status === 401) {
-        setError("Authentication failed. Please try logging in again.");
+        errorMessage = "Authentication failed. Please try logging in again.";
       } else if (err.response?.status === 500) {
-        setError("Server error. Please try again later.");
+        errorMessage = "Server error. Please try again later.";
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
       } else {
-        setError(err.response?.data?.message || err.message || "Invalid OTP. Please try again.");
+        errorMessage = err.message || "Something went wrong. Please try again.";
       }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    if (countdown > 0) return;
-    
-    setError("");
-    setLoading(true);
-
-    try {
-      if (!phoneNumber) {
-        throw new Error("Phone number not found.");
-      }
-
-      // Navigate back to login to resend OTP
-      setError("success:Redirecting to resend OTP...");
-      setTimeout(() => {
-        navigate("/client/client-login");
-      }, 1000);
-
-    } catch (err) {
-      console.error("Error resending OTP", err);
-      setError(err.response?.data?.message || err.message || "Failed to resend OTP. Please try again.");
+      
+      setError(errorMessage);
+      
+      // Clear OTP fields on error
+      setOtp(["", "", "", "", "", ""]);
+      const firstInput = document.querySelector('input[data-index="0"]');
+      if (firstInput) firstInput.focus();
     } finally {
       setLoading(false);
     }
@@ -1154,23 +1134,11 @@ const OTPVerification = () => {
     }
   };
 
-  if (!phoneNumber) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-blue-900">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
       <div className="flex items-center justify-center max-w-5xl w-full px-6">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
-          <p className="text-gray-700 text-center font-semibold">OTP Verification</p>
+          <h2 className="text-2xl font-semibold mb-4 text-center">OTP Verification</h2>
           <p className="text-gray-600 text-center mb-6">
             Enter 6-digit OTP sent to <span className="font-semibold">+91 {phoneNumber}</span>
           </p>
@@ -1205,23 +1173,6 @@ const OTPVerification = () => {
               ))}
             </div>
 
-            <div className="text-center">
-              {countdown > 0 ? (
-                <p className="text-gray-600">
-                  Resend OTP in {countdown} seconds
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={loading}
-                  className="text-blue-600 hover:text-blue-800 disabled:opacity-50 font-medium"
-                >
-                  Resend OTP
-                </button>
-              )}
-            </div>
-
             <button
               type="submit"
               disabled={loading || otp.join('').length !== 6}
@@ -1240,12 +1191,6 @@ const OTPVerification = () => {
               </button>
             </Link>
           </form>
-
-          <p className="text-xs text-gray-500 mt-6 text-center">
-            By signing up, you agree to our{" "}
-            <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
-            <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
-          </p>
         </div>
       </div>
     </div>
