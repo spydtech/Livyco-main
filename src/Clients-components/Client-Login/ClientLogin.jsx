@@ -904,11 +904,9 @@
 
 
 
-
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from 'react-router-dom';
-import { auth } from "../../firebase/firebase";
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
+import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase/firebase";
 import axios from "axios";
 import { API_BASE_URL } from "../PropertyController";
 
@@ -919,7 +917,6 @@ const ClientLogin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only initialize once per session
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
         'recaptcha-container',
@@ -927,49 +924,32 @@ const ClientLogin = () => {
         auth
       );
     }
-    // Cleanup optional, not critical
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     if (!phone || phone.length !== 10) {
-      setError("Please enter a valid 10-digit phone number.");
-      return;
+      setError("Please enter a valid 10-digit phone number."); return;
     }
     try {
       setLoading(true);
-
-      // 1. Check user with backend
       const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { phone });
       if (!response.data.success) {
-        setError(response.data.message || "Phone number not registered. Please register first.");
-        return;
+        setError(response.data.message || "Phone not registered."); return;
       }
-
-      // 2. Send OTP
       const phoneNumber = "+91" + phone;
-      const appVerifier = window.recaptchaVerifier;
-
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-
-      // 3. Store verificationId in sessionStorage
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
       sessionStorage.setItem('otpVerificationData', JSON.stringify({
         phone,
         userData: response.data.user,
         verificationId: confirmation.verificationId
       }));
-
       navigate("/client/client-otpverify");
-
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to send OTP. Please try again.");
-      // reCAPTCHA may require re-init on error
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
+      setError(err?.response?.data?.message || err.message || "Failed to send OTP.");
+      // Always re-init reCAPTCHA on certain errors
+      if (window.recaptchaVerifier) { window.recaptchaVerifier.clear(); window.recaptchaVerifier = null; }
       setTimeout(() => {
         if (!window.recaptchaVerifier) {
           window.recaptchaVerifier = new RecaptchaVerifier(
@@ -985,36 +965,17 @@ const ClientLogin = () => {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-blue-900">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-            placeholder="Enter your 10-digit mobile number"
-            className="w-full p-3 border border-gray-300 rounded-lg"
-            maxLength={10}
-            required
-          />
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600">{error}</div>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded-lg disabled:opacity-50"
-          >
-            {loading ? 'Sending OTP...' : 'SEND OTP'}
-          </button>
-        </form>
-        {/* DOM node for reCAPTCHA */}
-        <div id="recaptcha-container" style={{ display: "none" }}></div>
-      </div>
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input type="tel" value={phone}
+          onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+          placeholder="10-digit mobile number"
+          maxLength={10} required />
+        {error && <div style={{ color: "red" }}>{error}</div>}
+        <button type="submit" disabled={loading}>{loading ? 'Sending...' : 'SEND OTP'}</button>
+      </form>
+      <div id="recaptcha-container" style={{ display: "none" }}></div>
     </div>
   );
 };
-
 export default ClientLogin;
