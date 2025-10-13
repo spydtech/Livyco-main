@@ -901,7 +901,9 @@
 
 // export default ClientLogin;
 
-import React, { useState, useRef } from "react";
+
+
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { auth } from "../../firebase/firebase";
@@ -914,35 +916,50 @@ const ClientLogin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const recaptchaContainerRef = useRef(null);
+  const recaptchaVerifierRef = useRef(null);
 
-  const setupRecaptcha = () => {
-    // Clear any existing reCAPTCHA
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear();
-    }
-
-    // Create new reCAPTCHA verifier
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      'recaptcha-container',
-      {
-        'size': 'invisible',
-        'callback': (response) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber
-          console.log("reCAPTCHA solved:", response);
-        },
-        'expired-callback': () => {
-          // Reset reCAPTCHA when expired
-          setError("reCAPTCHA expired. Please try again.");
-          if (window.recaptchaVerifier) {
-            window.recaptchaVerifier.clear();
-          }
+  // Initialize reCAPTCHA on component mount
+  useEffect(() => {
+    initializeRecaptcha();
+    
+    return () => {
+      // Cleanup on unmount
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+        } catch (err) {
+          console.log("Recaptcha cleanup error:", err);
         }
-      },
-      auth
-    );
+      }
+    };
+  }, []);
 
-    return window.recaptchaVerifier;
+  const initializeRecaptcha = () => {
+    try {
+      console.log("Initializing reCAPTCHA...");
+      
+      // Clear any existing reCAPTCHA
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+      }
+
+      // Create reCAPTCHA verifier with minimal configuration
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
+        'recaptcha-container',
+        {
+          size: 'invisible',
+          callback: (response) => {
+            console.log("reCAPTCHA solved automatically");
+          },
+        },
+        auth
+      );
+
+      console.log("reCAPTCHA initialized successfully");
+      
+    } catch (error) {
+      console.error("Failed to initialize reCAPTCHA:", error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -958,28 +975,30 @@ const ClientLogin = () => {
       setLoading(true);
       setError("");
 
-      // 1. Check with backend if user exists
+      // 1. Check with backend if user exists and is a client
+      console.log("Checking user existence...");
       const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { phone });
       
       if (!response.data.success) {
-        setError(response.data.message || "Phone number not registered.");
+        setError(response.data.message || "Phone number not registered. Please register first.");
         return;
       }
 
-      // 2. Setup reCAPTCHA
-      const appVerifier = setupRecaptcha();
-      
-      // Render reCAPTCHA
-      await appVerifier.render();
-      
+      console.log("User found, proceeding with OTP...");
+
+      // 2. Ensure reCAPTCHA is ready
+      if (!recaptchaVerifierRef.current) {
+        initializeRecaptcha();
+      }
+
       const phoneNumber = "+91" + phone;
+      const appVerifier = recaptchaVerifierRef.current;
+      
+      console.log("Sending OTP to:", phoneNumber);
       
       // 3. Send OTP via Firebase
-      console.log("Sending OTP to:", phoneNumber);
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
       window.confirmationResult = confirmation;
-
-      console.log("OTP sent successfully");
 
       // Store data for OTP verification
       sessionStorage.setItem('otpVerificationData', JSON.stringify({
@@ -987,21 +1006,12 @@ const ClientLogin = () => {
         userData: response.data.user
       }));
 
+      console.log("OTP sent successfully, navigating to verification...");
       navigate("/client/client-otpverify");
 
     } catch (err) {
       console.error("Error in handleSubmit:", err);
       
-      // Clean up reCAPTCHA on error
-      if (window.recaptchaVerifier) {
-        try {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = null;
-        } catch (cleanupError) {
-          console.error("Error cleaning up reCAPTCHA:", cleanupError);
-        }
-      }
-
       // Handle specific Firebase errors
       if (err.code === 'auth/invalid-phone-number') {
         setError("Invalid phone number format.");
@@ -1012,25 +1022,83 @@ const ClientLogin = () => {
       } else if (err.code === 'auth/network-request-failed') {
         setError("Network error. Please check your internet connection.");
       } else if (err.code === 'auth/app-not-authorized') {
-        setError("App not authorized. Please contact support.");
-      } else if (err.code === 'auth/app-verification-failed') {
-        setError("Verification failed. Please try again.");
+        setError("Firebase app not authorized. Please contact support.");
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError("Phone authentication is not enabled. Please contact support.");
+      } else if (err.code === 'auth/recaptcha-not-enabled') {
+        setError("reCAPTCHA not enabled. Please contact support.");
       } else {
         setError(err.response?.data?.message || err.message || "Failed to send OTP. Please try again.");
       }
+      
+      // Reinitialize reCAPTCHA on error
+      setTimeout(() => {
+        initializeRecaptcha();
+      }, 1000);
     } finally {
       setLoading(false);
     }
   };
 
-  // Rest of your component remains the same...
+  // Alternative method using window object
+  const handleSubmitAlternative = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!phone || phone.length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      // Check user
+      const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { phone });
+      
+      if (!response.data.success) {
+        setError(response.data.message);
+        return;
+      }
+
+      // Simple reCAPTCHA setup
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+
+      window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+        size: 'invisible',
+      }, auth);
+
+      const phoneNumber = "+91" + phone;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+      window.confirmationResult = confirmation;
+
+      sessionStorage.setItem('otpVerificationData', JSON.stringify({
+        phone,
+        userData: response.data.user
+      }));
+
+      navigate("/client/client-otpverify");
+
+    } catch (err) {
+      console.error("Alternative method error:", err);
+      setError(err.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
       <div className="flex items-center md:max-w-5xl w-full lg:px-6 md:px-6 md:space-x-20 lg:space-x-40">
+        {/* Left Side Image */}
         <div className="w-1/2 hidden md:block md:-ml-10 -ml-0">
           {/* Add your image here */}
         </div>
         
+        {/* Right Side Form */}
         <div className="bg-white p-8 rounded-lg shadow-lg w-full md:w-1/3">
           <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -1048,6 +1116,15 @@ const ClientLogin = () => {
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-600 text-sm">{error}</p>
+                {error.includes("reCAPTCHA") && (
+                  <button
+                    type="button"
+                    onClick={handleSubmitAlternative}
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Try alternative method
+                  </button>
+                )}
               </div>
             )}
             
@@ -1097,8 +1174,8 @@ const ClientLogin = () => {
             Sign up with Google
           </button>
           
-          {/* reCAPTCHA Container */}
-          <div id="recaptcha-container" ref={recaptchaContainerRef} className="mt-4"></div>
+          {/* reCAPTCHA Container - Make sure it's in DOM */}
+          <div id="recaptcha-container" className="mt-4"></div>
         </div>
       </div>
     </div>
