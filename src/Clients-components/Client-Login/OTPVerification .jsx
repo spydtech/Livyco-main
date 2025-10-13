@@ -1201,37 +1201,237 @@
 
 
 
+// import React, { useState, useEffect, useRef } from 'react';
+// import { useNavigate, Link } from 'react-router-dom';
+// import axios from "axios";
+// import { API_BASE_URL } from "../PropertyController";
+
+// const OTPVerification = () => {
+//   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [phoneNumber, setPhoneNumber] = useState("");
+//   const [countdown, setCountdown] = useState(0);
+//   const navigate = useNavigate();
+//   const inputRefs = useRef([]);
+
+//   useEffect(() => {
+//     const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
+//     if (!otpData || !otpData.phone) {
+//       navigate("/client/client-login");
+//       return;
+//     }
+    
+//     setPhoneNumber(otpData.phone);
+//     setCountdown(30);
+//   }, [navigate]);
+
+//   useEffect(() => {
+//     if (countdown > 0) {
+//       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+//       return () => clearTimeout(timer);
+//     }
+//   }, [countdown]);
+
+//   const handleVerify = async (e) => {
+//     if (e) e.preventDefault();
+//     setError("");
+
+//     const otpValue = otp.join('');
+//     if (otpValue.length !== 6) {
+//       setError("Please enter a valid 6-digit OTP.");
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+      
+//       if (!window.confirmationResult) {
+//         throw new Error("OTP session expired. Please request a new OTP.");
+//       }
+
+//       console.log("🔐 Verifying OTP with Firebase...");
+      
+//       // Confirm OTP with Firebase
+//       const result = await window.confirmationResult.confirm(otpValue);
+      
+//       // Get Firebase ID token
+//       const idToken = await result.user.getIdToken();
+//       console.log("✅ Firebase ID token received");
+      
+//       // Verify with backend
+//       console.log("🔄 Sending to backend for verification...");
+//       const response = await axios.post(
+//         `${API_BASE_URL}/api/auth/verify-firebase-otp`,
+//         { idToken },
+//         {
+//           timeout: 15000,
+//           headers: {
+//             'Content-Type': 'application/json'
+//           }
+//         }
+//       );
+
+//       if (!response.data.success) {
+//         throw new Error(response.data.message || "OTP verification failed");
+//       }
+
+//       console.log("✅ Backend verification successful");
+
+//       // Store data
+//       localStorage.setItem('token', response.data.token);
+//       localStorage.setItem('user', JSON.stringify(response.data.user));
+
+//       // Cleanup
+//       sessionStorage.removeItem('otpVerificationData');
+//       window.confirmationResult = null;
+
+//       setError("success:Login successful! Redirecting...");
+      
+//       setTimeout(() => {
+//         navigate("/client/dashboard");
+//       }, 1500);
+
+//     } catch (err) {
+//       console.error("❌ OTP verification failed", err);
+      
+//       let errorMessage = "OTP verification failed";
+      
+//       if (err.code === 'auth/invalid-verification-code') {
+//         errorMessage = "Invalid OTP. Please check and try again.";
+//       } else if (err.code === 'auth/code-expired') {
+//         errorMessage = "OTP has expired. Please request a new one.";
+//       } else if (err.response?.status === 401) {
+//         errorMessage = err.response.data?.message || "Authentication failed.";
+//       } else if (err.response?.data?.message) {
+//         errorMessage = err.response.data.message;
+//       } else {
+//         errorMessage = err.message || "Something went wrong.";
+//       }
+      
+//       setError(errorMessage);
+//       setOtp(["", "", "", "", "", ""]);
+//       if (inputRefs.current[0]) {
+//         inputRefs.current[0].focus();
+//       }
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleOtpChange = (value, index) => {
+//     if (isNaN(value)) return;
+
+//     const newOtp = [...otp];
+//     newOtp[index] = value;
+//     setOtp(newOtp);
+
+//     if (value && index < 5) {
+//       inputRefs.current[index + 1]?.focus();
+//     }
+
+//     if (value && index === 5) {
+//       const otpValue = newOtp.join('');
+//       if (otpValue.length === 6) {
+//         handleVerify();
+//       }
+//     }
+//   };
+
+//   const handleKeyDown = (e, index) => {
+//     if (e.key === 'Backspace') {
+//       if (!otp[index] && index > 0) {
+//         inputRefs.current[index - 1]?.focus();
+//       }
+//     }
+//   };
+
+//   return (
+//     <div className="h-screen flex items-center justify-center bg-blue-900">
+//       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4">
+//         <h2 className="text-2xl font-semibold mb-4 text-center">OTP Verification</h2>
+//         <p className="text-gray-600 text-center mb-6">
+//           Enter code sent to <span className="font-semibold">+91 {phoneNumber}</span>
+//         </p>
+
+//         {error && (
+//           <div className={`p-3 rounded mb-4 text-center ${
+//             error.includes("success") 
+//               ? "bg-green-100 border border-green-400 text-green-700" 
+//               : "bg-red-100 border border-red-400 text-red-700"
+//           }`}>
+//             {error.replace("success:", "")}
+//           </div>
+//         )}
+
+//         <form onSubmit={handleVerify} className="space-y-6">
+//           <div className="flex justify-between space-x-2">
+//             {otp.map((digit, index) => (
+//               <input
+//                 key={index}
+//                 ref={(el) => (inputRefs.current[index] = el)}
+//                 type="text"
+//                 inputMode="numeric"
+//                 maxLength="1"
+//                 value={digit}
+//                 onChange={(e) => handleOtpChange(e.target.value, index)}
+//                 onKeyDown={(e) => handleKeyDown(e, index)}
+//                 className="w-12 h-12 border-2 border-gray-300 rounded text-center text-xl font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+//                 disabled={loading}
+//                 autoFocus={index === 0}
+//               />
+//             ))}
+//           </div>
+
+//           <button
+//             type="submit"
+//             disabled={loading || otp.join('').length !== 6}
+//             className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
+//           >
+//             {loading ? 'Verifying...' : 'VERIFY OTP'}
+//           </button>
+
+//           <Link to="/client/client-login">
+//             <button
+//               type="button"
+//               className="w-full bg-gray-200 hover:bg-gray-300 text-black font-semibold py-3 rounded transition duration-200"
+//             >
+//               Back to Login
+//             </button>
+//           </Link>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default OTPVerification;
+
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";
 import { API_BASE_URL } from "../PropertyController";
+import { PhoneAuthProvider, signInWithCredential } from "firebase/auth";
+import { auth } from "../../firebase/firebase";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
   const inputRefs = useRef([]);
 
   useEffect(() => {
     const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
-    if (!otpData || !otpData.phone) {
+    if (!otpData || !otpData.phone || !otpData.verificationId) {
       navigate("/client/client-login");
       return;
     }
-    
     setPhoneNumber(otpData.phone);
-    setCountdown(30);
   }, [navigate]);
-
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
 
   const handleVerify = async (e) => {
     if (e) e.preventDefault();
@@ -1242,107 +1442,64 @@ const OTPVerification = () => {
       setError("Please enter a valid 6-digit OTP.");
       return;
     }
-
+    const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
     try {
       setLoading(true);
-      
-      if (!window.confirmationResult) {
-        throw new Error("OTP session expired. Please request a new OTP.");
-      }
+      // Firebase credential from verificationId and code
+      const credential = PhoneAuthProvider.credential(
+        otpData.verificationId,
+        otpValue
+      );
+      const signInResult = await signInWithCredential(auth, credential);
+      const idToken = await signInResult.user.getIdToken(true); // Force refresh
 
-      console.log("🔐 Verifying OTP with Firebase...");
-      
-      // Confirm OTP with Firebase
-      const result = await window.confirmationResult.confirm(otpValue);
-      
-      // Get Firebase ID token
-      const idToken = await result.user.getIdToken();
-      console.log("✅ Firebase ID token received");
-      
       // Verify with backend
-      console.log("🔄 Sending to backend for verification...");
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/verify-firebase-otp`,
         { idToken },
-        {
-          timeout: 15000,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+        { timeout: 15000, headers: { 'Content-Type': 'application/json' } }
       );
-
       if (!response.data.success) {
         throw new Error(response.data.message || "OTP verification failed");
       }
-
-      console.log("✅ Backend verification successful");
-
-      // Store data
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-
-      // Cleanup
       sessionStorage.removeItem('otpVerificationData');
-      window.confirmationResult = null;
-
       setError("success:Login successful! Redirecting...");
-      
-      setTimeout(() => {
-        navigate("/client/dashboard");
-      }, 1500);
-
+      setTimeout(() => { navigate("/client/dashboard"); }, 1500);
     } catch (err) {
-      console.error("❌ OTP verification failed", err);
-      
-      let errorMessage = "OTP verification failed";
-      
+      let message = "OTP verification failed";
       if (err.code === 'auth/invalid-verification-code') {
-        errorMessage = "Invalid OTP. Please check and try again.";
+        message = "Invalid OTP. Please check and try again.";
       } else if (err.code === 'auth/code-expired') {
-        errorMessage = "OTP has expired. Please request a new one.";
-      } else if (err.response?.status === 401) {
-        errorMessage = err.response.data?.message || "Authentication failed.";
+        message = "OTP has expired. Please request a new one.";
       } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
+        message = err.response.data.message;
       } else {
-        errorMessage = err.message || "Something went wrong.";
+        message = err.message;
       }
-      
-      setError(errorMessage);
+      setError(message);
       setOtp(["", "", "", "", "", ""]);
-      if (inputRefs.current[0]) {
-        inputRefs.current[0].focus();
-      }
+      if (inputRefs.current[0]) inputRefs.current[0].focus();
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOtpChange = (value, index) => {
+  const handleOtpChange = (value, idx) => {
     if (isNaN(value)) return;
-
     const newOtp = [...otp];
-    newOtp[index] = value;
+    newOtp[idx] = value;
     setOtp(newOtp);
-
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    if (value && index === 5) {
-      const otpValue = newOtp.join('');
-      if (otpValue.length === 6) {
-        handleVerify();
-      }
+    if (value && idx < 5) inputRefs.current[idx + 1]?.focus();
+    if (value && idx === 5) {
+      handleVerify();
     }
   };
 
-  const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace') {
-      if (!otp[index] && index > 0) {
-        inputRefs.current[index - 1]?.focus();
-      }
+  const handleKeyDown = (e, idx) => {
+    if (e.key === 'Backspace' && !otp[idx] && idx > 0) {
+      inputRefs.current[idx - 1]?.focus();
     }
   };
 
@@ -1353,7 +1510,6 @@ const OTPVerification = () => {
         <p className="text-gray-600 text-center mb-6">
           Enter code sent to <span className="font-semibold">+91 {phoneNumber}</span>
         </p>
-
         {error && (
           <div className={`p-3 rounded mb-4 text-center ${
             error.includes("success") 
@@ -1363,38 +1519,35 @@ const OTPVerification = () => {
             {error.replace("success:", "")}
           </div>
         )}
-
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="flex justify-between space-x-2">
-            {otp.map((digit, index) => (
+            {otp.map((digit, idx) => (
               <input
-                key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
+                key={idx}
+                ref={el => inputRefs.current[idx] = el}
                 type="text"
                 inputMode="numeric"
                 maxLength="1"
                 value={digit}
-                onChange={(e) => handleOtpChange(e.target.value, index)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                className="w-12 h-12 border-2 border-gray-300 rounded text-center text-xl font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                onChange={e => handleOtpChange(e.target.value, idx)}
+                onKeyDown={e => handleKeyDown(e, idx)}
+                className="w-12 h-12 border-2 border-gray-300 rounded text-center text-xl font-semibold focus:border-blue-500"
                 disabled={loading}
-                autoFocus={index === 0}
+                autoFocus={idx === 0}
               />
             ))}
           </div>
-
           <button
             type="submit"
             disabled={loading || otp.join('').length !== 6}
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded disabled:opacity-50"
           >
             {loading ? 'Verifying...' : 'VERIFY OTP'}
           </button>
-
           <Link to="/client/client-login">
             <button
               type="button"
-              className="w-full bg-gray-200 hover:bg-gray-300 text-black font-semibold py-3 rounded transition duration-200"
+              className="w-full bg-gray-200 hover:bg-gray-300 text-black font-semibold py-3 rounded"
             >
               Back to Login
             </button>
