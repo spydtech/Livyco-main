@@ -1563,6 +1563,264 @@
 
 
 
+// import React, { useState, useEffect } from 'react';
+// import { useNavigate, Link } from 'react-router-dom';
+// import axios from "axios";
+// import { API_BASE_URL } from "../PropertyController";
+
+// const OTPVerification = () => {
+//   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [phoneNumber, setPhoneNumber] = useState("");
+//   const [countdown, setCountdown] = useState(0);
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
+//     if (!otpData || !otpData.phone) {
+//       navigate("/client/client-login");
+//       return;
+//     }
+    
+//     setPhoneNumber(otpData.phone);
+//     setCountdown(60); 
+//   }, [navigate]);
+
+//   // Countdown timer
+//   useEffect(() => {
+//     if (countdown > 0) {
+//       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+//       return () => clearTimeout(timer);
+//     }
+//   }, [countdown]);
+
+//   const handleVerify = async (e) => {
+//     if (e) e.preventDefault();
+//     setError("");
+
+//     const otpValue = otp.join('');
+//     if (otpValue.length !== 6) {
+//       setError("Please enter a valid 6-digit OTP.");
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+      
+//       // Verify OTP with Firebase
+//       if (!window.confirmationResult) {
+//         throw new Error("OTP session expired. Please request a new OTP.");
+//       }
+
+//       console.log("Verifying OTP with Firebase...");
+      
+//       // Confirm OTP with Firebase
+//       const result = await window.confirmationResult.confirm(otpValue);
+      
+//       // Get Firebase ID token
+//       const idToken = await result.user.getIdToken();
+//       console.log("Firebase ID token received");
+      
+//       // Verify with your backend
+//       const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-otp`, {
+//         idToken
+//       });
+
+//       if (!response.data.success) {
+//         throw new Error(response.data.message || "OTP verification failed");
+//       }
+
+//       // Store tokens and user data
+//       localStorage.setItem('token', response.data.token);
+//       localStorage.setItem('user', JSON.stringify(response.data.user));
+
+//       // Clear OTP verification data
+//       sessionStorage.removeItem('otpVerificationData');
+//       window.confirmationResult = null;
+
+//       // Show success message
+//       setError("success:Login successful! Redirecting...");
+      
+//       // Redirect to dashboard
+//       setTimeout(() => {
+//         navigate("/client/dashboard");
+//       }, 1500);
+
+//     } catch (err) {
+//       console.error("OTP verification failed", err);
+      
+//       if (err.code === 'auth/invalid-verification-code') {
+//         setError("Invalid OTP. Please try again.");
+//       } else if (err.code === 'auth/code-expired') {
+//         setError("OTP has expired. Please request a new one.");
+//       } else if (err.code === 'auth/too-many-requests') {
+//         setError("Too many attempts. Please try again later.");
+//       } else if (err.response?.status === 401) {
+//         setError("Authentication failed. Please try again.");
+//         console.error("Backend error:", err.response.data);
+//       } else {
+//         setError(err.response?.data?.message || err.message || "Invalid OTP. Please try again.");
+//       }
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleResend = async () => {
+//     if (countdown > 0) return;
+    
+//     setError("");
+//     setLoading(true);
+
+//     try {
+//       // Navigate back to login to resend OTP
+//       setError("success:Redirecting to resend OTP...");
+//       setTimeout(() => {
+//         navigate("/client/client-login");
+//       }, 1000);
+
+//     } catch (err) {
+//       console.error("Error resending OTP", err);
+//       setError(err.message || "Failed to resend OTP. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleOtpChange = (element, index) => {
+//     if (isNaN(element.value)) return false;
+
+//     const newOtp = [...otp];
+//     newOtp[index] = element.value;
+//     setOtp(newOtp);
+
+//     // Auto-focus next input
+//     if (element.value && element.nextSibling) {
+//       element.nextSibling.focus();
+//     }
+
+//     // Auto-submit when all fields are filled
+//     if (element.value && index === 5) {
+//       const otpValue = newOtp.join('');
+//       if (otpValue.length === 6) {
+//         handleVerify();
+//       }
+//     }
+//   };
+
+//   const handleKeyDown = (e, index) => {
+//     if (e.key === 'Backspace' && !otp[index] && index > 0) {
+//       const prevInput = document.querySelector(`input[data-index="${index - 1}"]`);
+//       if (prevInput) prevInput.focus();
+//     }
+//   };
+
+//   if (!phoneNumber) {
+//     return (
+//       <div className="h-screen flex items-center justify-center bg-blue-900">
+//         <div className="text-white text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+//           <p>Loading...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="h-screen flex items-center justify-center bg-blue-900">
+//       <div className="flex items-center justify-center max-w-5xl w-full px-6">
+//         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+//           <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
+//           <p className="text-gray-700 text-center font-semibold">OTP Verification</p>
+//           <p className="text-gray-600 text-center mb-6">
+//             Enter 6-digit OTP sent to <span className="font-semibold">+91 {phoneNumber}</span>
+//           </p>
+
+//           {error && (
+//             <div className={`p-3 rounded mb-4 text-center ${
+//               error.includes("success") 
+//                 ? "bg-green-100 border border-green-400 text-green-700" 
+//                 : "bg-red-100 border border-red-400 text-red-700"
+//             }`}>
+//               {error.replace("success:", "")}
+//             </div>
+//           )}
+
+//           <form onSubmit={handleVerify} className="space-y-6">
+//             <div className="flex justify-between space-x-2">
+//               {otp.map((data, index) => (
+//                 <input
+//                   key={index}
+//                   type="text"
+//                   inputMode="numeric"
+//                   pattern="[0-9]*"
+//                   maxLength="1"
+//                   value={data}
+//                   onChange={(e) => handleOtpChange(e.target, index)}
+//                   onKeyDown={(e) => handleKeyDown(e, index)}
+//                   data-index={index}
+//                   className="w-12 h-12 border-2 border-gray-300 rounded text-center text-xl font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+//                   disabled={loading}
+//                   autoFocus={index === 0}
+//                 />
+//               ))}
+//             </div>
+
+//             <div className="text-center">
+//               {countdown > 0 ? (
+//                 <p className="text-gray-600">
+//                   Resend OTP in {countdown} seconds
+//                 </p>
+//               ) : (
+//                 <button
+//                   type="button"
+//                   onClick={handleResend}
+//                   disabled={loading}
+//                   className="text-blue-600 hover:text-blue-800 disabled:opacity-50 font-medium"
+//                 >
+//                   Resend OTP
+//                 </button>
+//               )}
+//             </div>
+
+//             <button
+//               type="submit"
+//               disabled={loading || otp.join('').length !== 6}
+//               className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
+//             >
+//               {loading ? 'Verifying...' : 'VERIFY OTP'}
+//             </button>
+
+//             <Link to="/client/client-login">
+//               <button
+//                 type="button"
+//                 disabled={loading}
+//                 className="w-full bg-gray-200 hover:bg-gray-300 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
+//               >
+//                 Back to Login
+//               </button>
+//             </Link>
+//           </form>
+
+//           <p className="text-xs text-gray-500 mt-6 text-center">
+//             By signing up, you agree to our{" "}
+//             <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
+//             <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
+//           </p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default OTPVerification;
+
+
+
+
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";
@@ -1574,6 +1832,7 @@ const OTPVerification = () => {
   const [loading, setLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countdown, setCountdown] = useState(0);
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -1584,7 +1843,7 @@ const OTPVerification = () => {
     }
     
     setPhoneNumber(otpData.phone);
-    setCountdown(60); 
+    setCountdown(60); // 60 seconds countdown for resend
   }, [navigate]);
 
   // Countdown timer
@@ -1605,26 +1864,44 @@ const OTPVerification = () => {
       return;
     }
 
+    // Check verification attempts
+    if (verificationAttempts >= 3) {
+      setError("Too many failed attempts. Please request a new OTP.");
+      return;
+    }
+
     try {
       setLoading(true);
       
-      // Verify OTP with Firebase
-      if (!window.confirmationResult) {
+      // Check if OTP session is still valid
+      const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
+      if (!otpData || !window.confirmationResult) {
         throw new Error("OTP session expired. Please request a new OTP.");
       }
 
-      console.log("Verifying OTP with Firebase...");
+      // Check if OTP is expired (more than 5 minutes old)
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+      if (otpData.timestamp && otpData.timestamp < fiveMinutesAgo) {
+        throw new Error("OTP has expired. Please request a new one.");
+      }
+
+      console.log("🔐 Verifying OTP with Firebase...");
       
       // Confirm OTP with Firebase
       const result = await window.confirmationResult.confirm(otpValue);
       
       // Get Firebase ID token
       const idToken = await result.user.getIdToken();
-      console.log("Firebase ID token received");
+      console.log("✅ Firebase ID token received");
       
       // Verify with your backend
       const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-otp`, {
         idToken
+      }, {
+        timeout: 10000, // 10 second timeout
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.data.success) {
@@ -1639,28 +1916,48 @@ const OTPVerification = () => {
       sessionStorage.removeItem('otpVerificationData');
       window.confirmationResult = null;
 
-      // Show success message
       setError("success:Login successful! Redirecting...");
       
-      // Redirect to dashboard
       setTimeout(() => {
         navigate("/client/dashboard");
       }, 1500);
 
     } catch (err) {
-      console.error("OTP verification failed", err);
+      console.error("❌ OTP verification failed", err);
+      setVerificationAttempts(prev => prev + 1);
       
-      if (err.code === 'auth/invalid-verification-code') {
-        setError("Invalid OTP. Please try again.");
-      } else if (err.code === 'auth/code-expired') {
-        setError("OTP has expired. Please request a new one.");
-      } else if (err.code === 'auth/too-many-requests') {
-        setError("Too many attempts. Please try again later.");
-      } else if (err.response?.status === 401) {
-        setError("Authentication failed. Please try again.");
-        console.error("Backend error:", err.response.data);
-      } else {
-        setError(err.response?.data?.message || err.message || "Invalid OTP. Please try again.");
+      let errorMessage = "Invalid OTP. Please try again.";
+      
+      switch (err.code) {
+        case 'auth/invalid-verification-code':
+          errorMessage = "Invalid OTP. Please check and try again.";
+          break;
+        case 'auth/code-expired':
+          errorMessage = "OTP has expired. Please request a new one.";
+          // Clear expired session
+          sessionStorage.removeItem('otpVerificationData');
+          window.confirmationResult = null;
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Too many attempts. Please try again later.";
+          break;
+        case 'ERR_BAD_REQUEST':
+          if (err.response?.data?.error === 'app/invalid-credential') {
+            errorMessage = "Authentication service error. Please contact support.";
+          } else {
+            errorMessage = "Authentication failed. Please try again.";
+          }
+          break;
+        default:
+          errorMessage = err.response?.data?.message || err.message || errorMessage;
+      }
+      
+      setError(errorMessage);
+      
+      // Clear session on critical errors
+      if (err.code === 'auth/code-expired' || err.response?.status === 401) {
+        sessionStorage.removeItem('otpVerificationData');
+        window.confirmationResult = null;
       }
     } finally {
       setLoading(false);
@@ -1710,9 +2007,37 @@ const OTPVerification = () => {
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      const prevInput = document.querySelector(`input[data-index="${index - 1}"]`);
-      if (prevInput) prevInput.focus();
+    if (e.key === 'Backspace') {
+      if (!otp[index] && index > 0) {
+        // Move to previous input on backspace
+        const prevInput = document.querySelector(`input[data-index="${index - 1}"]`);
+        if (prevInput) {
+          prevInput.focus();
+          // Clear the previous input
+          const newOtp = [...otp];
+          newOtp[index - 1] = "";
+          setOtp(newOtp);
+        }
+      } else if (otp[index]) {
+        // Clear current input
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+      }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text').slice(0, 6);
+    if (pasteData.length === 6 && !isNaN(pasteData)) {
+      const newOtp = pasteData.split('');
+      setOtp(newOtp);
+      
+      // Auto-submit after paste
+      setTimeout(() => {
+        handleVerify();
+      }, 100);
     }
   };
 
@@ -1744,11 +2069,17 @@ const OTPVerification = () => {
                 : "bg-red-100 border border-red-400 text-red-700"
             }`}>
               {error.replace("success:", "")}
+              {verificationAttempts >= 2 && (
+                <p className="text-xs mt-1">You have {3 - verificationAttempts} attempts left</p>
+              )}
             </div>
           )}
 
           <form onSubmit={handleVerify} className="space-y-6">
-            <div className="flex justify-between space-x-2">
+            <div 
+              className="flex justify-between space-x-2"
+              onPaste={handlePaste}
+            >
               {otp.map((data, index) => (
                 <input
                   key={index}
@@ -1759,6 +2090,7 @@ const OTPVerification = () => {
                   value={data}
                   onChange={(e) => handleOtpChange(e.target, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
+                  onFocus={(e) => e.target.select()}
                   data-index={index}
                   className="w-12 h-12 border-2 border-gray-300 rounded text-center text-xl font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
                   disabled={loading}
@@ -1767,7 +2099,7 @@ const OTPVerification = () => {
               ))}
             </div>
 
-            <div className="text-center">
+            <div className="text-center space-y-2">
               {countdown > 0 ? (
                 <p className="text-gray-600">
                   Resend OTP in {countdown} seconds
@@ -1782,6 +2114,12 @@ const OTPVerification = () => {
                   Resend OTP
                 </button>
               )}
+              
+              {verificationAttempts > 0 && (
+                <p className="text-xs text-gray-500">
+                  Attempts: {verificationAttempts}/3
+                </p>
+              )}
             </div>
 
             <button
@@ -1789,7 +2127,17 @@ const OTPVerification = () => {
               disabled={loading || otp.join('').length !== 6}
               className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded disabled:opacity-50 transition duration-200"
             >
-              {loading ? 'Verifying...' : 'VERIFY OTP'}
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Verifying...
+                </span>
+              ) : (
+                'VERIFY OTP'
+              )}
             </button>
 
             <Link to="/client/client-login">
