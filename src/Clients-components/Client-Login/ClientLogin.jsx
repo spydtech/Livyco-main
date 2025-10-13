@@ -909,8 +909,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { auth } from "../../firebase/firebase";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import { API_BASE_URL } from "../PropertyController";
 import axios from "axios";
+import { API_BASE_URL } from "../PropertyController";
 
 const ClientLogin = () => {
   const [phone, setPhone] = useState("");
@@ -919,46 +919,16 @@ const ClientLogin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    initializeRecaptcha();
-    
-    return () => {
-      if (window.recaptchaVerifier) {
-        try {
-          window.recaptchaVerifier.clear();
-        } catch (err) {
-          console.log("Recaptcha cleanup error:", err);
-        }
-      }
-    };
-  }, []);
-
-  const initializeRecaptcha = () => {
-    try {
-      console.log("🔄 Initializing reCAPTCHA...");
-      
-      const container = document.getElementById('recaptcha-container');
-      if (container) {
-        container.innerHTML = '';
-      }
-
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-      }
-
+    // Only initialize once per session
+    if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
         'recaptcha-container',
-        {
-          size: 'invisible',
-        },
+        { size: "invisible" },
         auth
       );
-
-      console.log("✅ reCAPTCHA initialized successfully");
-      
-    } catch (error) {
-      console.error("❌ Failed to initialize reCAPTCHA:", error);
     }
-  };
+    // Cleanup optional, not critical
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -968,73 +938,46 @@ const ClientLogin = () => {
       setError("Please enter a valid 10-digit phone number.");
       return;
     }
-
     try {
       setLoading(true);
-      setError("");
 
-      console.log("🔍 Checking user existence...");
-      const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { 
-        phone 
-      }, {
-        timeout: 10000
-      });
-      
+      // 1. Check user with backend
+      const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { phone });
       if (!response.data.success) {
-        setError(response.data.message || "Phone number not registered.");
+        setError(response.data.message || "Phone number not registered. Please register first.");
         return;
       }
 
-      console.log("✅ User found, proceeding with OTP...");
+      // 2. Send OTP
+      const phoneNumber = "+91" + phone;
+      const appVerifier = window.recaptchaVerifier;
 
-      if (!window.recaptchaVerifier) {
-        initializeRecaptcha();
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
 
-      const phoneNumber = `+91${phone}`;
-      
-      console.log("📤 Sending OTP to:", phoneNumber);
-      
-      const confirmation = await signInWithPhoneNumber(
-        auth, 
-        phoneNumber, 
-        window.recaptchaVerifier
-      );
-      
-      window.confirmationResult = confirmation;
-
+      // 3. Store verificationId in sessionStorage
       sessionStorage.setItem('otpVerificationData', JSON.stringify({
         phone,
-        userData: response.data.user
+        userData: response.data.user,
+        verificationId: confirmation.verificationId
       }));
 
-      console.log("✅ OTP sent successfully");
       navigate("/client/client-otpverify");
 
     } catch (err) {
-      console.error("❌ Error in handleSubmit:", err);
-      
-      let errorMessage = "Failed to send OTP. Please try again.";
-      
-      if (err.code === 'auth/invalid-phone-number') {
-        errorMessage = "Invalid phone number format.";
-      } else if (err.code === 'auth/quota-exceeded') {
-        errorMessage = "Too many attempts. Please try again later.";
-      } else if (err.code === 'auth/too-many-requests') {
-        errorMessage = "Too many requests. Please try again later.";
-      } else if (err.code === 'auth/network-request-failed') {
-        errorMessage = "Network error. Please check your internet connection.";
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
+      setError(err.response?.data?.message || err.message || "Failed to send OTP. Please try again.");
+      // reCAPTCHA may require re-init on error
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
       }
-      
-      setError(errorMessage);
-      
       setTimeout(() => {
-        initializeRecaptcha();
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(
+            'recaptcha-container',
+            { size: "invisible" },
+            auth
+          );
+        }
       }, 1000);
     } finally {
       setLoading(false);
@@ -1043,59 +986,32 @@ const ClientLogin = () => {
 
   return (
     <div className="h-screen flex items-center justify-center bg-blue-900">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-semibold mb-4 text-center">Welcome Back!</h2>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mobile Number
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              placeholder="Enter your 10-digit mobile number"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              maxLength={10}
-              required
-            />
-          </div>
-          
+          <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            placeholder="Enter your 10-digit mobile number"
+            className="w-full p-3 border border-gray-300 rounded-lg"
+            maxLength={10}
+            required
+          />
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600">{error}</div>
           )}
-          
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded-lg disabled:opacity-50 transition duration-200"
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded-lg disabled:opacity-50"
           >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Sending OTP...
-              </span>
-            ) : (
-              'SEND OTP'
-            )}
+            {loading ? 'Sending OTP...' : 'SEND OTP'}
           </button>
         </form>
-
-        <div id="recaptcha-container" className="mt-4"></div>
-
-        <div className="mt-4 text-center">
-          <Link to="/client/register">
-            <span className="text-blue-500 hover:text-blue-700 cursor-pointer text-sm">
-              Don't have an account? Register here
-            </span>
-          </Link>
-        </div>
+        {/* DOM node for reCAPTCHA */}
+        <div id="recaptcha-container" style={{ display: "none" }}></div>
       </div>
     </div>
   );
