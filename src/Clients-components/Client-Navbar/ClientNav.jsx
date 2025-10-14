@@ -3,8 +3,9 @@ import { FaBell } from "react-icons/fa6";
 import { IoIosArrowDown } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../PropertyController";
 
-const API_BASE_URL = "http://localhost:5000/api/auth";
+// const API_BASE_URL = "http://localhost:5000/api/auth";
 
 const ClientNav = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -33,7 +34,7 @@ const ClientNav = () => {
         }
 
         // Verify token is still valid
-        const response = await axios.get(`${API_BASE_URL}/user`, {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/user`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
