@@ -2184,20 +2184,20 @@ const OTPVerification = () => {
 
   useEffect(() => {
     const otpData = JSON.parse(sessionStorage.getItem('otpVerificationData'));
-    console.log("📱 OTP Data from session:", otpData);
+    console.log("OTP Data from session:", otpData);
     
     if (!otpData || !otpData.phone) {
-      console.log("❌ No OTP data found, redirecting to login");
+      console.log(" No OTP data found, redirecting to login");
       navigate("/client/client-login");
       return;
     }
     
     setPhoneNumber(otpData.phone);
-    setCountdown(30); // 30 seconds countdown for resend
+    setCountdown(60); // 60 seconds countdown for resend
     
     // Check if confirmationResult exists
     if (!window.confirmationResult) {
-      console.log("❌ No confirmationResult found in window");
+      console.log(" No confirmationResult found in window");
       setError("OTP session expired. Please request a new OTP.");
       setCanResend(true);
     }
@@ -2225,7 +2225,7 @@ const OTPVerification = () => {
     setError("");
 
     const otpValue = otp.join('');
-    console.log("🔐 Verifying OTP:", otpValue);
+    console.log("Verifying OTP:", otpValue);
 
     if (otpValue.length !== 6) {
       setError("Please enter a valid 6-digit OTP.");
@@ -2265,9 +2265,9 @@ const OTPVerification = () => {
         );
         
         result = await Promise.race([confirmationPromise, timeoutPromise]);
-        console.log("✅ Firebase OTP confirmation successful");
+        console.log("Firebase OTP confirmation successful");
       } catch (firebaseError) {
-        console.error("❌ Firebase OTP confirmation error:", firebaseError);
+        console.error("Firebase OTP confirmation error:", firebaseError);
         
         // Handle specific Firebase errors
         if (firebaseError.code === 'auth/invalid-verification-code') {
@@ -2286,10 +2286,10 @@ const OTPVerification = () => {
       // Get Firebase ID token
       console.log("🪙 Getting Firebase ID token...");
       const idToken = await result.user.getIdToken();
-      console.log("✅ Firebase ID token received");
+      console.log("Firebase ID token received");
       
       // Verify with your backend
-      console.log("🌐 Sending to backend for verification...");
+      console.log("Sending to backend for verification...");
       const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-otp`, {
         idToken
       }, {
@@ -2300,7 +2300,7 @@ const OTPVerification = () => {
         }
       });
 
-      console.log("📡 Backend response:", response.data);
+      console.log("Backend response:", response.data);
 
       if (!response.data.success) {
         throw new Error(response.data.message || "OTP verification failed");
@@ -2314,7 +2314,7 @@ const OTPVerification = () => {
       sessionStorage.removeItem('otpVerificationData');
       window.confirmationResult = null;
 
-      console.log("🎉 Login successful!");
+      console.log("Login successful!");
       setError("success:Login successful! Redirecting...");
       
       setTimeout(() => {
@@ -2322,7 +2322,7 @@ const OTPVerification = () => {
       }, 1500);
 
     } catch (err) {
-      console.error("❌ OTP verification failed", err);
+      console.error("OTP verification failed", err);
       const newAttempts = verificationAttempts + 1;
       setVerificationAttempts(newAttempts);
       
@@ -2377,7 +2377,7 @@ const OTPVerification = () => {
     setCanResend(false);
 
     try {
-      console.log("🔄 Resending OTP...");
+      console.log("Resending OTP...");
       
       // Clear previous session
       sessionStorage.removeItem('otpVerificationData');
@@ -2415,7 +2415,7 @@ const OTPVerification = () => {
     if (value && index === 5) {
       const otpValue = newOtp.join('');
       if (otpValue.length === 6) {
-        console.log("⚡ Auto-submitting OTP...");
+        console.log("Auto-submitting OTP...");
         handleVerify();
       }
     }
@@ -2450,7 +2450,7 @@ const OTPVerification = () => {
   const handlePaste = (e) => {
     e.preventDefault();
     const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    console.log("📋 Pasted data:", pasteData);
+    console.log("Pasted data:", pasteData);
     
     if (pasteData.length === 6) {
       const newOtp = pasteData.split('');
@@ -2463,7 +2463,7 @@ const OTPVerification = () => {
       }
       
       // Auto-submit after paste
-      console.log("⚡ Auto-submitting pasted OTP...");
+      console.log("Auto-submitting pasted OTP...");
       setTimeout(() => {
         handleVerify();
       }, 100);
