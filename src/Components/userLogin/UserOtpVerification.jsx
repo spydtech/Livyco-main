@@ -394,7 +394,8 @@ export default function UserOtpVerfication() {
       // 3. Verify with backend using Firebase OTP endpoint
       console.log("Sending to backend for verification...");
       const response = await axios.post(`${API_BASE_URL}api/auth/verify-firebase-otp`, {
-        idToken
+        idToken,
+        role: 'user' 
       }, {
         timeout: 15000,
         headers: {
