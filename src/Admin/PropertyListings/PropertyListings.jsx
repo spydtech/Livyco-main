@@ -317,6 +317,7 @@
 // export default PropertyListings;
 
 
+
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaEllipsisV } from "react-icons/fa";
 import { BiSort, BiFilter } from "react-icons/bi";
@@ -336,11 +337,17 @@ const metrics = [
 const ITEMS_PER_PAGE = 5;
 
 const getStatusColor = (status) => {
-  switch (status.toLowerCase()) {
+  switch (status?.toLowerCase()) {
     case "active":
+    case "approved":
       return "text-green-600 bg-green-100";
     case "inactive":
-      return "text-gray-600 bg-gray-200";
+    case "rejected":
+      return "text-red-600 bg-red-100";
+    case "pending":
+      return "text-yellow-600 bg-yellow-100";
+    case "revision_requested":
+      return "text-blue-600 bg-blue-100";
     default:
       return "text-gray-600 bg-gray-200";
   }
@@ -552,6 +559,48 @@ const PropertyListings = () => {
     });
   };
 
+
+  // Handle approve action
+  const handleApprove = async (propertyId) => {
+    try {
+      const response = await propertyAPI.approveProperty(propertyId);
+      if (response.data.success) {
+        alert("Property approved successfully!");
+        // Update local state
+        setAllListings(prev => prev.map(item => 
+          item.id === propertyId ? { ...item, status: "approved" } : item
+        ));
+        setOpenDropdown(null);
+      }
+    } catch (err) {
+      console.error("Approval error:", err);
+      alert(err.response?.data?.message || "Error approving property");
+    }
+  };
+
+  // Handle reject action
+  const handleReject = async (propertyId) => {
+    const reason = prompt("Please enter rejection reason:");
+    if (reason && reason.trim().length >= 10) {
+      try {
+        const response = await propertyAPI.rejectProperty(propertyId, { rejectionReason: reason });
+        if (response.data.success) {
+          alert("Property rejected successfully!");
+          setAllListings(prev => prev.map(item => 
+            item.id === propertyId ? { ...item, status: "rejected" } : item
+          ));
+          setOpenDropdown(null);
+        }
+      } catch (err) {
+        console.error("Rejection error:", err);
+        alert(err.response?.data?.message || "Error rejecting property");
+      }
+    } else if (reason) {
+      alert("Rejection reason must be at least 10 characters.");
+    }
+  };
+
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen relative">
       <h1 className="text-2xl font-bold mb-6">Total Listing</h1>
@@ -664,7 +713,7 @@ const PropertyListings = () => {
                   </span>
                 </td>
                 <td className="p-4">{item.location}</td>
-                <td className="p-4 text-right relative dropdown-parent">
+                {/* <td className="p-4 text-right relative dropdown-parent">
                   <button 
                     onClick={() => toggleDropdown(item.id)}
                     aria-label="Open actions menu"
@@ -686,7 +735,46 @@ const PropertyListings = () => {
                       </ul>
                     </div>
                   )}
-                </td>
+                </td> */}
+
+
+                 <td className="p-4 text-right relative dropdown-parent">
+                    <button 
+                      onClick={() => toggleDropdown(item.id)}
+                      aria-label="Open actions menu"
+                      className="p-1 rounded-full hover:bg-gray-100"
+                    >
+                      <FaEllipsisV className="text-gray-400 hover:text-gray-600" />
+                    </button>
+                    {openDropdown === item.id && (
+                      <div className="absolute right-0 mt-2 w-40 bg-[#AFD1FF] justify-center text-center  border rounded-lg shadow-lg z-10">
+                        <ul className="py-2 text-gray-700">
+                          {item.status !== "approved" && (
+                            <li 
+                              className="px-4 py-2 hover:bg-green-50 cursor-pointer border-b text-green-600"
+                              onClick={() => handleApprove(item.id)}
+                            >
+                              Approve
+                            </li>
+                          )}
+                          {item.status !== "rejected" && (
+                            <li 
+                              className="px-4 py-2 hover:bg-red-50 cursor-pointer border-b text-red-600"
+                              onClick={() => handleReject(item.id)}
+                            >
+                              Reject
+                            </li>
+                          )}
+                          <li 
+                            className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-blue-600"
+                            onClick={() => handleViewDetails(item)}
+                          >
+                            View Details
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+                  </td>
               </tr>
             ))
           )}

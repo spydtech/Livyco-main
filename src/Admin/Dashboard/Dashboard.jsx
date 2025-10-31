@@ -12,15 +12,20 @@ import PropertyDetails from "../PropertyListings/PropertyDetails";
 import ManageUsers from "../Manage Users/ManageUsers";
 import UserDetails from "../Manage Users/UserDetails";
 import RoleActivityForm from "../FinancialReport/FinancialReport";
+import Tabs from "../AdminSettings/Tabs";
+import Bookings from "../BookingDetails/Bookings";
+import SupportDashboard from "../SupportTickets/AdminSupportdashboard";
+
 import axios from "axios";
 
 const menuItems = [
   { name: "Dashboard", icon: HiOutlineViewGrid, path: "/admin/dashboard" },
   { name: "Property Listings", icon: HiUsers, path: "/admin/dashboard/propertylistings" },
   { name: "Manage Users", icon: HiUsers, path: "/admin/dashboard/manageusers" },
+  { name:"Bookings", icon: HiUsers, path: "/admin/dashboard/bookings" },
   { name: "Financial Reports", icon: BiMoney, path: "/admin/dashboard/finacialReport" },
-  { name: "Support Tickets", icon: BiSupport, path: "/admin/support" },
-  { name: "Settings", icon: HiChartPie, path: "/admin/settings" },
+  { name: "Support Tickets", icon: BiSupport, path: "/admin/dashboard/support" },
+  { name: "Settings", icon: HiChartPie, path: "/admin/dashboard/settings" },
   { name: "Sign Out", icon: HiLogout, path: "/admin/admin-login" },
 ];
 
@@ -43,7 +48,7 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error("Failed to fetch admin profile:", error);
-        navigate("/admin/admin_login");
+        navigate("/admin/admin-login");
       }
     };
 
@@ -106,6 +111,9 @@ const Dashboard = () => {
           <Route path="/manageusers" element={<ManageUsers />} />
           <Route path="/manageusers/:id" element={<UserDetails />} />
           <Route path="/finacialReport" element={<RoleActivityForm />} />
+          <Route path="/settings" element={<Tabs />} />
+          <Route path="/bookings" element={<Bookings />} />
+          <Route path="/support" element={<SupportDashboard/>} />
         </Routes>
       </main>
     </div>

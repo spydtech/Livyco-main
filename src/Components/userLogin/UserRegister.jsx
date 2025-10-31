@@ -175,6 +175,9 @@
 // export default UserRegister;
 
 
+
+//this code used for deploy the project
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaGoogle } from "react-icons/fa";

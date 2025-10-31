@@ -86,7 +86,7 @@
 //           setLoading(false);
 //         }
 //       };
-  
+
 //       fetchProperties();
 //     }, []);
 //   return (
@@ -159,6 +159,7 @@ import React from "react";
 import { FaShareAlt, FaHeart, FaStar } from "react-icons/fa";
 import { useEffect } from "react";
 import { propertyAPI } from "../../Clients-components/PropertyController";
+import { useNavigate } from "react-router-dom";
 
 export default function TrendingPGCarousel() {
   const [pgList, setPgList] = React.useState([]);
@@ -166,7 +167,7 @@ export default function TrendingPGCarousel() {
   const [selectedPg, setSelectedPg] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -190,7 +191,7 @@ export default function TrendingPGCarousel() {
             roomType: item.rooms?.roomTypes?.map(rt => rt.type) || [],
             gender: item.pgProperty?.gender || "Not specified",
             recommended: false,
-           images: item.media?.images?.map(img => img.url) || [],
+            images: item.media?.images?.map(img => img.url) || [],
           }));
           setPgList(transformedData);
           setOriginalPgList(transformedData);
@@ -216,9 +217,14 @@ export default function TrendingPGCarousel() {
           {pgList.map((pg) => (
             <div
               key={pg.id}
-              className="snap-start shrink-0 w-[280px] bg-white rounded-2xl shadow-md p-4"
+              onClick={() => {
+                navigate(`/user/view-pg/${pg.id}`, { state: { pg } });
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="snap-start cursor-pointer shrink-0 w-[280px] bg-white rounded-2xl shadow-md p-4"
             >
-               <div className="relative">
+              <div
+                className="relative ">
                 <img
                   src={pg.image}
                   alt={pg.name}

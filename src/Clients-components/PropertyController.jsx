@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 
- //export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
 
 // Create a separate axios instance without interceptors for token refresh
 const refreshApi = axios.create({
@@ -127,6 +127,14 @@ export const propertyAPI = {
       }),
 };
 
+
+// maps
+export const mapAPI = {
+  addOrUpdateMap: (payload) => api.post("/api/map", payload),
+  getAllMaps: () => api.get("/api/map"),
+  getMapByProperty: (propertyId) => api.get(`/api/map/${propertyId}`),
+};
+
 //whishlist
 export const wishlistAPI = {
   // Add property to wishlist (send both userId and propertyId)
@@ -192,85 +200,139 @@ export const wishlistAPI = {
 
 
 export const menuAPI = {
-  // Get all food items
-  getFoodItems: () => 
-    api.get('/api/menu')
+  // Get food items with property and booking filtering
+  getFoodItems: (filters = {}) => {
+    const params = {};
+    if (filters.day) params.day = filters.day;
+    if (filters.propertyId) params.propertyId = filters.propertyId;
+    if (filters.bookingId) params.bookingId = filters.bookingId;
+    if (filters.category) params.category = filters.category;
+ 
+    return api.get('/api/menu', { params })
       .then(response => {
         if (!response.data?.success) {
           throw new Error(response.data?.message || 'Failed to fetch food items');
         }
         return response;
-      }),
-
+      });
+  },
+ 
   // Get weekly menu
-  getWeeklyMenu: () => 
-    api.get('/api/menu/weekly')
+  getWeeklyMenu: (filters = {}) => {
+    const params = {};
+    if (filters.propertyId) params.propertyId = filters.propertyId;
+    if (filters.bookingId) params.bookingId = filters.bookingId;
+ 
+    return api.get('/api/menu/weekly', { params })
       .then(response => {
         if (!response.data?.success) {
           throw new Error(response.data?.message || 'Failed to fetch weekly menu');
         }
         return response;
-      }),
-
+      });
+  },
+ 
   // Add new food item
-  addFoodItem: (foodItemData) => 
-    api.post('/api/menu', foodItemData)
+  addFoodItem: (foodItemData) => {
+    return api.post('/api/menu', foodItemData)
       .then(response => {
         if (!response.data?.success) {
           throw new Error(response.data?.message || 'Failed to add food item');
         }
         return response;
-      }),
-
-  // Delete food item by ID
-  deleteFoodItem: (foodItemId) => 
-    api.delete(`/api/menu/${foodItemId}`)
+      });
+  },
+ 
+  // Delete food item
+  deleteFoodItem: (foodItemId) => {
+    return api.delete(`/api/menu/${foodItemId}`)
       .then(response => {
         if (!response.data?.success) {
           throw new Error(response.data?.message || 'Failed to delete food item');
         }
         return response;
-      }),
-
-  // Clear menu for a specific day
-  clearDayMenu: (day) => 
-    api.delete('/api/menu/clear/day', { params: { day } })
+      });
+  },
+ 
+  // Clear day menu
+  clearDayMenu: (filters = {}) => {
+    const params = {};
+    if (filters.day) params.day = filters.day;
+    if (filters.propertyId) params.propertyId = filters.propertyId;
+    if (filters.bookingId) params.bookingId = filters.bookingId;
+ 
+    return api.delete('/api/menu/clear/day', { params })
       .then(response => {
         if (!response.data?.success) {
           throw new Error(response.data?.message || 'Failed to clear day menu');
         }
         return response;
-      }),
+      });
+  },
+ 
+  // Clear multiple days’ menu
+  // clearDaysMenu: (filters = {}) => {
+  //   const params = {};
+  //   if (filters.days) params.days = filters.days;
+  //   if (filters.propertyId) params.propertyId = filters.propertyId;
+  //   if (filters.bookingId) params.bookingId = filters.bookingId;
+ 
+  //   return api.delete('/api/menu/clear/days', { params })
+  //     .then(response => {
+  //       if (!response.data?.success) {
+  //         throw new Error(response.data?.message || 'Failed to clear days menu');
+  //       }
+  //       return response;
+  //     });
+  // },
 
-  // Clear menu for multiple days
-  clearDaysMenu: (days) => 
-    api.delete('/api/menu/clear/days', { params: { days } })
+  getBookingsByUser: () => {
+  const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+ 
+  return api
+    .get(`/api/auth/bookings/user`, {  // ✅ Fixed path
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((response) => {
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message ||
+          'Invalid response format for fetching user bookings'
+        );
+      }
+      return response;
+    })
+    .catch((error) => {
+      console.error("Error fetching user bookings:", error);
+      throw new Error(
+        error.response?.data?.message || 'Failed to fetch user bookings'
+      );
+    });
+}, 
+ 
+  // Get food items by specific booking
+  getFoodItemsByBooking: (bookingId) => {
+    return api.get(`/api/menu/booking/${bookingId}`)
       .then(response => {
         if (!response.data?.success) {
-          throw new Error(response.data?.message || 'Failed to clear days menu');
+          throw new Error(response.data?.message || 'Failed to fetch booking menu');
         }
         return response;
-      }),
-
-  // Update food item (optional - if your backend supports it)
-  updateFoodItem: (foodItemId, updates) => 
-    api.put(`/api/menu/${foodItemId}`, updates)
+      });
+  },
+ 
+  // Get food items by booking and day
+  getFoodItemsByBookingAndDay: (bookingId, day) => {
+    return api.get(`/api/menu/booking/${bookingId}/day/${day}`)
       .then(response => {
         if (!response.data?.success) {
-          throw new Error(response.data?.message || 'Failed to update food item');
+          throw new Error(response.data?.message || 'Failed to fetch booking day menu');
         }
         return response;
-      }),
-
-  // Get menu for specific day (optional - if your backend supports it)
-  getDayMenu: (day) => 
-    api.get(`/api/menu/day/${day}`)
-      .then(response => {
-        if (!response.data?.success) {
-          throw new Error(response.data?.message || 'Failed to fetch day menu');
-        }
-        return response;
-      }),
+      });
+  }
 };
 
 // Add this to your PropertyController.js file
@@ -371,7 +433,25 @@ export const paymentAPI = {
   validatePayment: (data) => api.post('/api/payments/validate-payment', data),
   getPaymentDetails: (paymentId) => api.get(`/api/payments/${paymentId}`),
   refundPayment: (data) => api.post('/api/payments/refund', data),
-  getPaymentHistory: (bookingId) => api.get(`/api/payments/history/${bookingId}`),
+ getUserPayments: () => {
+    // console.log(' Calling getUserPayments API');
+    return api.get('/api/payments/user');
+  },
+  
+  getUserPaymentsAggregate: () => {
+    // console.log(' Calling getUserPaymentsAggregate API');
+    return api.get('/api/payments/user-payments-aggregate');
+  },
+  
+  getPaymentHistory: (bookingId) => {
+    // console.log(' Calling getPaymentHistory for:', bookingId);
+    return api.get(`/api/payments/history/${bookingId}`);
+  },
+  
+  debugUserBookings: () => {
+    // console.log(' Calling debugUserBookings');
+    return api.get('/api/payments/debug-bookings');
+  },
   sendPaymentRequest: (data) => api.post('/api/payments/request', data),
   getUserPaymentRequests: (userId) => api.get(`/api/payments/requests/user/${userId}`),
   updatePaymentRequestStatus: (requestId, data) => api.put(`/api/payments/request/${requestId}`, data),
@@ -672,7 +752,7 @@ export const bookingAPI = {
   //     throw new Error(error.response?.data?.message || 'Failed to fetch bookings');
   //   }),
     getBookingById: (bookingId) => 
-    api.get(`/api/auth/bookings/${bookingId}`) // CORRECTED PATH
+    api.get(`/api/bookings/${bookingId}`) // CORRECTED PATH
       .then(response => {
         if (!response.data?.success) {
           throw new Error(response.data?.message || 'Failed to fetch booking details');
@@ -680,7 +760,7 @@ export const bookingAPI = {
         return response;
       }),
    getBookingsByProperty: () => 
-    api.get('/api/auth/bookings/property')
+    api.get('/api/bookings/property')
       .then(response => {
         console.log('Bookings API response:', response.data);
         if (!response.data?.success) {
@@ -693,7 +773,7 @@ export const bookingAPI = {
         throw new Error(error.response?.data?.message || 'Failed to fetch bookings');
       }),
       getUserBookings: () =>
-    api.get('/api/auth/bookings/user')
+    api.get('/api/bookings/user')
       .then(response => {
         if (!response.data?.success) {
           throw new Error(response.data?.message || 'Invalid response format for fetching user bookings');
@@ -707,7 +787,7 @@ export const bookingAPI = {
    * @param {object} bookingData - The booking details (propertyId, roomTypeId, roomId, moveInDate, moveOutDate).
    * @returns {Promise<AxiosResponse>} A promise that resolves to the API response.
    */
-  createBooking: (bookingData) => api.post('/api/auth/bookings', bookingData)
+  createBooking: (bookingData) => api.post('/api/bookings', bookingData)
     .then(response => {
       if (!response.data?.success) {
         throw new Error(response.data?.message || 'Invalid response format for creating booking');
@@ -738,6 +818,128 @@ export const vacateAPI = {
   addDeduction: (requestId, data) => 
     api.post(`/api/auth/vacate/${requestId}/add-deduction`, data)
 };
+
+
+
+export const ticketAPI = {
+  // Create a new ticket
+  createTicket: (ticketData) => 
+    api.post('/api/tickets', ticketData)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to create ticket');
+        }
+        return response;
+      }),
+
+  // Get all tickets for a specific client
+  getTicketsByClient: (clientId) => 
+    api.get(`/api/tickets/client/${clientId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch client tickets');
+        }
+        return response;
+      }),
+
+  // Get all tickets (admin only)
+  getAllTickets: (params = {}) => 
+    api.get('/api/tickets', { params })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch all tickets');
+        }
+        return response;
+      }),
+
+  // Update ticket (admin only)
+  updateTicket: (ticketId, updates) => 
+    api.put(`/api/tickets/${ticketId}`, updates)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to update ticket');
+        }
+        return response;
+      }),
+
+  // Get ticket by ID (you might want to add this endpoint to your backend)
+  getTicketById: (ticketId) => 
+    api.get(`/api/tickets/${ticketId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch ticket');
+        }
+        return response;
+      }),
+
+  // Close ticket (you might want to add this endpoint to your backend)
+  closeTicket: (ticketId, resolutionNotes = '') => 
+    api.patch(`/api/tickets/${ticketId}/close`, { resolutionNotes })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to close ticket');
+        }
+        return response;
+      }),
+
+  // Add comment to ticket (you might want to add this endpoint to your backend)
+  addComment: (ticketId, comment) => 
+    api.post(`/api/tickets/${ticketId}/comments`, { comment })
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to add comment');
+        }
+        return response;
+      }),
+
+  // Utility functions for ticket management
+  validateTicketData: (ticketData) => {
+    const errors = [];
+    
+    if (!ticketData.title?.trim()) {
+      errors.push('Ticket title is required');
+    }
+    
+    if (!ticketData.description?.trim()) {
+      errors.push('Ticket description is required');
+    }
+    
+    if (!ticketData.category?.trim()) {
+      errors.push('Ticket category is required');
+    }
+    
+    if (!ticketData.priority) {
+      errors.push('Ticket priority is required');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  },
+
+  formatTicketStatus: (status) => {
+    const statusMap = {
+      'open': 'Open',
+      'in_progress': 'In Progress',
+      'resolved': 'Resolved',
+      'closed': 'Closed',
+      'pending': 'Pending'
+    };
+    return statusMap[status] || status;
+  },
+
+  formatPriority: (priority) => {
+    const priorityMap = {
+      'low': 'Low',
+      'medium': 'Medium',
+      'high': 'High',
+      'urgent': 'Urgent'
+    };
+    return priorityMap[priority] || priority;
+  }
+};
+
 
 
 // export const vacateAPI = {

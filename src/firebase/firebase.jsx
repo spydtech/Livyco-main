@@ -30,41 +30,45 @@
 
 
 // firebase/firebase.js
-import { initializeApp } from "firebase/app";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+// It is used in the live-after deployed
+// import { initializeApp } from "firebase/app";
+// import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBxKGVr5ffZ5q_KglebLOQPKCjdoCzdpMY",
-  authDomain: "livyco-b65f5.firebaseapp.com",
-  projectId: "livyco-b65f5",
-  storageBucket: "livyco-b65f5.appspot.com",
-  messagingSenderId: "948960032829",
-  appId: "1:948960032829:web:924ff275abacebfffd5254",
-  measurementId: "G-WDVJECG9R8"
-};
+// const firebaseConfig = {
+//   apiKey: "AIzaSyBxKGVr5ffZ5q_KglebLOQPKCjdoCzdpMY",
+//   authDomain: "livyco-b65f5.firebaseapp.com",
+//   projectId: "livyco-b65f5",
+//   storageBucket: "livyco-b65f5.appspot.com",
+//   messagingSenderId: "948960032829",
+//   appId: "1:948960032829:web:924ff275abacebfffd5254",
+//   measurementId: "G-WDVJECG9R8"
+// };
 
-// Initialize Firebase with error handling
-let app;
-let auth;
+// // Initialize Firebase with error handling
+// let app;
+// let auth;
 
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
+// try {
+//   app = initializeApp(firebaseConfig);
+//   auth = getAuth(app);
   
-  // Disable App Check for testing if needed (remove in production)
-  // Note: This property might not exist in newer Firebase versions
-  if (auth.settings && typeof auth.settings.appVerificationDisabledForTesting !== 'undefined') {
-    auth.settings.appVerificationDisabledForTesting = false;
-  }
+//   // Disable App Check for testing if needed (remove in production)
+//   // Note: This property might not exist in newer Firebase versions
+//   if (auth.settings && typeof auth.settings.appVerificationDisabledForTesting !== 'undefined') {
+//     auth.settings.appVerificationDisabledForTesting = false;
+//   }
   
-  console.log("Firebase initialized successfully");
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-  throw error;
-}
+//   console.log("Firebase initialized successfully");
+// } catch (error) {
+//   console.error("Firebase initialization error:", error);
+//   throw error;
+// }
 
-export { auth, RecaptchaVerifier, signInWithPhoneNumber };
-export default app;
+// export { auth, RecaptchaVerifier, signInWithPhoneNumber };
+// export default app;
+
+
+
 
 
 // const app = initializeApp(firebaseConfig);
@@ -93,29 +97,29 @@ export default app;
 
 
 
-// // firebase/firebase.js
-// import { initializeApp } from "firebase/app";
-// import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator } from "firebase/auth";
-// import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+// firebase/firebase.js
+import { initializeApp } from "firebase/app";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator } from "firebase/auth";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// const firebaseConfig = {
-//   apiKey: "AIzaSyBxKGVr5ffZ5q_KglebLOQPKCjdoCzdpMY",
-//   authDomain: "livyco-b65f5.firebaseapp.com",
-//   projectId: "livyco-b65f5",
-//   storageBucket: "livyco-b65f5.appspot.com",
-//   messagingSenderId: "948960032829",
-//   appId: "1:948960032829:web:924ff275abacebfffd5254",
-//   measurementId: "G-WDVJECG9R8"
-// };
+const firebaseConfig = {
+  apiKey: "AIzaSyBxKGVr5ffZ5q_KglebLOQPKCjdoCzdpMY",
+  authDomain: "livyco-b65f5.firebaseapp.com",
+  projectId: "livyco-b65f5",
+  storageBucket: "livyco-b65f5.appspot.com",
+  messagingSenderId: "948960032829",
+  appId: "1:948960032829:web:924ff275abacebfffd5254",
+  measurementId: "G-WDVJECG9R8"
+};
 
-// const app = initializeApp(firebaseConfig);
-// const auth = getAuth(app);
-// // Initialize reCAPTCHA configuration
-// // initializeRecaptchaConfig(auth, {
-// //   siteKey: "gMY32VUo5l4IzxwtaIPiflcRuialfKBkVXVRDECMgGaCZ0hlfq", // Get this from Firebase Console
-// // });
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+// Initialize reCAPTCHA configuration
+// initializeRecaptchaConfig(auth, {
+//   siteKey: "gMY32VUo5l4IzxwtaIPiflcRuialfKBkVXVRDECMgGaCZ0hlfq", // Get this from Firebase Console
+// });
 
-// // Initialize App Check for production
+// Initialize App Check for production
 // if (process.env.NODE_ENV === 'production') {
 //   const appCheck = initializeAppCheck(app, {
 //     provider: new ReCaptchaV3Provider('your-recaptcha-v3-site-key-from-firebase-console'),
@@ -123,12 +127,12 @@ export default app;
 //   });
 // }
 
-// // Emulator only in development
+// Emulator only in development
 // if (window.location.hostname === 'localhost') {
 //   connectAuthEmulator(auth, 'http://localhost:9099');
 // }
 
-// export { auth, RecaptchaVerifier, signInWithPhoneNumber };
+export { auth, RecaptchaVerifier, signInWithPhoneNumber };
 
-// export { auth, RecaptchaVerifier, signInWithPhoneNumber };
+//export { auth, RecaptchaVerifier, signInWithPhoneNumber };
 

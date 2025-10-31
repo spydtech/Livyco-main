@@ -1,6 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
-
 import { Phone, MessageCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { MapPin } from 'lucide-react';
@@ -11,27 +9,31 @@ import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import Header from "../Header";
 
+import FreeMapComponent from "../usermaps/FreeMapComponent";
+import { mapAPI } from "../../Clients-components/PropertyController";
 
 export default function BookPG() {
-
-   const sliderRef = useRef(null);
+  const sliderRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [data, setData] = useState([])
-    const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [index, setIndex] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
-    
+  const [selectedMarker, setSelectedMarker] = useState(null);
+  const [locationData, setLocationData] = useState(null);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [mapApiError, setMapApiError] = useState(null);
+  const [showMapView, setShowMapView] = useState(false);
+
   const { id } = useParams();
   const location = useLocation();
-  const pg = location.state?.pg; // Get the pg data from navigation state
-  console.log("PG Data:", pg);
-      const navigate = useNavigate();
-  
-// ✅ Get user from localStorage once for the whole component
+  const pg = location.state?.pg;
+  const navigate = useNavigate();
+
+  // ✅ Get user from localStorage once for the whole component
   const user = JSON.parse(localStorage.getItem('user'));
-  
 
   useEffect(() => {
     if (!user) {
@@ -40,28 +42,87 @@ export default function BookPG() {
       });
     }
   }, [id, user, navigate]);
- 
-   
-      
+
+  // Get the property ID safely
+  const getPropertyId = () => {
+    return pg?._id || pg?.id || id;
+  };
+
+  // Fetch location data for the PG using your actual API
+  useEffect(() => {
+    const fetchLocationData = async () => {
+      const propertyId = getPropertyId();
+
+      if (!propertyId || propertyId === 'undefined') {
+        console.log('No valid property ID found:', { pg, id });
+        setMapLoading(false);
+        setMapApiError("Property ID not available");
+        return;
+      }
+
+      try {
+        setMapLoading(true);
+        setMapApiError(null);
+
+        console.log('Fetching location data for property ID:', propertyId);
+
+        // Use your actual API call
+        const res = await mapAPI.getMapByProperty(propertyId);
+
+        console.log('Location API response:', res);
+
+        if (res.data && res.data.success && res.data.location) {
+          setLocationData(res.data.location);
+        } else {
+          setLocationData(null);
+          setMapApiError("No location data found for this property");
+        }
+      } catch (error) {
+        console.error("Error fetching location data:", error);
+
+        // Handle different types of errors
+        if (error.response?.status === 404) {
+          setLocationData(null);
+          setMapApiError("Location data not found for this property");
+        } else if (error.response?.status === 500) {
+          setMapApiError("Server error. Please try again later.");
+          setLocationData(null);
+        } else if (error.code === 'NETWORK_ERROR') {
+          setMapApiError("Network error. Please check your connection.");
+          setLocationData(null);
+        } else {
+          setMapApiError("Failed to load location data. Please try again.");
+          setLocationData(null);
+        }
+      } finally {
+        setMapLoading(false);
+      }
+    };
+
+    if (pg || id) {
+      fetchLocationData();
+    } else {
+      setMapLoading(false);
+      setMapApiError("Property information not available");
+    }
+  }, [pg, id]);
 
   // Handle undefined pg gracefully
   if (!pg) {
     return (
       <div className="p-10 text-center text-red-600 font-semibold">
-        PG not found
+        PG not found. Please go back and try again.
       </div>
     );
   }
 
   const bg = {
-  backgroundImage: `url(${bgImg})`,
-   backgroundSize: '100%  ',
-  backgroundRepeat: 'repeat',
-  backgroundPosition: 'center',
-  minHeight: '100vh',  
-};
- 
-
+    backgroundImage: `url(${bgImg})`,
+    backgroundSize: '100%',
+    backgroundRepeat: 'repeat',
+    backgroundPosition: 'center',
+    minHeight: '100vh',
+  };
 
   const onMouseDown = (e) => {
     setIsDragging(true);
@@ -73,7 +134,7 @@ export default function BookPG() {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - sliderRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // scroll speed
+    const walk = (x - startX) * 1.5;
     sliderRef.current.scrollLeft = scrollLeft - walk;
   };
 
@@ -81,105 +142,51 @@ export default function BookPG() {
     setIsDragging(false);
   };
 
-
   // Function to handle phone call
   const handlePhoneClick = () => {
-    // Replace with actual owner phone number from pg data
     const phoneNumber = pg?.owner?.phone || "1234567890";
     window.location.href = `tel:${phoneNumber}`;
   };
 
-
-
   // Function to handle message click
-// In BookPG component
-const handleMessageClick = () => {
-  if (!user) {
-    navigate("/user/login");
-    return;
-  }
-  
-  // Ensure we're passing all required data
-  navigate("/user/chats", { 
-    state: { 
-      recipientId: pg.ownerId || pg.owner._id, // Handle both cases
-      recipientName: pg.owner?.name || "PG Owner",
-      propertyId: pg._id || pg.id,
-      propertyName: pg.name,
-      clientId: pg.owner?.clientId || "client ID", // Handle both cases
-      role: "client" // Assuming the user is a client
-    } 
-    
-  });
-  console.log('propertyid:', pg._id);
-};
+  const handleMessageClick = () => {
+    if (!user) {
+      navigate("/user/login");
+      return;
+    }
 
-
-
-
-  const prev = () => {
-    setActiveIndex((prevIndex) => (prevIndex === 0 ? 2 : prevIndex - 1));
+    navigate("/user/chats", {
+      state: {
+        recipientId: pg.ownerId || pg.owner._id,
+        recipientName: pg.owner?.name || "PG Owner",
+        propertyId: getPropertyId(),
+        propertyName: pg.name,
+        clientId: pg.owner?.clientId || "client ID",
+        role: "client"
+      }
+    });
   };
 
-  const next = () => {
-    setActiveIndex((prevIndex) => (prevIndex === 2 ? 0 : prevIndex + 1));
-  };
-
-  const visibleCount = 4;
-
-  const nextSlide = () => {
-    setIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevSlide = () => {
-    setIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-// const handleBookNow = () => {
-//     if (!pg) return;
-    
-//     navigate(`/user/booking`, { // Use pg._id directly in the URL
-//       state: {
-//         propertyId: pg._id, // Use pg._id directly
-//         propertyName: pg.name,
-//         roomTypes: pg.rooms?.roomTypes || [],
-//         price: pg.rooms?.roomTypes?.[0]?.price || 0,
-//         rooms: pg.rooms || {},
-//         owner: pg.owner,
-//         role: "client",
-//       }
-//     });
-//     console.log("Booking details:", {
-//       propertyId: pg._id, // Changed from pg.property._id
-//       propertyName: pg.name,
-//       roomTypes: pg.rooms?.roomTypes || [],
-//       price: pg.rooms?.roomTypes?.[0]?.price || 0,
-//       rooms: pg.rooms || {},
-//       owner: pg.owner,
-//       role: "client",
-//     });
-// };
-const handleview = () => {
+  const handleview = () => {
     if (!pg) {
-        console.error("PG data is missing");
-        return;
+      console.error("PG data is missing");
+      return;
     }
-    
-    const propertyId = pg._id || pg.id || pg.property?._id;
-    
+
+    const propertyId = getPropertyId();
+
     if (!propertyId) {
-        console.error("Property ID is undefined", pg);
-        // You might want to show an error message to the user
-        alert("Unable to book: Property information is incomplete");
-        return;
+      console.error("Property ID is undefined", pg);
+      alert("Unable to book: Property information is incomplete");
+      return;
     }
-    
+
     const propertyName = pg.name || pg.propertyName;
     const roomTypes = pg.rooms?.roomTypes || pg.roomTypes || [];
     const price = roomTypes[0]?.price || 0;
     const rooms = pg.rooms || {};
     const owner = pg.owner || {};
-    
+
     navigate(`/user/booking`, {
       state: {
         propertyId,
@@ -191,7 +198,11 @@ const handleview = () => {
         role: "client",
       }
     });
-};
+  };
+
+  const toggleMapView = () => {
+    setShowMapView(!showMapView);
+  };
 
   const Images = [
     {
@@ -244,44 +255,39 @@ const handleview = () => {
       title: "Airport",
       name: "Rajiv Gandhi Intl. Airport",
       walk: "km | hrs",
-
     },
     {
       icon: <TrainFront />,
       title: "Metro Station",
       name: "Kukatpally Metro Station",
       walk: "km | hrs",
-
     },
     {
       icon: <Bus />,
       title: "Bus Stop",
       name: "KPHB Bus Stop",
       walk: "km | hrs",
-
     },
     {
       icon: <TrainFront />,
       title: "Railway Station",
       name: "Hafeezpet Station",
       walk: "km | hrs",
-
     },
     {
       icon: <Hospital />,
       title: "Hospital",
       name: "Rainbow Hospital",
       walk: "km | hrs",
-
     },
     {
       icon: <ShoppingCart />,
       title: "Market",
       name: "Forum Mall Kukatpally",
       walk: "km | hrs",
-
     },
   ];
+
   const people = [
     {
       id: 1,
@@ -307,198 +313,299 @@ const handleview = () => {
       comment: "Loved the simplicity!",
       avatar: "https://example.com/avatar1.jpg",
     },
-
   ];
+
   const displayedData = showAll ? neighborhoodData : neighborhoodData.slice(0, 4);
+  const pins = locationData?.pins || [];
+  const hasPins = pins.length > 0;
+  const property = getPropertyId();
 
   return (
     <>
-    <Header />
+      <Header />
       <div
         className="w-full min-h-screen bg-cover bg-no-repeat bg-center px-0 py-2"
         style={{ backgroundImage: `url('${bgImg}')` }}
-        >
-      <div className=" flex flex-col   mx-10 md:mx-44   ">
-        <div>
-          <span>Home</span>
-          <span>/</span>
-          <span>PG Booking</span>
-        </div>
-        {/*first image box and text */}
-        <div className="flex flex-col md:flex-row   p-2  mt-10 md:gap-6 gap-6">
-          {/* Image + Thumbnails */}
-         <div className="w-full md:w-2/5 flex flex-col gap-3">
-  {/* Main Image */}
-  <div>
-    <img
-      src={pg.images?.[0]?.url || "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDB4MzM1/LmpwZw"}
-      alt="Main PG"
-      className="w-full h-48 object-cover rounded-2xl shadow"
-      onError={(e) => {
-        e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDB4MzM1/LmpwZw";
-      }}
-    />
-  </div>
+      >
+        <div className="flex flex-col mx-10 md:mx-44">
+          <div className="text-sm text-gray-600 mb-4">
+            <span>Home</span>
+            <span> / </span>
+            <span>PG Booking</span>
+          </div>
 
-  {/* Thumbnails */}
-  <div className="flex gap-2">
-    {pg.images?.slice(0, 3).map((image, i) => (
-      <img
-        key={i}
-        src={image.url || "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDB4MzM1/LmpwZw"}
-        alt={`Thumbnail ${i + 1}`}
-        className="flex-1 min-w-0 h-24 object-cover rounded-xl shadow-sm"
-        onError={(e) => {
-          e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDB4MzM1/LmpwZw";
-        }}
-      />
-    ))}
-  </div>
-</div>
+          {/* First image box and text */}
+          <div className="flex flex-col md:flex-row p-2 mt-10 md:gap-6 gap-6">
+            {/* Image + Thumbnails */}
+            <div className="w-full md:w-2/5 flex flex-col gap-3">
+              {/* Main Image */}
+              <div>
+                <img
+                  src={
+                    pg.images?.[0]?.url ||
+                    pg.image ||
+                    "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw"
+                  }
+                  alt="Main PG"
+                  className="w-full h-48 object-cover rounded-2xl shadow"
+                  onError={(e) => {
+                    e.target.src =
+                      "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+                  }}
+                />
+              </div>
 
+              {/* Thumbnails */}
+              <div className="flex gap-2">
+                {pg.images?.slice(0, 3).map((image, i) => (
+                  <img
+                    key={i}
+                    src={
+                      image.url ||
+                      pg.image ||
+                      "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw"
+                    }
+                    alt={`Thumbnail ${i + 1}`}
+                    className="flex-1 min-w-0 h-24 object-cover rounded-xl shadow-sm"
+                    onError={(e) => {
+                      e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
 
-          {/* Details Section */}
-          <div className="w-full md:w-3/5 flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <p className="text-xl font-semibold">{pg.name}</p>
-              {/* Stars */}
-              <div className="text-yellow-500 py-1">
-               {pg.rating >= 4.5 ? (
-                  <span className="text-lg font-semibold">{pg.rating} ★</span>
+            {/* Details Section */}
+            <div className="w-full md:w-3/5 flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <p className="text-xl font-semibold">{pg.name}</p>
+                {/* Stars */}
+                <div className="text-yellow-500 py-1">
+                  {pg.rating >= 4.5 ? (
+                    <span className="text-lg font-semibold">{pg.rating} ★</span>
+                  ) : (
+                    <span className="text-lg font-semibold">{pg.rating} ☆</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  {pg.pgProperty?.description || pg.description || "Comfortable and affordable PG accommodation with all modern amenities."}
+                </p>
+              </div>
+
+              {/* Feature Grid */}
+              <div className="border min-h-[185px] border-gray-200 rounded-lg p-4 py-7 relative">
+                <hr className="absolute left-5 right-5 top-1/2 border-t border-gray-300" />
+                {/* Add your feature grid content here */}
+              </div>
+            </div>
+          </div>
+
+          {/* Occupancy */}
+          <div className="flex flex-col mt-5 bg-white py-3 px-5 rounded-lg shadow-sm">
+            <p className="text-lg font-semibold">Occupancy Options</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-5">
+              {pg.rooms?.roomTypes?.map((roomType) => (
+                <div
+                  key={roomType.type}
+                  className="flex flex-col items-center border border-gray-200 rounded-lg py-10 shadow-sm w-full hover:shadow-md transition-shadow"
+                >
+                  <p className="text-gray-500 text-xs capitalize">
+                    {roomType.type} Sharing
+                  </p>
+                  <p className="font-semibold text-lg">₹{roomType.price}</p>
+                  <p className="text-gray-500 text-xs mt-2">Deposit</p>
+                  <p className="font-semibold">
+                    ₹{roomType.deposit || Math.round(roomType.price * 0.5)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Common Amenities */}
+          <div className="flex flex-col bg-white p-1 my-5 rounded-lg shadow-sm">
+            <p className="text-lg font-semibold mb-4">Common Amenities</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: "Wi-Fi", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-Rt5IUiRCyA3LX1gWrvm7BEP0L4Mw899riA&s" },
+                { label: "Gym", img: "https://thumbs.dreamstime.com/b/barbel-dumbbell-gym-icon-logo-template-barbel-dumbbell-gym-icon-logo-template-gym-badge-fitness-logo-design-barbell-vector-weight-144308752.jpg" },
+                { label: "Parking", img: "https://i.fbcd.co/products/resized/resized-750-500/g15584-089613be34d1836ec5c09a3c740fc83f807401500aaead36004e9801cd847962.jpg" },
+                { label: "Fire Safety", img: "https://toppng.com/uploads/preview/fire-extinguisher-symbol-png-11553496624yvo8ytv66m.png" },
+                { label: "Smoking", img: "https://www.shutterstock.com/image-vector/cigarette-iconsmoke-area-icon-vector-600nw-1403219231.jpg" },
+                { label: "Solar Power", img: "https://as1.ftcdn.net/jpg/05/50/51/74/1000_F_550517478_pqKOUpiR65GgyuCvld9Stag97lkPwjdA.jpg" },
+                { label: "Lift", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeoYy2pkHEE_k9wKJ1LAzmcXTQjAArYpemuw&s" },
+                { label: "Fridge", img: "https://cdn3.iconfinder.com/data/icons/food-drink/512/refrigerator-512.png" },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col items-center rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <img src={item.img} alt={item.label} className="w-14 h-14 mb-2" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <p className="text-lg font-semibold mb-2">PG Rules</p>
+            <p className="text-sm text-gray-500">Rules and regulations will be provided upon booking.</p>
+          </div>
+
+          {/* Owner */}
+          <div className="mt-5 bg-white p-4 flex justify-between py-4 rounded-lg shadow-sm">
+            <div className="flex gap-3 items-center">
+              <img
+                src={pg.owner?.profilePicture || "https://placehold.co/150x150"}
+                alt="Owner"
+                className="w-16 h-16 rounded-full object-cover"
+              />
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-gray-800">
+                  {pg.owner?.name?.trim() || pg.name || "PG Owner"}
+                </p>
+                <p className="text-xs text-gray-500">Property Owner</p>
+              </div>
+            </div>
+            <div className="flex gap-4 text-xl justify-center items-center">
+              <button
+                onClick={handlePhoneClick}
+                className="bg-yellow-400 w-10 h-10 rounded-full flex items-center justify-center hover:bg-yellow-500 transition-colors"
+              >
+                <Phone className="w-5 h-5 text-black" />
+              </button>
+              <button
+                onClick={handleMessageClick}
+                className="bg-yellow-400 w-10 h-10 rounded-full flex items-center justify-center hover:bg-yellow-500 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5 text-black" />
+              </button>
+            </div>
+          </div>
+
+          {/* Location Section with MapLocationAdmin */}
+          <div className="mt-5 bg-white rounded-lg shadow-sm">
+            <div className="p-4 border-b flex justify-between items-center">
+              <p className="flex items-center gap-2 text-gray-700 font-semibold">
+                <MapPin className="w-5 h-5" />
+                Property Location
+                {hasPins && (
+                  <span className="text-sm font-normal text-gray-500 ml-2">
+                    ({pins.length} location pin{pins.length !== 1 ? 's' : ''})
+                  </span>
+                )}
+              </p>
+              <button
+                onClick={toggleMapView}
+                className="bg-[#facc14] text-black px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                {showMapView ? "Show Simple View" : "Show Detailed Map"}
+              </button>
+            </div>
+
+            {showMapView ? (
+              <div className="p-4">
+                <FreeMapComponent pins={pins} propertyName={pg.name} />
+              </div>
+            ) : (
+              // Simple map view
+              <div className="p-4">
+                {mapLoading ? (
+                  <div className="p-8 text-center">
+                    <p>Loading property location...</p>
+                  </div>
+                ) : mapApiError ? (
+                  <div className="p-6 text-center">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+                      <div className="text-red-600 mb-2">⚠️ Error Loading Map</div>
+                      <p className="text-red-700 text-sm mb-4">{mapApiError}</p>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  </div>
+                ) : !hasPins ? (
+                  <div className="p-8 text-center">
+                    <div className="text-4xl mb-4">📍</div>
+                    <h3 className="text-xl font-semibold mb-2">Location Not Available</h3>
+                    <p className="text-gray-600">
+                      Location details for this property are not available.
+                    </p>
+                  </div>
                 ) : (
-                  <span className="text-lg font-semibold">{pg.rating} ☆</span>
+                  <div>
+                    {/* Location Details */}
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold">Location Details</h4>
+                        {pins.length > 2 && (
+                          <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                            {pins.length} locations
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Scrollable container with gradient fade effect */}
+                      <div className="relative">
+                        <div className="max-h-44 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                          {pins.map((pin, index) => (
+                            <div
+                              key={index}
+                              className="text-sm text-gray-600 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all duration-200"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <span className="text-blue-600 text-xs font-bold">{index + 1}</span>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-800 mb-1">{pin.address}</p>
+                                  <div className="text-xs text-gray-500 space-y-1">
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Lat:</span>
+                                      <span>{pin.lat.toFixed(6)}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <span className="font-medium">Lng:</span>
+                                      <span>{pin.lng.toFixed(6)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Scroll indicator */}
+                        {pins.length > 2 && (
+                          <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none flex items-end justify-center pb-1">
+                            <div className="w-6 h-1 bg-gray-300 rounded-full"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Help text for scrolling */}
+                      {pins.length > 2 && (
+                        <div className="mt-2 text-center">
+                          <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                            <span>⬆️⬇️</span>
+                            <span>Scroll to view all {pins.length} locations</span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-              <p className="text-sm text-gray-600">
-                {pg.pgProperty?.description}
-              </p>
-            </div>
-
-            {/* Feature Grid */}
-            <div className="border border-gray-200 rounded-lg p-4 py-7 relative">
-              {/* Horizontal line */}
-              <hr className="absolute left-5   right-5 top-1/2 border-t border-gray-300" />
-
-              {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i}>
-                    <p className="text-gray-500 text-sm">Item</p>
-                    <p className="font-semibold text-sm">Description</p>
-                  </div>
-                ))}
-              </div> */}
-            </div>
-
-          </div>
-        </div>
-
-        {/*forst image box and text */}
-        {/*Occupenct */}
-        <div className="flex flex-col mt-5  bg-white py-3 px-5">
-          <p className="text-lg font-semibold">Occupancy Options</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-5">
-  {pg.rooms?.roomTypes?.map((roomType) => (
-    <div 
-      key={roomType.type} 
-      className="flex flex-col items-center border border-gray-200 rounded-lg py-10 shadow-sm w-full"
-    >
-      <p className="text-gray-500 text-xs capitalize">
-        {roomType.type} Sharing
-      </p>
-      <p className="font-semibold">₹{roomType.price}</p>
-      <p className="text-gray-500 text-xs mt-2">Deposit</p>
-      <p className="font-semibold">
-        ₹{roomType.deposit || Math.round(roomType.price * 0.5)} {/* Default to 50% of price if deposit not specified */}
-      </p>
-    </div>
-  ))}
-</div>
-        </div>
-
-        {/*Occupenct */}
-        {/*common ameneties */}
-        <div className="flex flex-col  bg-white p-1 my-5">
-          <p  >Common Amenities</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 ">
-            {[
-              { label: "Wi-Fi", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-Rt5IUiRCyA3LX1gWrvm7BEP0L4Mw899riA&s" },
-              { label: "Gym", img: "https://thumbs.dreamstime.com/b/barbel-dumbbell-gym-icon-logo-template-barbel-dumbbell-gym-icon-logo-template-gym-badge-fitness-logo-design-barbell-vector-weight-144308752.jpg" },
-              { label: "Parking", img: "https://i.fbcd.co/products/resized/resized-750-500/g15584-089613be34d1836ec5c09a3c740fc83f807401500aaead36004e9801cd847962.jpg" },
-              { label: "Fire Safety", img: "https://toppng.com/uploads/preview/fire-extinguisher-symbol-png-11553496624yvo8ytv66m.png" },
-              { label: "Smoking", img: "https://www.shutterstock.com/image-vector/cigarette-iconsmoke-area-icon-vector-600nw-1403219231.jpg" },
-              { label: "Solar Power", img: "https://as1.ftcdn.net/jpg/05/50/51/74/1000_F_550517478_pqKOUpiR65GgyuCvld9Stag97lkPwjdA.jpg" },
-              { label: "Lift", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeoYy2pkHEE_k9wKJ1LAzmcXTQjAArYpemuw&s" },
-              { label: "Fridge", img: "https://cdn3.iconfinder.com/data/icons/food-drink/512/refrigerator-512.png" },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="flex flex-col items-center   rounded-lg p-4"
-              >
-                <img src={item.img} alt={item.label} className="w-14 h-14 mb-2" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        {/*common ameneties end */}
-        <div className=" bg-white p-2">
-          <p className="mt-1 mb-2 ">PG Rules</p>
-          <p className="text-sm text-gray-500">Ruels.</p>
-        </div>
-        {/*Owner */}
-        <div className="mt-5  bg-white p-1 flex justify-between py-2">
-          <div className="flex gap-2">
-            <div className="flex">
-              <img
-               src={pg.owner?.profilePicture || "https://placehold.co/150x150"}
-                alt="Owner"
-                className="w-16 h-14 rounded-full"
-              />
-
-            </div>
-            <div className="flex flex-col">
-              <p>{pg.owner?.name || "PG Owner"}</p>
-              <p>Owner</p>
-            </div>
-          </div>
-          <div className="flex gap-4 text-xl justify-center items-center">
-            <div className="bg-yellow-400 w-8 h-8 rounded-full flex items-center justify-center">
-               <Phone
-                onClick={handlePhoneClick}
-               className="w-4 h-4 text-black" /></div>
-            <div className="bg-yellow-400 w-8 h-8 rounded-full flex items-center justify-center"> 
-              <MessageCircle 
-               onClick={handleMessageClick}
-              className="w-4 h-4 text-black" /></div>
-
-          </div>
-        </div>
-        {/*Owner end */}
-        {/*Location */}
-        <div>
-          <p className="flex items-center gap-2  bg-white p-1 text-gray-700">
-            <MapPin className="w-5 h-5" />
-            Hostel Address
-          </p>
-          <div className="rounded-lg overflow-hidden shadow bg-white p-1">
-            <div className="rounded-lg overflow-hidden shadow">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.548745113867!2d78.44089437421063!3d17.43343050147892!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb90ce5a6bb089%3A0x9735729ba8a8e87d!2sMADHAVI%20BOYS%20HOSTEL%2F%20PG%20Boys%20Hostel!5e0!3m2!1sen!2sus!4v1753682216942!5m2!1sen!2sus"
-                width="100%"
-                height="350"
-                style={{ border: 0 }}
-                allowFullScreen=" "
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-
+            )}
           </div>
 
-          <div className="mt-10 px-4 bg-white p-1">
+          {/* Neighborhood */}
+          <div className="mt-5 px-4 bg-white p-4 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Neighborhood</h2>
-
             <div className="grid text-xs grid-cols-1 gap-4">
               {displayedData.map((item, index) => (
                 <div key={index} className="px-4 rounded-lg text-blue-600">
@@ -514,7 +621,6 @@ const handleview = () => {
                       <p>{item.name}</p>
                       <p>{item.walk}</p>
                     </div>
-
                   </div>
                 </div>
               ))}
@@ -528,124 +634,89 @@ const handleview = () => {
             </button>
           </div>
 
-        </div>
-        {/*Location end */}
-        <div className="flex justify-center bg-white py-4 mt-5  ">
-          <p className="text-xl">Feedbacks From Our Users</p>
-        </div>
-        {/*review start */}
-        <div className="grid grid-cols-1  bg-white md:grid-cols-3 p-9 gap-4">
-          {people.map((item) => (
-            <div key={item.id} >
-              <div className="min-h-44   relative z-0 overflow-visible mx-auto">
-                <div className="bg-gray-700 w-full rounded-tr-xl rounded-bl-xl absolute    z-10    pb-5">
-                  <div className="flex flex-col justify-center items-center text-white gap-1 ">
-                    <p className="font-semibold mt-5">{item.name}</p>
+          {/* Reviews */}
+          <div className="flex justify-center bg-white py-4 mt-5 rounded-lg shadow-sm">
+            <p className="text-xl font-semibold">Feedbacks From Our Users</p>
+          </div>
+
+          <div className="grid grid-cols-1 bg-white md:grid-cols-3 p-6 gap-6 rounded-lg shadow-sm">
+            {people.map((item) => (
+              <div key={item.id} className="relative min-h-44 overflow-visible">
+                <div className="bg-gray-700 w-full rounded-tr-xl rounded-bl-xl absolute z-10 pb-5 pt-8">
+                  <div className="flex flex-col justify-center items-center text-white gap-1 px-4">
+                    <p className="font-semibold">{item.name}</p>
                     <p className="text-xs">{item.occupation}</p>
                     <p className="text-yellow-500">&#9733; <span className="text-white">{item.rating}</span></p>
-                    <p>“{item.comment}”</p>
+                    <p className="text-sm text-center">"{item.comment}"</p>
                   </div>
                 </div>
-                <div className="bg-gray-700 w-24 h-24 absolute rounded-full 
-                      top-1/5 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                </div>
-                <div className="bg-white flex items-center justify-center w-16 h-16 absolute rounded-full 
-                      top-1/5 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-                  {/*   insert image */}
+                <div className="bg-gray-700 w-24 h-24 absolute rounded-full top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"></div>
+                <div className="bg-white flex items-center justify-center w-20 h-20 absolute rounded-full top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 border-4 border-white">
                   <img
-                    src="data:image/jpeg;base64,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"
-                    className="w-16 h-16 rounded-full"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        {/*review end */}
-        <div className="flex bg-white mt-5 p-1 ">
-          <p className="text-xl ml-5">Nearby Properties</p>
-        </div>
-        {/*Slide show */}
-        <div className="relative w-full max-w-5xl bg-white mx-auto p-3 mb-5  ">
-          <div
-            className="flex gap-1 overflow-x-auto cursor-grab"
-            ref={sliderRef}
-            onMouseDown={onMouseDown}
-            onMouseMove={onMouseMove}
-            onMouseLeave={onMouseUp}
-            onMouseUp={onMouseUp}
-          >
-            {Images.map((item, i) => (
-              <div key={i} className="flex-shrink-0 w-1/4 px-2">
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                  <img
-                    src={item.img}
+                    src={item.avatar}
                     alt={item.name}
-                    className="w-full h-44 object-cover"
+                    className="w-16 h-16 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+                    }}
                   />
-                  <div className="p-3 text-sm text-gray-700 space-y-1">
-                    <p className="font-semibold">{item.name}</p>
-                    <p className="text-blue-600">{item.price}</p>
-                    <p className="text-yellow-600">Rating: ★ {item.rating}</p>
-                    <p className="text-gray-500">{item.distance}</p>
-                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-        {/*Slide show end */}
-        {/*last 2 buttons */}
-        <div className="flex flex-col sm:flex-row justify-center items-center bg-white gap-4 md:gap-10 p-5">
-          <button className="bg-blue-700 px-10 md:px-20 lg:px-44 rounded-md py-3 text-white w-full sm:w-auto">
-            Contact
-          </button>
 
-          <button 
-         onClick={handleview}
-          className="bg-blue-700 px-10 md:px-20 lg:px-44 rounded-md py-3 text-white w-full sm:w-auto">
-            Book Now
-          </button>
-        </div>
-
-
-        {/*
-        <div className="flex justify-center items-center  py-3 space-x-6">
-          
-          <button
-            onClick={prev}
-            className="w-14 h-14 border-2 border-gray-400 rounded-full text-xl font-bold flex items-center justify-center"
-          >
-            ⟵
-          </button>
-
-           
-          <div className="flex space-x-3">
-            <div
-              className={`w-14 h-14 rounded-full   flex justify-center items-center border-1 border-gray-400   text-xl ${activeIndex === 0 ? "bg-yellow-400 text-white" : "bg-white"
-                }`}
-            >1</div>
-            <div
-              className={`w-14 h-14 rounded-full  flex justify-center items-center border-1 border-gray-400  text-xl ${activeIndex === 1 ? "bg-yellow-400 text-white" : "bg-white"
-                }`}
-            >2</div>
-            <div
-              className={`w-14 h-14 rounded-full  flex justify-center items-center border-1 border-gray-400  text-xl ${activeIndex === 2 ? "bg-yellow-400 text-white" : "bg-white"
-                }`}
-            >3</div>
+          {/* Nearby Properties */}
+          <div className="flex bg-white mt-5 p-4 rounded-lg shadow-sm">
+            <p className="text-xl font-semibold">Nearby Properties</p>
           </div>
 
-        
-          <button
-            onClick={next}
-            className="w-14 h-14 border-2 border-gray-400 rounded-full text-xl font-bold flex items-center justify-center"
-          >
-            ⟶
-          </button>
-        </div>*/}
-      </div>
+          {/* Slideshow */}
+          <div className="relative w-full max-w-6xl bg-white mx-auto p-3 mb-5 rounded-lg shadow-sm">
+            <div
+              className="flex gap-3 overflow-x-auto cursor-grab scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+              ref={sliderRef}
+              onMouseDown={onMouseDown}
+              onMouseMove={onMouseMove}
+              onMouseLeave={onMouseUp}
+              onMouseUp={onMouseUp}
+            >
+              {Images.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[70%] sm:w-[45%] md:w-[30%] lg:w-[23%] px-2"
+                >
+                  <div className="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:scale-105 border border-gray-200">
+                    <img
+                      src={item.img}
+                      alt={item.name}
+                      className="w-full h-40 sm:h-44 md:h-48 object-cover"
+                    />
+                    <div className="p-3 text-sm sm:text-base text-gray-700 space-y-1">
+                      <p className="font-semibold truncate">{item.name}</p>
+                      <p className="text-blue-600 font-semibold">{item.price}</p>
+                      <p className="text-yellow-600">Rating: ★ {item.rating}</p>
+                      <p className="text-gray-500 text-sm">{item.distance}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-    </div>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center items-center bg-white gap-4 md:gap-10 p-6 rounded-lg shadow-sm mb-8">
+            <button className="bg-blue-700 px-10 md:px-20 lg:px-32 rounded-md py-3 text-white w-full sm:w-auto hover:bg-blue-800 transition-colors font-semibold">
+              Contact
+            </button>
+
+            <button
+              onClick={handleview}
+              className="bg-blue-700 px-10 md:px-20 lg:px-32 rounded-md py-3 text-white w-full sm:w-auto hover:bg-blue-800 transition-colors font-semibold">
+              Book Now
+            </button>
+          </div>
+        </div>
+      </div>
     </>
-  )
+  );
 }

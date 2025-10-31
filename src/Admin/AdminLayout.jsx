@@ -5,6 +5,7 @@ import Dashboard from './Dashboard/Dashboard';
 // import PropertyDetails from './PropertyListings/PropertyDetails';
 // import PropertyListings from './PropertyListings/PropertyListings';
 
+
 const AdminLayout = () => {
     return (
         <>
