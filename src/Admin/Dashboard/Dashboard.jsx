@@ -15,6 +15,7 @@ import RoleActivityForm from "../FinancialReport/FinancialReport";
 import Tabs from "../AdminSettings/Tabs";
 import Bookings from "../BookingDetails/Bookings";
 import SupportDashboard from "../SupportTickets/AdminSupportdashboard";
+import CustomReviewsPage from "../CustomReviews/CustomReviewsPage";
 
 import axios from "axios";
 
@@ -22,6 +23,7 @@ const menuItems = [
   { name: "Dashboard", icon: HiOutlineViewGrid, path: "/admin/dashboard" },
   { name: "Property Listings", icon: HiUsers, path: "/admin/dashboard/propertylistings" },
   { name: "Manage Users", icon: HiUsers, path: "/admin/dashboard/manageusers" },
+  { name: "Custom Reviews", icon: HiUsers, path: "/admin/dashboard/reviews" },
   { name:"Bookings", icon: HiUsers, path: "/admin/dashboard/bookings" },
   { name: "Financial Reports", icon: BiMoney, path: "/admin/dashboard/finacialReport" },
   { name: "Support Tickets", icon: BiSupport, path: "/admin/dashboard/support" },
@@ -111,6 +113,7 @@ const Dashboard = () => {
           <Route path="/manageusers" element={<ManageUsers />} />
           <Route path="/manageusers/:id" element={<UserDetails />} />
           <Route path="/finacialReport" element={<RoleActivityForm />} />
+          <Route path="/reviews" element={<CustomReviewsPage />} />
           <Route path="/settings" element={<Tabs />} />
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/support" element={<SupportDashboard/>} />
