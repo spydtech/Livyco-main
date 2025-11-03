@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FaArrowLeft, FaBars, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaBars, FaSearch, FaUser, FaHome, FaCalendarAlt, FaMoneyBillWave, FaInfoCircle } from "react-icons/fa";
 
 const API_BASE_URL = "http://localhost:5000/api";
 const ITEMS_PER_PAGE = 5;
@@ -138,62 +138,97 @@ const Bookings = () => {
         : selectedBooking.roomDetails || {};
 
     return (
-      <div className="min-h-screen bg-gray-100 p-6">
-        <button
-          onClick={() => setSelectedBooking(null)}
-          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium mb-4"
-        >
-          <FaArrowLeft /> Back to Bookings
-        </button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <button
+            onClick={() => setSelectedBooking(null)}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors duration-200 bg-white px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md border border-gray-100"
+          >
+            <FaArrowLeft className="text-sm" /> Back to Bookings
+          </button>
 
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-white shadow-md rounded-lg p-6 space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Booking Details</h2>
-
-            {/* Tenant Info */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Tenant Information</h3>
-              <p><span className="font-semibold">Name:</span> {tenant.name || "N/A"}</p>
-              <p><span className="font-semibold">Email:</span> {tenant.email || "N/A"}</p>
-              <p><span className="font-semibold">Phone:</span> {tenant.phone || "N/A"}</p>
-              <p><span className="font-semibold">Client ID:</span> {tenant.clientId || selectedBooking.createdBy || "N/A"}</p>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="bg-[#1e3b8a] p-6 text-white">
+              <h2 className="text-2xl font-bold">Booking Details</h2>
+              
             </div>
 
-            {/* Property Info */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Property Information</h3>
-              <p><span className="font-semibold">Property Name:</span> {property.name || "N/A"}</p>
-              <p><span className="font-semibold">Address:</span> {property.address || "N/A"}</p>
-              <p><span className="font-semibold">Room No/ID:</span> {room.roomNumber || room.roomIdentifier || "N/A"}</p>
-              <p><span className="font-semibold">Room Type/Sharing:</span> {room.sharingType || room.roomType || "N/A"}</p>
-              <p><span className="font-semibold">Amenities:</span> {room.amenities?.join(", ") || "N/A"}</p>
-            </div>
+            <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Tenant Info */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-300">
+                    <FaUser className="text-gray-800" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 text-lg">Tenant Information</h3>
+                </div>
+                <div className="space-y-3">
+                  <InfoRow label="Name" value={tenant.name || "N/A"} />
+                  <InfoRow label="Email" value={tenant.email || "N/A"} />
+                  <InfoRow label="Phone" value={tenant.phone || "N/A"} />
+                  <InfoRow label="Client ID" value={tenant.clientId || selectedBooking.createdBy || "N/A"} />
+                </div>
+              </div>
 
-            {/* Booking Info */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Booking Information</h3>
-              <p><span className="font-semibold">Move In:</span> {new Date(selectedBooking.checkInDate || selectedBooking.moveInDate).toLocaleDateString()}</p>
-              <p><span className="font-semibold">Move Out:</span> {new Date(selectedBooking.checkOutDate || selectedBooking.moveOutDate).toLocaleDateString()}</p>
-              <p>
-                <span className="font-semibold">Status:</span>{" "}
-                <span className={`inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full ${getStatusBadge(selectedBooking.status || selectedBooking.bookingStatus)}`}>
-                  {(selectedBooking.status || selectedBooking.bookingStatus)?.toUpperCase()}
-                </span>
-              </p>
-              <p><span className="font-semibold">Booking ID:</span> {selectedBooking._id || selectedBooking.id || "N/A"}</p>
-              <p><span className="font-semibold">Created By:</span> {selectedBooking.createdBy || "N/A"}</p>
-              <p><span className="font-semibold">Payment Status:</span> {selectedBooking.paymentStatus || "N/A"}</p>
-              <p><span className="font-semibold">Amount Paid:</span> {selectedBooking.amountPaid || "N/A"}</p>
-              <p><span className="font-semibold">Total Amount:</span> {selectedBooking.totalAmount || "N/A"}</p>
-              <p><span className="font-semibold">Additional Notes:</span> {selectedBooking.notes || "N/A"}</p>
-            </div>
+              {/* Property Info */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-300">
+                    <FaHome className="text-gray-800" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 text-lg">Property Information</h3>
+                </div>
+                <div className="space-y-3">
+                  <InfoRow label="Property Name" value={property.name || "N/A"} />
+                  <InfoRow label="Address" value={property.address || "N/A"} />
+                  <InfoRow label="Room No/ID" value={room.roomNumber || room.roomIdentifier || "N/A"} />
+                  <InfoRow label="Room Type/Sharing" value={room.sharingType || room.roomType || "N/A"} />
+                  <InfoRow label="Amenities" value={room.amenities?.join(", ") || "N/A"} />
+                </div>
+              </div>
 
-            {/* Extra Info */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Extra Information</h3>
-              <p><span className="font-semibold">Booking Source:</span> {bookingType}</p>
-              <p><span className="font-semibold">Created At:</span> {new Date(selectedBooking.createdAt).toLocaleString()}</p>
-              <p><span className="font-semibold">Updated At:</span> {new Date(selectedBooking.updatedAt).toLocaleString()}</p>
+              {/* Booking Info */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-300">
+                    <FaCalendarAlt className="text-gray-800" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 text-lg">Booking Information</h3>
+                </div>
+                <div className="space-y-3">
+                  <InfoRow label="Move In" value={new Date(selectedBooking.checkInDate || selectedBooking.moveInDate).toLocaleDateString()} />
+                  <InfoRow label="Move Out" value={new Date(selectedBooking.checkOutDate || selectedBooking.moveOutDate).toLocaleDateString()} />
+                  <InfoRow 
+                    label="Status" 
+                    value={
+                      <span className={`inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full ${getStatusBadge(selectedBooking.status || selectedBooking.bookingStatus)}`}>
+                        {(selectedBooking.status || selectedBooking.bookingStatus)?.toUpperCase()}
+                      </span>
+                    } 
+                  />
+                  <InfoRow label="Booking ID" value={selectedBooking._id || selectedBooking.id || "N/A"} />
+                  <InfoRow label="Created By" value={selectedBooking.createdBy || "N/A"} />
+                </div>
+              </div>
+
+              {/* Payment & Additional Info */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-300">
+                    <FaMoneyBillWave className="text-gray-800" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 text-lg">Payment & Additional Info</h3>
+                </div>
+                <div className="space-y-3">
+                  <InfoRow label="Payment Status" value={selectedBooking.paymentStatus || "N/A"} />
+                  <InfoRow label="Amount Paid" value={selectedBooking.amountPaid ? `$${selectedBooking.amountPaid}` : "N/A"} />
+                  <InfoRow label="Total Amount" value={selectedBooking.totalAmount ? `$${selectedBooking.totalAmount}` : "N/A"} />
+                  <InfoRow label="Additional Notes" value={selectedBooking.notes || "N/A"} />
+                  <InfoRow label="Booking Source" value={bookingType} />
+                  <InfoRow label="Created At" value={new Date(selectedBooking.createdAt).toLocaleString()} />
+                  <InfoRow label="Updated At" value={new Date(selectedBooking.updatedAt).toLocaleString()} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -392,5 +427,13 @@ const Bookings = () => {
     </div>
   );
 };
+
+// Helper component for detail view
+const InfoRow = ({ label, value }) => (
+  <div className="flex justify-between items-start">
+    <span className="text-sm font-medium text-gray-600 min-w-[120px]">{label}:</span>
+    <span className="text-sm text-gray-800 text-right flex-1">{value}</span>
+  </div>
+);
 
 export default Bookings;
