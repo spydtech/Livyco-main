@@ -17,7 +17,7 @@ const api = axios.create({
   },
   withCredentials: true,
   timeout: 10000,
-});
+});  
 
 // Request interceptor
 api.interceptors.request.use(
