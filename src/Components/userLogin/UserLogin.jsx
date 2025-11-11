@@ -453,6 +453,7 @@ function UserLogin() {
 
       {/* reCAPTCHA Container - Hidden but in DOM */}
       <div id="recaptcha-container" className="invisible"></div>
+       <div id="recaptcha-container"></div>
     </div>
   );
 }
