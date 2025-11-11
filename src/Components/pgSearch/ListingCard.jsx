@@ -269,7 +269,7 @@ export default function ListingCard({ pg }) {
   const displayData = propertyDetails || pg;
 
   return (
-    <div className="relative bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg lg:w-full md:w-full sm:w-[300px] justify-center  -ml-14 lg:-ml-0 m-d:ml-0 sm:-ml-10 w-[280px] transition duration-300">
+    <div className="relative bg-white rounded-xl  overflow-hidden hover:shadow-lg lg:w-full md:w-full sm:w-[300px] justify-center  -ml-14 lg:-ml-0 m-d:ml-0 sm:-ml-10 w-[280px] transition duration-300">
       {/* Top Right Icons */}
       <div className="absolute top-3 right-3 flex gap-2 z-10">
         <button
@@ -298,7 +298,7 @@ export default function ListingCard({ pg }) {
      
       <div 
         onClick={handleCardClick} 
-        className="cursor-pointer flex flex-col lg:flex-row w-full lg:w-full md:w-full "
+        className="cursor-pointer flex flex-col lg:flex-row w-full lg:w-full md:w-full border-2 border-gray-200 rounded-lg hover:border-yellow-400 transition-colors"
       >
         {/* Image Section  */}
         <div className="w-full lg:w-1/3 h-48 sm:h-56  lg:h-40 p-4 lg:p-4">

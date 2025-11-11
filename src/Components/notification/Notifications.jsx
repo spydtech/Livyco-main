@@ -108,6 +108,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import notifyImg from "../../assets/notification/undraw_my-notifications_fy5v.png";
 import { userAPI } from "../../Clients-components/PropertyController";
 
 // use environment variable if available, otherwise fall back to localhost:5000
@@ -188,7 +189,15 @@ const Notifications = () => {
       </div>
 
       {notifications.length === 0 ? (
+        <div className="flex flex-col items-center justify-center mt-20">
+          <img
+            src={notifyImg}
+            alt="No Notifications"
+            className="w-48 h-48 mb-4"
+          />
+
         <p className="text-black">No notifications yet</p>
+        </div>
       ) : (
         <ul className="space-y-2 w-full">
           {notifications.map((n) => (

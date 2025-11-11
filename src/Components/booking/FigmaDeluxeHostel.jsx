@@ -1609,28 +1609,23 @@ import Headers from "../Header";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../Clients-components/PropertyController"
 
-
-
-// API_Base_URL = 'http://localhost:5000/api'
-
-// API_BASE_URL ='https://livyco.com'
 const VisualBox = ({ boxes }) => {
-  const boxSize = "w-[50px] h-[60px] bg-yellow-400 rounded-sm";
+  const boxSize = "w-[40px] h-[50px] sm:w-[50px] sm:h-[60px] bg-yellow-400 rounded-sm";
 
   switch (boxes) {
     case 1:
-      return <div className="flex justify-center items-center h-[100px]"><div className={boxSize} /></div>;
+      return <div className="flex justify-center items-center h-[80px] sm:h-[100px]"><div className={boxSize} /></div>;
     case 2:
       return (
-        <div className="flex justify-center items-center gap-[6px] h-[100px]">
+        <div className="flex justify-center items-center gap-1 sm:gap-[6px] h-[80px] sm:h-[100px]">
           <div className={boxSize} />
           <div className={boxSize} />
         </div>
       );
     case 3:
       return (
-        <div className="flex flex-col items-center gap-[6px] h-[120px] justify-center">
-          <div className="flex gap-[6px]">
+        <div className="flex flex-col items-center gap-1 sm:gap-[6px] h-[100px] sm:h-[120px] justify-center">
+          <div className="flex gap-1 sm:gap-[6px]">
             <div className={boxSize} />
             <div className={boxSize} />
           </div>
@@ -1639,20 +1634,20 @@ const VisualBox = ({ boxes }) => {
       );
     case 4:
       return (
-        <div className="grid grid-cols-2 gap-[6px] w-[120px] h-[120px] justify-center items-center">
+        <div className="grid grid-cols-2 gap-1 sm:gap-[6px] w-[90px] h-[90px] sm:w-[120px] sm:h-[120px] justify-center items-center">
           {[...Array(4)].map((_, i) => <div key={i} className={boxSize} />)}
         </div>
       );
     case 5:
-      const wideBoxSize = "w-[110px] h-[60px] bg-yellow-400 rounded-sm";
+      const wideBoxSize = "w-[90px] h-[50px] sm:w-[110px] sm:h-[60px] bg-yellow-400 rounded-sm";
       return (
-        <div className="flex flex-col items-center gap-[6px] h-[200px] justify-center">
+        <div className="flex flex-col items-center gap-1 sm:gap-[6px] h-[160px] sm:h-[200px] justify-center">
           <div className="flex justify-center"><div className={wideBoxSize} /></div>
-          <div className="flex gap-[6px] justify-center">
+          <div className="flex gap-1 sm:gap-[6px] justify-center">
             <div className={boxSize} />
             <div className={boxSize} />
           </div>
-          <div className="flex gap-[6px] justify-center">
+          <div className="flex gap-1 sm:gap-[6px] justify-center">
             <div className={boxSize} />
             <div className={boxSize} />
           </div>
@@ -1660,7 +1655,7 @@ const VisualBox = ({ boxes }) => {
       );
     case 6:
       return (
-        <div className="grid grid-cols-3 gap-[6px] w-[160px] h-[130px] justify-center items-center">
+        <div className="grid grid-cols-3 gap-1 sm:gap-[6px] w-[130px] h-[110px] sm:w-[160px] sm:h-[130px] justify-center items-center">
           {[...Array(6)].map((_, i) => <div key={i} className={boxSize} />)}
         </div>
       );
@@ -1687,9 +1682,9 @@ const RoomBlock = ({
   };
 
   return (
-    <div className="mb-2">
-      <div className="text-[13px] font-semibold mb-1">{roomNumber}</div>
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-3 sm:mb-2">
+      <div className="text-[12px] sm:text-[13px] font-semibold mb-1">{roomNumber}</div>
+      <div className="flex flex-wrap gap-1 sm:gap-2">
         {beds.map((bed, index) => {
           const bedLabel = typeof bed === 'string' && bed.includes('Bed') ? bed : `Bed${index + 1}`;
           const bedIdentifier = getBedIdentifier(bedLabel);
@@ -1698,7 +1693,7 @@ const RoomBlock = ({
           
           const status = bedStatus[bedIdentifier] || 'available';
           
-          let buttonClass = "text-[12px] px-3 py-2 rounded border transition-colors duration-200 ";
+          let buttonClass = "text-[10px] sm:text-[12px] px-2 sm:px-3 py-1 sm:py-2 rounded border transition-colors duration-200 ";
           let titleText = "";
           
           if (status === 'approved') {
@@ -1755,9 +1750,9 @@ const FloorRow = ({
   unavailableRooms,
   bedStatus
 }) => (
-  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-    <div className="text-[16px] font-semibold mb-3 text-blue-800">{floorLabel}</div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
+    <div className="text-[14px] sm:text-[16px] font-semibold mb-2 sm:mb-3 text-blue-800">{floorLabel}</div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
       {Object.entries(roomsConfig).map(([roomNumber, beds]) => (
         <RoomBlock
           key={roomNumber}
@@ -2105,18 +2100,18 @@ const FigmaDeluxeHostel = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-xl">Loading booking information...</div>
+        <div className="text-lg sm:text-xl">Loading booking information...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-xl text-red-600">{error}</div>
+      <div className="min-h-screen bg-white flex items-center justify-center flex-col p-4">
+        <div className="text-lg sm:text-xl text-red-600 text-center mb-4">{error}</div>
         <button 
           onClick={() => navigate(-1)}
-          className="ml-4 bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Go Back
         </button>
@@ -2127,7 +2122,7 @@ const FigmaDeluxeHostel = () => {
   if (!bookingData) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-xl">No booking data available</div>
+        <div className="text-lg sm:text-xl">No booking data available</div>
       </div>
     );
   }
@@ -2137,204 +2132,211 @@ const FigmaDeluxeHostel = () => {
   return (
     <>
       <Headers />
-      <div className="min-h-screen w-full py-24 bg-cover bg-center" style={{ backgroundImage: `url('${bgImage}')` }}>
-        <div className="px-4 sm:px-6 md:px-10 lg:px-20 pt-6 pb-16 bg-white bg-opacity-95">
-          <div className="text-[24px] sm:text-[28px] md:text-[32px] font-bold mb-1 text-center md:text-left">
+      <div className="min-h-screen w-full py-20 sm:py-24 bg-cover bg-center" style={{ backgroundImage: `url('${bgImage}')` }}>
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 xl:px-20 pt-4 sm:pt-6 pb-12 sm:pb-16 bg-white bg-opacity-95">
+          <div className="text-[20px] sm:text-[24px] md:text-[28px] lg:text-[32px] font-bold mb-1 sm:text-start ">
             {propertyName}
           </div>
 
-          <div className="flex flex-wrap gap-4 sm:gap-6 my-4 justify-center md:justify-start">
+          <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 my-3 sm:my-4 justify-center md:justify-start">
             {bookingData.roomTypes && bookingData.roomTypes[0]?.amenities?.map((amenity, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm bg-gray-100 px-3 py-2 rounded-full">
+              <div key={i} className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-gray-100 px-2 sm:px-3 py-1 sm:py-2 rounded-full">
                 <span className="text-xs sm:text-sm">{amenity}</span>
               </div>
             ))}
           </div>
 
-          <div className="bg-white shadow-md rounded-md p-4 flex flex-wrap gap-3 items-center justify-center w-full max-w-[900px] mx-auto mb-6">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="border px-3 py-2 rounded text-sm w-[140px]"
-              required
-            />
-            <input
-              type="number"
-              placeholder="Number of Persons"
-              value={personCount}
-              onChange={(e) => setPersonCount(e.target.value)}
-              className="border px-3 py-2 rounded text-sm w-[140px]"
-              min={1}
-              required
-            />
+          {/* Search and Filter Section - Responsive */}
+          <div className="bg-white shadow-md rounded-md p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-center justify-center w-full max-w-[900px] mx-auto mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 w-full">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+                required
+              />
+              <input
+                type="number"
+                placeholder="Number of Persons"
+                value={personCount}
+                onChange={(e) => setPersonCount(e.target.value)}
+                className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+                min={1}
+                required
+              />
+              
+              <select
+                value={durationType}
+                onChange={(e) => setDurationType(e.target.value)}
+                className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="daily">Daily</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              
+              {durationType === "monthly" && (
+                <div className="flex items-center w-full">
+                  <input
+                    type="number"
+                    placeholder="Months"
+                    value={durationMonths}
+                    onChange={(e) => setDurationMonths(parseInt(e.target.value) || 1)}
+                    className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+                    min={1}
+                  />
+                  <span className="ml-2 text-xs sm:text-sm whitespace-nowrap">Months</span>
+                </div>
+              )}
+              
+              {durationType === "daily" && (
+                <div className="flex items-center w-full">
+                  <input
+                    type="number"
+                    placeholder="Days"
+                    value={durationDays}
+                    onChange={(e) => setDurationDays(parseInt(e.target.value) || 1)}
+                    className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+                    min={1}
+                  />
+                  <span className="ml-2 text-xs sm:text-sm whitespace-nowrap">Days</span>
+                </div>
+              )}
+              
+              {durationType === "custom" && (
+                <div className="col-span-2 flex flex-col sm:flex-row gap-2 w-full">
+                  <input
+                    type="date"
+                    placeholder="Start Date"
+                    value={customStartDate}
+                    onChange={(e) => {
+                      setCustomStartDate(e.target.value);
+                      setSelectedDate(e.target.value);
+                    }}
+                    className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+                  />
+                  <input
+                    type="date"
+                    placeholder="End Date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+                  />
+                </div>
+              )}
+            </div>
             
-            {/* Duration Type Selection */}
-            <select
-              value={durationType}
-              onChange={(e) => setDurationType(e.target.value)}
-              className="border px-3 py-2 rounded text-sm w-[140px]"
-            >
-              <option value="monthly">Monthly</option>
-              <option value="daily">Daily</option>
-              <option value="custom">Custom Range</option>
-            </select>
-            
-            {/* Duration Input based on type */}
-            {durationType === "monthly" && (
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  placeholder="Months"
-                  value={durationMonths}
-                  onChange={(e) => setDurationMonths(parseInt(e.target.value) || 1)}
-                  className="border px-3 py-2 rounded text-sm w-[80px]"
-                  min={1}
-                />
-                <span className="ml-2 text-sm">Months</span>
-              </div>
-            )}
-            
-            {durationType === "daily" && (
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  placeholder="Days"
-                  value={durationDays}
-                  onChange={(e) => setDurationDays(parseInt(e.target.value) || 1)}
-                  className="border px-3 py-2 rounded text-sm w-[80px]"
-                  min={1}
-                />
-                <span className="ml-2 text-sm">Days</span>
-              </div>
-            )}
-            
-            {durationType === "custom" && (
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="date"
-                  placeholder="Start Date"
-                  value={customStartDate}
-                  onChange={(e) => {
-                    setCustomStartDate(e.target.value);
-                    setSelectedDate(e.target.value);
-                  }}
-                  className="border px-3 py-2 rounded text-sm w-[140px]"
-                />
-                <input
-                  type="date"
-                  placeholder="End Date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="border px-3 py-2 rounded text-sm w-[140px]"
-                />
-              </div>
-            )}
-            
-            <button
-              className="bg-[#0120c8] text-white text-sm px-4 py-2 rounded"
-              onClick={handleSearch}
-            >
-              Search Rooms
-            </button>
-            <button
-              onClick={() => checkRoomAvailability(selectedDate, bookingData._id || bookingData.propertyId)}
-              className="bg-gray-200 text-gray-800 text-sm px-3 py-2 rounded ml-2"
-              title="Refresh availability"
-            >
-              🔄 Refresh
-            </button>
+            <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+              <button
+                className="bg-[#0120c8] text-white text-xs sm:text-sm px-3 sm:px-4 py-2 rounded flex-1 sm:flex-none"
+                onClick={handleSearch}
+              >
+                Search Rooms
+              </button>
+              <button
+                onClick={() => checkRoomAvailability(selectedDate, bookingData._id || bookingData.propertyId)}
+                className="bg-gray-200 text-gray-800 text-xs sm:text-sm px-2 sm:px-3 py-2 rounded"
+                title="Refresh availability"
+              >
+                🔄
+              </button>
+            </div>
           </div>
 
+          {/* Status Messages */}
           {!availabilityChecked && selectedDate && (
-            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
+            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 sm:p-4 mb-4 sm:mb-6 text-sm" role="alert">
               <p>Checking room availability for {selectedDate}...</p>
             </div>
           )}
 
           {availabilityChecked && unavailableRooms.length > 0 && (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 sm:p-4 mb-4 sm:mb-6 text-sm" role="alert">
               <p className="font-bold">Note</p>
               <p>Some rooms are not available for your selected date. Unavailable rooms are marked with ❌.</p>
             </div>
           )}
 
           {availabilityChecked && unavailableRooms.length === 0 && selectedDate && (
-            <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+            <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 sm:p-4 mb-4 sm:mb-6 text-sm" role="alert">
               <p className="font-bold">Good news!</p>
               <p>All rooms are available for {selectedDate}.</p>
             </div>
           )}
 
+          {/* Bed Statistics */}
           {bedStatistics && (
-            <div className="bg-blue-50 p-4 rounded-lg mb-6">
-              <h3 className="text-lg font-semibold mb-2">Bed Availability Summary</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="bg-blue-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+              <h3 className="text-base sm:text-lg font-semibold mb-2">Bed Availability Summary</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div className="text-center">
-                  <div className="font-bold text-2xl">{bedStatistics.totalBeds}</div>
+                  <div className="font-bold text-xl sm:text-2xl">{bedStatistics.totalBeds}</div>
                   <div>Total Beds</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-2xl text-green-600">{bedStatistics.availableBeds}</div>
+                  <div className="font-bold text-xl sm:text-2xl text-green-600">{bedStatistics.availableBeds}</div>
                   <div>Available</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-2xl text-orange-500">{bedStatistics.bookedBeds}</div>
+                  <div className="font-bold text-xl sm:text-2xl text-orange-500">{bedStatistics.bookedBeds}</div>
                   <div>Pending</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-2xl text-red-600">{bedStatistics.approvedBeds}</div>
+                  <div className="font-bold text-xl sm:text-2xl text-red-600">{bedStatistics.approvedBeds}</div>
                   <div>Approved</div>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div className="text-center">
-                  <div className="font-bold text-xl">{Math.round((bedStatistics.availableBeds / bedStatistics.totalBeds) * 100)}%</div>
+                  <div className="font-bold text-lg sm:text-xl">{Math.round((bedStatistics.availableBeds / bedStatistics.totalBeds) * 100)}%</div>
                   <div>Availability Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-xl">{Math.round(((bedStatistics.bookedBeds + bedStatistics.approvedBeds) / bedStatistics.totalBeds) * 100)}%</div>
+                  <div className="font-bold text-lg sm:text-xl">{Math.round(((bedStatistics.bookedBeds + bedStatistics.approvedBeds) / bedStatistics.totalBeds) * 100)}%</div>
                   <div>Occupancy Rate</div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex flex-wrap gap-4 mb-6 justify-center">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-600 rounded"></div>
-              <span className="text-sm">Approved Booking</span>
+          {/* Legend */}
+          <div className="flex flex-wrap gap-3 sm:gap-4 mb-4 sm:mb-6 justify-center">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-600 rounded"></div>
+              <span className="text-xs sm:text-sm">Approved Booking</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-orange-400 rounded"></div>
-              <span className="text-sm">Pending Booking</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-400 rounded"></div>
+              <span className="text-xs sm:text-sm">Pending Booking</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-600 rounded"></div>
-              <span className="text-sm">Selected</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded"></div>
+              <span className="text-xs sm:text-sm">Selected</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-white border border-gray-300 rounded"></div>
-              <span className="text-sm">Available</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white border border-gray-300 rounded"></div>
+              <span className="text-xs sm:text-sm">Available</span>
             </div>
           </div>
 
-          <div className="space-y-8">
+          {/* Room Types */}
+          <div className="space-y-4 sm:space-y-6 md:space-y-8">
             {filteredTypes.map((roomType, index) => {
               const roomConfig = bookingData?.rooms?.floorConfig?.floors?.[0]?.rooms || {};
               
               return (
-                <div key={index} className="flex flex-col lg:flex-row gap-6 bg-white p-4 rounded-lg shadow">
-                  <div className="w-full lg:w-1/4 flex flex-col items-center justify-center border rounded-lg p-4">
+                <div key={index} className="flex flex-col lg:flex-row gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-lg shadow">
+                  <div className="w-full lg:w-1/4 flex flex-col items-center justify-center border rounded-lg p-3 sm:p-4">
                     <VisualBox boxes={roomType.boxes} />
                     <p className="text-sm font-medium mt-2 text-center">{roomType.label}</p>
-                    <p className="text-lg text-green-600 font-semibold mt-1">₹{roomType.price}</p>
+                    <p className="text-base sm:text-lg text-green-600 font-semibold mt-1">₹{roomType.price}</p>
                     <p className="text-xs text-gray-500">Deposit: ₹{roomType.deposit}</p>
                     <p className="text-xs text-gray-500">Capacity: {roomType.capacity} persons</p>
                   </div>
                   
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-4">Available Rooms - Floor 1</h3>
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Available Rooms - Floor 1</h3>
                     <FloorRow
                       sharing={roomType.type}
                       floorLabel="Floor 1"
@@ -2353,46 +2355,103 @@ const FigmaDeluxeHostel = () => {
             })}
           </div>
 
-          <div className="text-center mt-8">
-            <div className="mb-4">
-              <strong>Duration: </strong>
-              {durationType === "monthly" && `${durationMonths} month(s)`}
-              {durationType === "daily" && `${durationDays} day(s)`}
-              {durationType === "custom" && `${selectedDate} to ${customEndDate}`}
-            </div>
-            <div className="mb-4">
-              <strong>Selected Room Type: </strong>
-              {selectedRoomType || 'None selected'}
-            </div>
-            <div className="mb-4">
-              <strong>Advance Amount: </strong>
-              {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.price || 0}` : '₹0'}
-            </div>
-            <div className="mb-4">
-              <strong>Security Deposit: </strong>
-              {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length || 0}` : '₹0'}
-            </div>
-            <div className="mb-4">
-              <strong>Total Amount: </strong>
-              {selectedRoomType ? `₹${(sharingTypes.find(st => st.type === selectedRoomType)?.price + (sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length)) || 0}` : '₹0'}
-            </div>
-            <div className="mb-4">
-              <strong>Selected Beds: </strong>
-              {globalSelectedRooms.length > 0 
-                ? globalSelectedRooms.join(', ') 
-                : 'No beds selected'}
-            </div>
-            
-            <button
-              className="bg-[#0B2DC9] text-white text-base font-normal px-10 sm:px-16 md:px-28 py-3 sm:py-4 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed"
-              onClick={handleAddProofs}
-              disabled={globalSelectedRooms.length === 0 || !selectedRoomType || !availabilityChecked}
-            >
-              {!availabilityChecked ? 'Checking Availability...' : 
-               globalSelectedRooms.length === 0 ? 'Select Beds First' : 
-               !selectedRoomType ? 'Select Room Type' : 'Proceed to Payment'}
-            </button>
-          </div>
+          <div className="mt-6 sm:mt-8">
+  {/* Mobile Layout (unchanged) */}
+  <div className="block lg:hidden space-y-3 sm:space-y-4">
+    <div className="mb-3 sm:mb-4 text-sm sm:text-base">
+      <strong>Duration: </strong>
+      {durationType === "monthly" && `${durationMonths} month(s)`}
+      {durationType === "daily" && `${durationDays} day(s)`}
+      {durationType === "custom" && `${selectedDate} to ${customEndDate}`}
+    </div>
+    <div className="mb-3 sm:mb-4 text-sm sm:text-base">
+      <strong>Selected Room Type: </strong>
+      {selectedRoomType || 'None selected'}
+    </div>
+    <div className="mb-3 sm:mb-4 text-sm sm:text-base">
+      <strong>Advance Amount: </strong>
+      {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.price || 0}` : '₹0'}
+    </div>
+    <div className="mb-3 sm:mb-4 text-sm sm:text-base">
+      <strong>Security Deposit: </strong>
+      {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length || 0}` : '₹0'}
+    </div>
+    <div className="mb-3 sm:mb-4 text-sm sm:text-base">
+      <strong>Total Amount: </strong>
+      {selectedRoomType ? `₹${(sharingTypes.find(st => st.type === selectedRoomType)?.price + (sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length)) || 0}` : '₹0'}
+    </div>
+    <div className="mb-3 sm:mb-4 text-sm sm:text-base">
+      <strong>Selected Beds: </strong>
+      {globalSelectedRooms.length > 0 
+        ? globalSelectedRooms.join(', ') 
+        : 'No beds selected'}
+    </div>
+  </div>
+
+  {/* Desktop/Laptop Layout - Left Title & Right Value */}
+  <div className="hidden lg:block">
+    <div className="bg-white rounded-lg p-8 border border-gray-200 shadow-sm">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center py-2">
+          <strong className="text-base text-gray-800 font-medium">Duration</strong>
+          <span className="text-base text-gray-900">
+            {durationType === "monthly" && `${durationMonths} month(s)`}
+            {durationType === "daily" && `${durationDays} day(s)`}
+            {durationType === "custom" && `${selectedDate} to ${customEndDate}`}
+          </span>
+        </div>
+        
+        <div className="flex justify-between items-center py-2">
+          <strong className="text-base text-gray-800 font-medium">Room Type</strong>
+          <span className="text-base text-gray-900">{selectedRoomType || 'None selected'}</span>
+        </div>
+        
+        <div className="flex justify-between items-center py-2">
+          <strong className="text-base text-gray-800 font-medium">Advance Amount</strong>
+          <span className="text-lg font-semibold text-green-600">
+            {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.price || 0}` : '₹0'}
+          </span>
+        </div>
+        
+        <div className="flex justify-between items-center py-2">
+          <strong className="text-base text-gray-800 font-medium">Security Deposit</strong>
+          <span className="text-lg font-semibold text-blue-600">
+            {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length || 0}` : '₹0'}
+          </span>
+        </div>
+        
+        <div className="flex justify-between items-center py-3 border-t border-gray-200">
+          <strong className="text-lg text-gray-900 font-bold">Total Amount</strong>
+          <span className="text-xl font-bold text-green-600">
+            {selectedRoomType ? `₹${(sharingTypes.find(st => st.type === selectedRoomType)?.price + (sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length)) || 0}` : '₹0'}
+          </span>
+        </div>
+        
+        <div className="flex justify-between items-start py-3 border-t border-gray-200">
+          <strong className="text-base text-gray-800 font-medium mt-1">Selected Beds</strong>
+          <span className="text-base text-gray-900 text-right max-w-[60%] leading-relaxed">
+            {globalSelectedRooms.length > 0 
+              ? globalSelectedRooms.join(', ') 
+              : 'No beds selected'}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Button - Same for both */}
+  <div className="text-center mt-6 sm:mt-8">
+    <button
+      className="bg-[#0B2DC9] text-white text-sm sm:text-base font-normal px-6 sm:px-10 md:px-16 lg:px-28 py-2 sm:py-3 md:py-4 rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed w-full sm:w-auto"
+      onClick={handleAddProofs}
+      disabled={globalSelectedRooms.length === 0 || !selectedRoomType || !availabilityChecked}
+    >
+      {!availabilityChecked ? 'Checking Availability...' : 
+       globalSelectedRooms.length === 0 ? 'Select Beds First' : 
+       !selectedRoomType ? 'Select Room Type' : 'Proceed to Payment'}
+    </button>
+  </div>
+</div>
         </div>
       </div>
     </>

@@ -165,12 +165,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../Header";
+import notfount from "../../assets/staying not fount/undraw_not-found_6bgl.png";
 import { bookingAPI } from "../../Clients-components/PropertyController";
 
 const MyStay_Main = () => {
   const [activeTab, setActiveTab] = useState("current");
   const [bookings, setBookings] = useState({ current: null, previous: [] });
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -237,6 +240,8 @@ const MyStay_Main = () => {
   const activeData = getActiveData();
 
   if (!activeData) {
+   
+
     return (
       <div>
         <Header />
@@ -257,6 +262,11 @@ const MyStay_Main = () => {
             ))}
           </div>
           <div className="text-center py-10">
+            <img
+              src={notfount}
+              alt="No Data"
+              className="mx-auto mb-6 w-48 h-48 object-contain"
+            />
             <p>No {activeTab} stays found</p>
           </div>
         </div>

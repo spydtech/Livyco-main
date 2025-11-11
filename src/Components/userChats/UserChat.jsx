@@ -113,6 +113,8 @@ import { useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
 import { FaPhoneAlt, FaBars } from 'react-icons/fa';
 import { IoSend, IoClose } from 'react-icons/io5';
+import chatImg from "../../assets/chat/undraw_begin-chat_4wy6.png";
+import chatImg1 from "../../assets/chat/undraw_messaging-app_wfqi.png";
 import Header from '../Header';
 import { chatAPI } from '../../Clients-components/PropertyController';
 
@@ -303,6 +305,7 @@ const UserChat = () => {
             
             {conversations.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
+              <img src={chatImg} className="w-26 h-auto" />
                 No conversations yet
               </div>
             ) : (
@@ -387,6 +390,7 @@ const UserChat = () => {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex justify-center items-center h-full">
+                 
                     <p className="text-gray-500 text-center px-4">
                       No messages yet. Start the conversation!
                     </p>
@@ -443,8 +447,9 @@ const UserChat = () => {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col justify-center items-center p-4 text-center">
+            <div className="flex-1 flex flex-col justify-center items-center p-4 text-center bg-white">
               <div className="max-w-md mx-auto">
+                 <img src={chatImg1} className="w-[60%] h-auto mb-4 " />
                 <p className="text-gray-500 text-lg mb-4">
                   {conversations.length === 0 ? 'No conversations available' : 'Select a conversation to start chatting'}
                 </p>

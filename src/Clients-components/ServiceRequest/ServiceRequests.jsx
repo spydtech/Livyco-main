@@ -500,6 +500,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ClientNav from "../Client-Navbar/ClientNav";
+import pgImg from "../../assets/pgsearch/undraw_house-searching_g2b8.png";
 import { concernAPI, propertyAPI } from "../PropertyController";
 
 const ServiceRequests = () => {
@@ -555,7 +556,7 @@ const ServiceRequests = () => {
   const fetchClientProperties = async () => {
     try {
       setLoading(true);
-      const response = await propertyAPI.getAllClientProperties();
+      const response = await propertyAPI.getProperty();
       if (response.data.success) {
         const properties = response.data.data || [];
         setClientProperties(properties);
@@ -565,7 +566,7 @@ const ServiceRequests = () => {
       }
     } catch (err) {
       console.error("Error fetching client properties:", err);
-      handleApiError(err, "Failed to fetch properties");
+      // handleApiError(err, "Failed to fetch properties");
     } finally {
       setLoading(false);
     }
@@ -680,9 +681,9 @@ const ServiceRequests = () => {
     navigate(`/client/servicerequests/details/${request._id}`, { state: request });
   };
 
-  const handleLoginRedirect = () => {
-    navigate('/client/client-login');
-  };
+  // const handleLoginRedirect = () => {
+  //   navigate('/client/client-login');
+  // };
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -695,55 +696,41 @@ const ServiceRequests = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <>
-        <ClientNav />
-        <div className="p-6 bg-[#FFFFFF] min-h-screen">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <p>Authentication required. Please login as a client to access service requests.</p>
-            <button
-              onClick={handleLoginRedirect}
-              className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Login
-            </button>
-          </div>
-        </div>
-      </>
-    );
-  }
+  // if (!isAuthenticated) {
+  //   return (
+  //     <>
+  //       <ClientNav />
+  //       <div className="p-6 bg-[#FFFFFF] min-h-screen">
+  //         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+  //           <p>Authentication required. Please login as a client to access service requests.</p>
+  //           <button
+  //             onClick={handleLoginRedirect}
+  //             className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+  //           >
+  //             Login
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </>
+  //   );
+  // }
 
   return (
     <>
       <ClientNav />
       <div className="p-6 bg-[#FFFFFF] min-h-screen">
         <h2 className="text-gray-600 text-sm mb-4">Home / Service Requests</h2>
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <p>{error}</p>
-            {error.includes("Session expired") && (
-              <button
-                onClick={handleLoginRedirect}
-                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Login Again
-              </button>
-            )}
-          </div>
-        )}
-
+      
         {/* Property Selector */}
         {clientProperties.length > 0 && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-500 mb-2">
               Select Property:
             </label>
             <select
               value={selectedProperty}
               onChange={(e) => setSelectedProperty(e.target.value)}
-              className="w-full md:w-1/3 bg-gray-100 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-auto md:w-1/4 bg-blue-100 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {clientProperties.map((property) => (
                 <option key={property.property._id} value={property.property._id}>
@@ -759,7 +746,12 @@ const ServiceRequests = () => {
             <p>Loading service requests...</p>
           </div>
         ) : serviceRequests.length === 0 ? (
-          <div className="bg-white p-6 rounded-lg border border-[#BCBCBC] text-center">
+          <div className="bg-white p-6  text-center">
+            <img
+              src={pgImg}
+              alt="No Data"
+              className="mx-auto mb-4 w-32 h-32"
+            />
             <p className="text-gray-500">
               {selectedProperty ? "No service requests found for this property" : "Please select a property"}
             </p>

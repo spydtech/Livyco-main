@@ -38,29 +38,67 @@ const adminUserAPI = {
 
 export { adminUserAPI };
 
-const getbankAccountsAPI = {
+ export const adminBankAccountsAPI = {
   getAllBankAccounts: () => api.get("/bank-accounts/admin/get/all"),
+  
+ // Get bank accounts by PROPERTY ID (not clientId)
+  getBankAccountsByProperty: (propertyId) => 
+    api.get(`/bank-accounts/admin/get/all?propertyId=${propertyId}`),
+  // Get bank accounts by CLIENT ID (fallback)
+  getBankAccountsByClient: (clientId) => 
+    api.get(`/bank-accounts/admin/get/all?clientId=${clientId}`),
+  // Verify bank account
+  verifyBankAccount: (accountId, verificationData) => 
+    api.patch(`/bank-accounts/admin/verify/${accountId}`, verificationData),
+  
+  // Get bank account stats
+  getBankAccountStats: () => 
+    api.get("/bank-accounts/admin/stats"),
 };
 
-export { getbankAccountsAPI };
+// Admin Bookings API
+export const adminBookingsAPI = {
+  // Get all bookings
+  getAllBookings: () => api.get("/auth/bookings"),
+  
+  // Get offline bookings
+  getOfflineBookings: () => api.get("/offline-bookings"),
+  
+  // Get booking by ID
+  getBookingById: (bookingId) => api.get(`/auth/bookings/${bookingId}`),
+  
+  // Update booking status
+  updateBookingStatus: (bookingId, status, reason = "") => 
+    api.patch(`/auth/bookings/${bookingId}/status`, { status, reason }),
+};
 
+// adminController.js - Fix the manual transfer API
+export const adminPaymentsAPI = {
+  // Manual transfer - FIXED
+  initiateManualTransfer: async (transferData) => {
+    return api.post(`/payments/transfer/initiate/${transferData.bookingId}`, transferData);
+  },
+
+  // Get transfer details
+  getTransferDetails: async (bookingId) => {
+    return api.get(`/transfer/status/${bookingId}`);
+  }
+};
 
 
 export const adminTicketAPI = {
-  
-
   // Get all tickets (admin only)
-  getAllTickets: (params = {}) => 
+  getAllTickets: (params = {}) =>
     api.get('/tickets', { params })
       .then(response => {
         if (!response.data?.success) {
-          throw new Error(response.data?.message || 'Failed to fetch all tickets');
+          throw new Error(response.data?.message || 'Failed to fetch tickets');
         }
         return response;
       }),
-
+ 
   // Update ticket (admin only)
-  updateTicket: (ticketId, updates) => 
+  updateTicket: (ticketId, updates) =>
     api.put(`/tickets/${ticketId}`, updates)
       .then(response => {
         if (!response.data?.success) {
@@ -68,9 +106,9 @@ export const adminTicketAPI = {
         }
         return response;
       }),
-
-  // Get ticket by ID (you might want to add this endpoint to your backend)
-  getTicketById: (ticketId) => 
+ 
+  // Get ticket by ID
+  getTicketById: (ticketId) =>
     api.get(`/tickets/${ticketId}`)
       .then(response => {
         if (!response.data?.success) {
@@ -78,9 +116,9 @@ export const adminTicketAPI = {
         }
         return response;
       }),
-
-  // Close ticket (you might want to add this endpoint to your backend)
-  closeTicket: (ticketId, resolutionNotes = '') => 
+ 
+  // Close ticket
+  closeTicket: (ticketId, resolutionNotes = '') =>
     api.patch(`/tickets/${ticketId}/close`, { resolutionNotes })
       .then(response => {
         if (!response.data?.success) {
@@ -88,9 +126,9 @@ export const adminTicketAPI = {
         }
         return response;
       }),
-
-  // Add comment to ticket (you might want to add this endpoint to your backend)
-  addComment: (ticketId, comment) => 
+ 
+  // Add comment to ticket
+  addComment: (ticketId, comment) =>
     api.post(`/tickets/${ticketId}/comments`, { comment })
       .then(response => {
         if (!response.data?.success) {
@@ -98,52 +136,76 @@ export const adminTicketAPI = {
         }
         return response;
       }),
-
+ 
   // Utility functions for ticket management
   validateTicketData: (ticketData) => {
     const errors = [];
-    
+   
     if (!ticketData.title?.trim()) {
       errors.push('Ticket title is required');
     }
-    
+   
     if (!ticketData.description?.trim()) {
       errors.push('Ticket description is required');
     }
-    
+   
     if (!ticketData.category?.trim()) {
       errors.push('Ticket category is required');
     }
-    
+   
     if (!ticketData.priority) {
       errors.push('Ticket priority is required');
     }
-    
+   
     return {
       isValid: errors.length === 0,
       errors
     };
   },
-
+ 
   formatTicketStatus: (status) => {
     const statusMap = {
       'open': 'Open',
+      'Open': 'Open',
       'in_progress': 'In Progress',
+      'In Progress': 'In Progress',
       'resolved': 'Resolved',
+      'Resolved': 'Resolved',
       'closed': 'Closed',
-      'pending': 'Pending'
+      'Closed': 'Closed'
     };
     return statusMap[status] || status;
   },
-
+ 
   formatPriority: (priority) => {
     const priorityMap = {
       'low': 'Low',
+      'Low': 'Low',
       'medium': 'Medium',
+      'Medium': 'Medium',
       'high': 'High',
-      'urgent': 'Urgent'
+      'High': 'High'
     };
     return priorityMap[priority] || priority;
+  },
+ 
+  getStatusColor: (status) => {
+    const colorMap = {
+      'Open': 'bg-yellow-400',
+      'In Progress': 'bg-blue-400',
+      'Resolved': 'bg-green-400',
+      'Closed': 'bg-purple-400'
+    };
+    return colorMap[status] || 'bg-gray-400';
+  },
+ 
+  getPriorityColor: (priority) => {
+    const colorMap = {
+      'Low': 'bg-green-100 text-green-800',
+      'Medium': 'bg-yellow-100 text-yellow-800',
+      'High': 'bg-red-100 text-red-800'
+    };
+    return colorMap[priority] || 'bg-gray-100 text-gray-800';
   }
 };
 

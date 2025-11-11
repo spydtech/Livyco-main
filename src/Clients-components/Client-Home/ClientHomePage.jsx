@@ -4,7 +4,7 @@ import RecentlyListedProperties from "../ListedProperties";
 import PropertyListing from "../PropertyListing";
 import Footer from "../Footer";
 import FaqSection from "../FaqSection";
-import TestimonialsCarousel from "../TestimonialsCarousel ";
+import TestimonialsCarousel from "../TestimonialsCarousel";
 
 const ClientHomePage = () => {
   return (

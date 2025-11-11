@@ -310,6 +310,7 @@
 
 
 
+
 import React, { useState, useRef, useEffect } from "react";
 import image1 from "../../assets/Contact-support/image-1.png";
 import image2 from "../../assets/Contact-support/image-2.png";
@@ -338,17 +339,23 @@ const SupportDashboard = () => {
   const [inputValue, setInputValue] = useState("");
   const chatEndRef = useRef(null);
 
-  // Fetch tickets using ticketAPI
+  // Fetch tickets - FIXED VERSION
   useEffect(() => {
     const fetchTickets = async () => {
       try {
         setLoading(true);
         const response = await adminTicketAPI.getAllTickets();
-        setTickets(response.data.tickets || []);
-        console.log("Fetched all tickets:", response.data.tickets);
+        
+        // FIX: Use response.data.tickets (matches backend response format)
+        const ticketsData = response.data.tickets || [];
+        setTickets(ticketsData);
+        
+        console.log("Fetched tickets:", ticketsData);
+        console.log("First ticket status:", ticketsData[0]?.status);
+        
       } catch (err) {
         console.error("Failed to fetch tickets:", err);
-        alert("Failed to load tickets: " + err.message);
+        alert("Failed to load tickets: " + (err.message || "Unknown error"));
       } finally {
         setLoading(false);
       }
@@ -410,11 +417,12 @@ const SupportDashboard = () => {
         prev.map((t) => (t._id === ticketId ? { ...t, assignedTo: newAssignee } : t))
       );
 
-      // Send update to backend using ticketAPI
       await adminTicketAPI.updateTicket(ticketId, { assignedTo: newAssignee });
+      
+      console.log("Assignment updated successfully");
     } catch (err) {
       console.error("Failed to update assignment", err);
-      alert("Could not update assigned person: " + err.message);
+      alert("Could not update assigned person: " + (err.message || "Unknown error"));
       
       // Revert optimistic update on error
       const response = await adminTicketAPI.getAllTickets();
@@ -422,7 +430,7 @@ const SupportDashboard = () => {
     }
   };
 
-  // Update status
+  // Update status - FIXED
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
       // Optimistic UI update
@@ -430,11 +438,12 @@ const SupportDashboard = () => {
         prev.map((t) => (t._id === ticketId ? { ...t, status: newStatus } : t))
       );
 
-      // Send update to backend using ticketAPI
       await adminTicketAPI.updateTicket(ticketId, { status: newStatus });
+      
+      console.log("Status updated successfully to:", newStatus);
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("Could not update ticket status: " + err.message);
+      alert("Could not update ticket status: " + (err.message || "Unknown error"));
       
       // Revert optimistic update on error
       const response = await adminTicketAPI.getAllTickets();
@@ -442,15 +451,38 @@ const SupportDashboard = () => {
     }
   };
 
+  // Get status color - FIXED
+  const getStatusColor = (status) => {
+    const colorMap = {
+      'Open': 'bg-yellow-400',
+      'In Progress': 'bg-blue-400', 
+      'Resolved': 'bg-green-400',
+      'Closed': 'bg-purple-400'
+    };
+    return colorMap[status] || 'bg-gray-400';
+  };
+
+  // Get priority color - FIXED
+  const getPriorityColor = (priority) => {
+    const colorMap = {
+      'Low': 'bg-green-100 text-green-800',
+      'Medium': 'bg-yellow-100 text-yellow-800',
+      'High': 'bg-red-100 text-red-800'
+    };
+    return colorMap[priority] || 'bg-gray-100 text-gray-800';
+  };
+
+  const filteredTickets = filterTickets();
+
   return (
     <>
       <div className="flex h-auto bg-gray-100 p-4">
         {/* Sidebar */}
-        <aside className="w-1/5 bg-white p-4 rounded-lg shadow-md">
+        <aside className="w-1/5 bg-white p-4 rounded-lg border-2">
           {supportOptions.map((option) => (
             <div
               key={option.name}
-              className={`p-4 mb-2 cursor-pointer border border-[#BCBCBC] rounded-lg ${
+              className={`p-4 mb-2 cursor-pointer border-2 border-[#BCBCBC] rounded-lg ${
                 selectedOption === option.name ? "bg-blue-200" : "bg-gray-50"
               }`}
               onClick={() => setSelectedOption(option.name)}
@@ -462,7 +494,7 @@ const SupportDashboard = () => {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 bg-white p-6 rounded-lg shadow-md ml-4">
+        <main className="flex-1 bg-white p-6 rounded-lg border-2  ml-4">
           {/* Ticket Status */}
           {selectedOption === "Ticket Status" && (
             <div>
@@ -482,25 +514,25 @@ const SupportDashboard = () => {
               </div>
 
               {loading ? (
-                <p>Loading tickets...</p>
+                <p className="text-center py-4">Loading tickets...</p>
               ) : (
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b">
+                    <tr className="border-b bg-gray-50">
                       <th className="p-2 text-center">Name</th>
                       <th className="p-2 text-center">Ticket No</th>
-                      <th className="p-2">E-mail</th>
-                      <th className="p-2">Category</th>
-                      <th className="p-2">Date</th>
-                      <th className="p-2">Status</th>
-                      <th className="p-2">Priority</th>
-                      <th className="p-2">Assigned To</th>
+                      <th className="p-2 text-center">E-mail</th>
+                      <th className="p-2 text-center">Category</th>
+                      <th className="p-2 text-center">Date</th>
+                      <th className="p-2 text-center">Status</th>
+                      <th className="p-2 text-center">Priority</th>
+                      <th className="p-2 text-center">Assigned To</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filterTickets().length > 0 ? (
-                      filterTickets().map((ticket) => (
-                        <tr key={ticket._id} className="border-b">
+                    {filteredTickets.length > 0 ? (
+                      filteredTickets.map((ticket) => (
+                        <tr key={ticket._id} className="border-b hover:bg-gray-50">
                           <td className="p-2 text-center">{ticket.name}</td>
                           <td className="p-2 text-center">{ticket.ticketId || ticket._id}</td>
                           <td className="p-2 text-center">{ticket.email}</td>
@@ -510,33 +542,19 @@ const SupportDashboard = () => {
                           </td>
                           <td className="p-2 text-center">
                             <select
-                              value={ticket.status || "open"}
+                              value={ticket.status || "Open"}
                               onChange={(e) => handleStatusChange(ticket._id, e.target.value)}
-                              className={`px-3 py-1 text-center rounded-full text-white ${
-                                ticket.status === "resolved"
-                                  ? "bg-green-400"
-                                  : ticket.status === "closed"
-                                  ? "bg-purple-400"
-                                  : "bg-yellow-400"
-                              }`}
+                              className={`px-3 py-1 text-center rounded-full text-white ${getStatusColor(ticket.status)}`}
                             >
-                              <option value="open">Open</option>
-                              <option value="in_progress">In Progress</option>
-                              <option value="resolved">Resolved</option>
-                              <option value="closed">Closed</option>
+                              <option value="Open">Open</option>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Resolved">Resolved</option>
+                              <option value="Closed">Closed</option>
                             </select>
                           </td>
                           <td className="p-2 text-center">
-                            <span
-                              className={`px-2 py-1 rounded ${
-                                ticket.priority === "high" 
-                                  ? "bg-red-100 text-red-800"
-                                  : ticket.priority === "medium"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-green-100 text-green-800"
-                              }`}
-                            >
-                              {ticketAPI.formatPriority(ticket.priority)}
+                            <span className={`px-2 py-1 rounded ${getPriorityColor(ticket.priority)}`}>
+                              {adminTicketAPI.formatPriority(ticket.priority)}
                             </span>
                           </td>
                           <td className="p-2 text-center">
@@ -572,7 +590,7 @@ const SupportDashboard = () => {
           {selectedOption === "Chat Support" && (
             <div className="flex flex-col h-full">
               <h2 className="text-lg font-semibold mb-4">Executive Name</h2>
-              <div className="flex-1 bg-gray-100 p-4 rounded-lg overflow-y-auto flex flex-col-reverse">
+              <div className="flex-1 bg-white p-4 rounded-lg overflow-y-auto flex flex-col-reverse">
                 {messages.map((msg, index) => (
                   <div
                     key={index}

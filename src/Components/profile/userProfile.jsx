@@ -304,7 +304,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { FaEdit } from "react-icons/fa";
 import { ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom"; // Changed from lucide-react import
+import { Link } from "react-router-dom";
 import Header from "../Header";
 import { userAPI } from "../../Clients-components/PropertyController";
 import ProfileEdit from "./ProfileEdit";
@@ -312,7 +312,6 @@ import ProfileEdit from "./ProfileEdit";
 const UserProfile = () => {
   const [profile, setProfile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showFullProfileCreation, setShowFullProfileCreation] = useState(false);
 
   const menuItems = [
     { label: "Theme", hasArrow: false },
@@ -346,7 +345,6 @@ const UserProfile = () => {
 
   const closeEditModal = () => {
     setIsModalOpen(false);
-    setShowFullProfileCreation(false);
   };
 
   const handleProfileCreationComplete = () => {
@@ -410,7 +408,7 @@ const UserProfile = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             {/* Close button */}
-            <div className="flex justify-end p-4 sticky top-0 bg-white z-10 border-b">
+            <div className="flex justify-end px-4 sticky top-0 bg-white z-10 border-b">
               <button
                 onClick={closeEditModal}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -421,8 +419,6 @@ const UserProfile = () => {
             <ProfileEdit
               onComplete={handleProfileCreationComplete}
               onClose={closeEditModal}
-              showFullProfileCreation={showFullProfileCreation}
-              setShowFullProfileCreation={setShowFullProfileCreation}
               profile={profile}
             />
           </div>

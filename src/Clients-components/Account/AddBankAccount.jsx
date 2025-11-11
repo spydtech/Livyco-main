@@ -1696,7 +1696,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { propertyAPI, bankAccountAPI } from '../PropertyController';
-// import ClientNav from '../Client-Navbar/ClientNav';
+ import ClientNav from '../Client-Navbar/ClientNav';
 
 const AddBankAccount = ({ propertyId, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -1729,7 +1729,7 @@ const AddBankAccount = ({ propertyId, onSuccess, onCancel }) => {
   const fetchOwnerProperties = async () => {
     try {
       setFetchingProperties(true);
-      const response = await propertyAPI.getAllClientProperties();
+      const response = await propertyAPI.getProperty();
       
       let propertiesArray = [];
       
@@ -1933,7 +1933,7 @@ const AddBankAccount = ({ propertyId, onSuccess, onCancel }) => {
   if (fetchingProperties) {
     return (
       <>
-        {/* <ClientNav /> */}
+        <ClientNav />
         <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
           <div className=" rounded-xl shadow-lg border border-gray-200 p-8 text-center">
             <div className="flex justify-center items-center space-x-3">
@@ -1948,7 +1948,7 @@ const AddBankAccount = ({ propertyId, onSuccess, onCancel }) => {
 
   return (
     <>
-      {/* <ClientNav /> */}
+      <ClientNav />
       <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8">
           <div className="text-center mb-8">

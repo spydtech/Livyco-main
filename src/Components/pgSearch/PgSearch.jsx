@@ -182,6 +182,7 @@ import UserFilters from "./UserFilters";
 import SearchBar from "./SearchBar";
 import ListingCard from "./ListingCard";
 import image from "../../assets/user/pgsearch/image (5).png";
+import Search from "../../assets/pgsearch/undraw_house-searching_g2b8.png";
 import Header from "../Header";
 import { propertyAPI } from "../../Clients-components/PropertyController";
 
@@ -258,12 +259,12 @@ export default function PgSearch() {
 
   // Filtering logic - IMPROVED with better debugging
   useEffect(() => {
-    console.log("🔄 Filtering triggered");
+    console.log(" Filtering triggered");
     console.log("Original list length:", originalPgList.length);
     console.log("Current filters:", filters);
 
     if (originalPgList.length === 0) {
-      console.log("❌ No original data to filter");
+      console.log(" No original data to filter");
       return;
     }
 
@@ -348,13 +349,13 @@ export default function PgSearch() {
       console.log(`After recommended filter: ${filtered.length} items`);
     }
 
-    console.log("✅ Final filtered results:", filtered.length);
+    console.log("Final filtered results:", filtered.length);
     setPgList(filtered);
   }, [filters, originalPgList]);
 
   // Debug useEffect to monitor state changes
   useEffect(() => {
-    console.log("📊 State update - pgList:", pgList.length, "originalPgList:", originalPgList.length);
+    console.log("State update - pgList:", pgList.length, "originalPgList:", originalPgList.length);
   }, [pgList, originalPgList]);
 
   return (
@@ -368,36 +369,43 @@ export default function PgSearch() {
       >
         {/* ✅ Centered SearchBar with Max Width */}
         <div className="flex justify-center">
-          <div className="w-full max-w-6xl">
+          <div className="w-full max-w-8xl">
             <SearchBar setFilters={setFilters} initialCity={filters.city} />
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-start justify-center gap-2.5 md:gap-3 p-6">
+        <div className="flex  flex-col md:flex-row items-start justify-center gap-2.5 md:gap-3 p-6">
           {/* Sidebar */}
           <div className="w-full md:w-[27%] md:ml-10">
             <UserFilters filters={filters} setFilters={setFilters} />
           </div>
 
           {/* PG Listings */}
-          <div className="w-full md:w-[55%] px-4">
+          <div className="w-full md:w-[55%] px-4 bg-white rounded-sm ">
             {loading ? (
               <p className="text-center text-gray-500">Loading PGs...</p>
             ) : error ? (
               <p className="text-center text-red-500">{error}</p>
             ) : pgList.length > 0 ? (
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-6 ">
                 {pgList.map((pg) => (
                   <ListingCard key={pg.id} pg={pg} />
                 ))}
               </div>
             ) : (
+              <div className="flex flex-col items-center">
+                 <img 
+                   alt="No PGs found"
+                   src={Search} 
+                   className="w-full h-auto mb-4 mt-20" // Fixed: ClassName -> className
+                  />
               <p className="text-center text-gray-500">
                 {originalPgList.length === 0 
                   ? "No PGs available." 
                   : "No PGs match your filters."
                 }
               </p>
+              </div>
             )}
           </div>
         </div>

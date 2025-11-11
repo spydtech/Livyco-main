@@ -76,9 +76,11 @@ import { FaPhone, FaCommentDots, FaHeart, FaShareAlt, FaArrowLeft } from "react-
 import { useNavigate } from "react-router-dom";
 import Pgimg from "../../assets/user/home page/homepage image.png";
 import bgImage from "../../assets/user/pgsearch/image (5).png"; 
+import FavoriteImg from "../../assets/whishlist/undraw_like-dislike_ggjr.png";
 import Header from "../Header";
 import { toast } from "react-toastify";
 import { wishlistAPI } from "../../Clients-components/PropertyController";
+
 
 export default function MyWishList() {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -191,7 +193,7 @@ export default function MyWishList() {
         <Header />
         <div style={containerStyle} className="min-h-screen py-24">
           <div className="container mx-auto px-4">
-            <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+            <div className="bg-white bg-opacity-95 rounded-lg  p-6 max-w-2xl mx-auto">
               <div className="flex items-center text-blue-700 mb-6 text-lg font-semibold">
                 <button onClick={() => navigate(-1)} className="cursor-pointer mr-2 flex items-center">
                   <FaArrowLeft className="mr-1" /> Back
@@ -202,7 +204,7 @@ export default function MyWishList() {
                 <div className="text-lg mb-4">Error: {error}</div>
                 <button
                   onClick={fetchWishlist}
-                  className="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors"
+                  className=" text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors"
                 >
                   Try Again
                 </button>
@@ -221,15 +223,15 @@ export default function MyWishList() {
         <div className="container mx-auto px-4">
           {/* Header Section - Removed white background */}
           <div className="mb-8">
-            <div className="rounded-lg p-4 md:p-6 max-w-4xl mx-auto">
-              <div className="flex items-center text-blue-700 text-lg font-semibold">
+            <div className="rounded-lg p-4 md:p-6 max-w-8xl mx-auto space-between">
+              <div className="flex items-center text-blue-700 text-lg font-semibold space-between">
                 <button 
                   onClick={() => navigate(-1)} 
-                  className="cursor-pointer mr-3 flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
+                  className="cursor-pointer mr-3 flex items-center  hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
                 >
                   <FaArrowLeft className="mr-2" /> Back
                 </button>
-                <span className="text-xl md:text-2xl text-white bg-blue-700 bg-opacity-80 px-4 py-2 rounded-lg">
+                <span className="text-xl md:text-xl text-blue-500  px-4 py-2 rounded-lg">
                   My Wishlist ({wishlistItems.length} items)
                 </span>
               </div>
@@ -239,7 +241,12 @@ export default function MyWishList() {
           {/* Wishlist Items */}
           <div className="max-w-4xl mx-auto">
             {wishlistItems.length === 0 ? (
-              <div className="bg-white bg-opacity-95 rounded-lg shadow-lg p-8 text-center">
+              <div className="bg-white  p-8 text-center">
+                <img
+                  src={FavoriteImg}
+                  alt="Empty Wishlist"
+                  className="mx-auto mb-6 w-48 h-48 object-contain"
+                />
                 <div className="text-gray-600 text-lg mb-6">Your wishlist is empty</div>
                 <button
                   onClick={() => navigate("/user/pgsearch")}

@@ -315,6 +315,7 @@ import { MdArrowDropDown } from 'react-icons/md';
 import { FiMenu, FiX } from 'react-icons/fi';
 import logo from "../assets/livco logo.png"; 
 import userImg from '../assets/react.svg';
+import profileImg from '../assets/profile/undraw_pic-profile_nr49.png'; // Replace with actual user image
 import Notifications from './notification/Notifications'; // Import your Notifications component
 
 const Header = () => {
@@ -463,7 +464,7 @@ const Header = () => {
                     className="flex items-center gap-2 bg-yellow-400 text-black px-3 py-1 rounded-full cursor-pointer"
                     onClick={toggleProfileDropdown}
                   >
-                    <img src={userImg} alt="user" className="w-6 h-6 rounded-full" />
+                    <img src={profileImg} alt="user" className="w-6 h-6 rounded-full" />
                     {user?.name || "Guest"} <MdArrowDropDown size={20} />
                   </div>
                   

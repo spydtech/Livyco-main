@@ -76,6 +76,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Download } from 'lucide-react';
 import Header from '../Header';
 import { useState, useEffect } from 'react';
+import paymentImg from "../../assets/paymentHistory/undraw_credit-card-payments_y0vn.png";
 import axios from 'axios';
 import { bookingAPI } from '../../Clients-components/PropertyController';
 
@@ -218,7 +219,7 @@ const PaymentHistory = () => {
         return (
             <>
                 <Header />
-                <div className="flex flex-col items-center justify-center min-h-screen px-4">
+                <div className="flex flex-col items-center justify-start py-20   min-h-screen px-4">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 px-4 self-start mb-4"
@@ -226,8 +227,13 @@ const PaymentHistory = () => {
                         <ArrowLeft className="w-5 h-5 text-[#0827B2]" />
                         <span className="whitespace-nowrap">Back</span>
                     </button>
-                    <div className="text-center">
-                        <p className="text-red-500 text-lg">{error}</p>
+                    <div className="text-center mt-10">
+                        <img
+                            src={paymentImg}
+                            alt="Error"
+                            className="mx-auto mb-6 w-48 h-48 object-contain"
+                        />
+                        <p className="text-gray-500 text-lg">{error}</p>
                         <button 
                             onClick={() => navigate('/bookings')}
                             className="mt-4 bg-[#0827B2] text-white px-6 py-2 rounded-lg"
@@ -252,7 +258,14 @@ const PaymentHistory = () => {
                         <ArrowLeft className="w-5 h-5 text-[#0827B2]" />
                         <span className="whitespace-nowrap">Back</span>
                     </button>
+                    <div className="text-center">
+                        <img
+                            src={paymentImg}
+                            alt="Error"
+                            className="mx-auto mb-6 w-48 h-48 object-contain"
+                        />
                     <p className="text-gray-500">No payment data available</p>
+                    </div>
                 </div>
             </>
         );

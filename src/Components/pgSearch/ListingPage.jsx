@@ -3,7 +3,10 @@ import data from "./pgData.json";
 import UserFilters from "./UserFilters";
 import SearchBar from "./SearchBar";
 import ListingCard from "./ListingCard";
+
 import image from "../../assets/user/pgsearch/images/image.png";
+
+
 
 
 export default function ListingPage() {
@@ -101,12 +104,17 @@ export default function ListingPage() {
 
         <div className="w-full md:w-3/4 px-4">
           <div className="flex flex-col gap-6">
+
+         
             {paginatedList.length > 0 ? (
               paginatedList.map((pg) => <ListingCard key={pg.id} pg={pg} />)
             ) : (
+              <div>
+              
               <p className="text-center text-gray-500">
                 No PGs match your filters.
               </p>
+              </div>
             )}
           </div>
         </div>

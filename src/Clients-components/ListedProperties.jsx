@@ -97,7 +97,7 @@
 
 
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { propertyAPI } from "./PropertyController";
 import PropertyCard from "./PropertyCard";
 import PropertyCardSkeleton from "./PropertyCardSkeleton";
@@ -106,32 +106,49 @@ const RecentlyListedProperties = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const response = await propertyAPI.getCompletePropertyData();
+        const response = await propertyAPI.getAllClientProperties();
         const data = response?.data;
         console.log("Fetched property data:", data);
 
         if (data?.success && Array.isArray(data?.data)) {
-          const transformedProperties = data.data.map((item) => ({
-            id: item?._id,
-            title: item?.basicInfo?.name || "Property Title",
-            fullAddress: [
-              item?.basicInfo?.address?.street,
-              item?.basicInfo?.address?.locality,
-              item?.basicInfo?.address?.city,
-            ]
-              .filter(Boolean)
-              .join(", "),
-            images: item?.media?.images?.length ? item.media.images : [],
-            startingPrice: item?.pricing?.roomPrice || 0,
-            amenities: item?.pgDetails?.amenities || [],
-            rating: Number(item?.basicInfo?.rating) || 0,
-          }));
+          const transformedProperties = data.data.map((item) => {
+            console.log("Processing item:", item);
+            
+            const propertyData = item?.property || {};
+            const pgData = item?.pgProperty || {};
+            const mediaData = item?.media || {};
+            const roomData = item?.rooms || {};
 
+            // Extract pricing from room data
+            const roomTypes = roomData?.roomTypes || [];
+            const startingPrice = roomTypes.length > 0 
+              ? Math.min(...roomTypes.map(room => room.price || 0))
+              : 0;
+
+            return {
+              id: item?._id || propertyData?._id,
+              title: propertyData?.name || "Property Title",
+              fullAddress: [
+                propertyData?.street,
+                propertyData?.locality,
+                propertyData?.city
+              ]
+                .filter(Boolean)
+                .join(", "),
+              images: mediaData?.images?.length ? mediaData.images : [],
+              startingPrice: startingPrice,
+              amenities: pgData?.amenities || [],
+              rating: 4.0, // Default rating since it's not in your API
+            };
+          });
+
+          console.log("Transformed properties:", transformedProperties);
           setProperties(transformedProperties);
         } else {
           setProperties([]);
@@ -149,14 +166,18 @@ const RecentlyListedProperties = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#333333] py-10 px-5">
+      <div className="bg-[#1e3b8a] py-10 px-5">
         <h2 className="text-white text-2xl font-semibold text-center mb-6">
           Recently listed properties
         </h2>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center">
-          {[...Array(3)].map((_, idx) => (
-            <PropertyCardSkeleton key={idx} />
-          ))}
+        <div className="max-w-6xl mx-auto flex gap-6 overflow-x-auto pb-4">
+          <div className="flex gap-6 min-w-max">
+            {[...Array(3)].map((_, idx) => (
+              <div key={idx} className="w-80 flex-shrink-0">
+                <PropertyCardSkeleton />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -164,7 +185,7 @@ const RecentlyListedProperties = () => {
 
   if (error) {
     return (
-      <div className="bg-[#333333] py-10 px-5 text-center">
+      <div className="bg-[#1e3b8a] py-10 px-5 text-center">
         <h2 className="text-white text-2xl font-semibold mb-4">
           Recently listed properties
         </h2>
@@ -181,7 +202,7 @@ const RecentlyListedProperties = () => {
 
   if (!properties.length) {
     return (
-      <div className="bg-[#333333] py-10 px-5 text-center">
+      <div className="bg-[#1e3b8a] py-10 px-5 text-center">
         <h2 className="text-white text-2xl font-semibold mb-4">
           Recently listed properties
         </h2>
@@ -191,14 +212,29 @@ const RecentlyListedProperties = () => {
   }
 
   return (
-    <div className="bg-[#333333] py-10 px-5">
+    <div className="bg-[#1e3b8a] py-10 px-5">
       <h2 className="text-white text-2xl font-semibold text-center mb-6">
         Recently listed properties
       </h2>
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-center">
-        {properties.map((property, idx) => (
-          <PropertyCard key={property.id || idx} property={property} />
-        ))}
+      <div className="max-w-6xl mx-auto">
+        <div 
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto 
+                    [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
+                    hover:[&::-webkit-scrollbar]:block hover:[&::-webkit-scrollbar]:h-2
+                    hover:[&::-webkit-scrollbar-track]:bg-gray-100 hover:[&::-webkit-scrollbar-track]:rounded-full
+                    hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 hover:[&::-webkit-scrollbar-thumb]:rounded-full
+                    hover:[-ms-overflow-style:auto] hover:[scrollbar-width:thin]
+                    snap-x snap-mandatory space-x-6 pb-4"
+        >
+          <div className="flex gap-6 min-w-max">
+            {properties.map((property, idx) => (
+              <div key={property.id || idx} className="w-80 flex-shrink-0">
+                <PropertyCard property={property} />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

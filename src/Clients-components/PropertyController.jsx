@@ -135,6 +135,93 @@ export const mapAPI = {
   getMapByProperty: (propertyId) => api.get(`/api/map/${propertyId}`),
 };
 
+
+// custom Reviews
+// Add this to your PropertyController.jsx file
+export const reviewAPI = {
+  // Get reviews for a property
+  getPropertyReviews: (propertyId, status = 'approved') => 
+    api.get(`/api/custom-reviews/property/${propertyId}`, { 
+      params: { status } 
+    })
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch reviews');
+      }
+      return response;
+    }),
+
+  // Create a new review
+  createReview: (reviewData) => 
+    api.post('/api/custom-reviews', reviewData)
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to create review');
+      }
+      return response;
+    }),
+
+  // Get user's reviews
+  getUserReviews: (userId) => 
+    api.get(`/api/custom-reviews/user/${userId}`)
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch user reviews');
+      }
+      return response;
+    }),
+
+  // Update a review
+  updateReview: (reviewId, updates) => 
+    api.put(`/api/custom-reviews/${reviewId}`, updates)
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to update review');
+      }
+      return response;
+    }),
+
+  // Delete a review
+  deleteReview: (reviewId) => 
+    api.delete(`/api/custom-reviews/${reviewId}`)
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to delete review');
+      }
+      return response;
+    }),
+
+  // Get review statistics
+  getReviewStats: (propertyId) => 
+    api.get(`/api/custom-reviews/stats/${propertyId}`)
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch review statistics');
+      }
+      return response;
+    }),
+
+  // Admin: Get all reviews (with filtering)
+  getAllReviews: (params = {}) => 
+    api.get('/api/custom-reviews/admin/all', { params })
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to fetch all reviews');
+      }
+      return response;
+    }),
+
+  // Admin: Update review status
+  updateReviewStatus: (reviewId, status, adminNotes = '') => 
+    api.patch(`/api/custom-reviews/admin/${reviewId}/status`, { status, adminNotes })
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to update review status');
+      }
+      return response;
+    })
+};
+
 //whishlist
 export const wishlistAPI = {
   // Add property to wishlist (send both userId and propertyId)

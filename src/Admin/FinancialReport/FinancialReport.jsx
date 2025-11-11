@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaSearch } from "react-icons/fa";
-import { getbankAccountsAPI } from "../adminController";
+import { adminBankAccountsAPI } from "../adminController";
  
 const ITEMS_PER_PAGE = 5;
  
@@ -18,7 +18,7 @@ const RoleActivityForm = () => {
     const fetchBankAccounts = async () => {
       try {
         setLoading(true);
-       const response = await getbankAccountsAPI.getAllBankAccounts();
+       const response = await adminBankAccountsAPI.getAllBankAccounts();
         setBankAccounts(response.data.bankAccounts || []);
       } catch (err) {
         console.error("Error fetching bank accounts:", err);
