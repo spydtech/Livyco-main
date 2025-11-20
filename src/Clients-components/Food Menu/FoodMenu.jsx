@@ -102,12 +102,13 @@
 
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ClientNav from "../Client-Navbar/ClientNav";
 import bgImage from "../../assets/user/pgsearch/image (5).png"; 
-// import headers from "../../Components/Header"
 import { menuAPI, propertyAPI } from "../PropertyController";
 
 const FoodMenu = () => {
+  const navigate = useNavigate();
   const [manualEntry, setManualEntry] = useState(false);
   const [selectedDay, setSelectedDay] = useState("Monday");
   const [menuItems, setMenuItems] = useState([]);
@@ -322,21 +323,38 @@ const FoodMenu = () => {
   return (
     <>
       <ClientNav />
+      {/* Add global CSS to remove focus outlines */}
+      <style jsx>{`
+        select:focus {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+      `}</style>
+      
       <div className="min-h-screen p-4 sm:p-6 bg-cover bg-center" style={{ backgroundImage: `url('${bgImage}')` }}>
-        {/* Breadcrumb */}
-        <h2 className="text-xs sm:text-sm text-gray-500 mb-4">Dashboard / Food Menu</h2>
+        {/* Breadcrumb - Clickable Dashboard - Navigate to Client Dashboard */}
+        <div className="text-xs sm:text-sm text-gray-500 mb-2">
+          <span 
+            className="cursor-pointer hover:text-blue-600 hover:underline"
+            onClick={() => navigate('/client/dashboard')}
+          >
+            Dashboard
+          </span>
+          <span> / Food Menu</span>
+        </div>
         
         {/* Property Selection */}
-        <div className="mb-6 p-4 rounded-lg">
+        <div className="mb-4 p-4 rounded-lg">
           <label className="block text-sm font-medium mb-2">Select Property:</label>
           {propertyLoading ? (
             <p className="text-sm">Loading properties...</p>
           ) : (
             <>
-              <select 
-                className="border p-2 rounded-md w-full md:w-1/2 lg:w-1/3 text-sm sm:text-base"
+              <select
+                className="border border-black bg-transparent text-black p-2 rounded-md w-full md:w-1/2 lg:w-1/3 text-sm sm:text-base no-focus-outline"
                 value={selectedProperty}
                 onChange={(e) => setSelectedProperty(e.target.value)}
+                style={{ outline: 'none' }}
               >
                 <option value="">Select a property</option>
                 {properties.map((propData) => (
@@ -358,12 +376,12 @@ const FoodMenu = () => {
 
         {/* Alert Messages */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-4 text-sm">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-2 text-sm">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-4 text-sm">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-2 text-sm">
             {success}
           </div>
         )}
@@ -374,16 +392,16 @@ const FoodMenu = () => {
           </div>
         ) : (
           <>
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mb-6">
+            {/* Action Buttons - FIXED: Consistent small button sizes */}
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mb-4">
               <button 
-                className="bg-blue-900 text-white px-4 py-2 sm:px-6 sm:py-2 rounded-md text-sm sm:text-base w-full sm:w-auto"
+                className="bg-blue-900 text-white px-3 py-1.5 rounded text-xs w-full sm:w-auto focus:outline-none"
                 onClick={() => { setShowMenuCard(true); setManualEntry(false); }}
               >
                 View Menu Card
               </button>
               <button 
-                className="bg-blue-900 text-white px-4 py-2 sm:px-6 sm:py-2 rounded-md text-sm sm:text-base w-full sm:w-auto"
+                className="bg-blue-900 text-white px-3 py-1.5 rounded text-xs w-full sm:w-auto focus:outline-none"
                 onClick={() => { setManualEntry(true); setShowMenuCard(false); }}
               >
                 Enter Manually
@@ -392,16 +410,17 @@ const FoodMenu = () => {
 
             {/* Menu Card View */}
             {showMenuCard ? (
-              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg mt-2 mx-auto max-w-6xl">
                 <h3 className="text-xl sm:text-2xl mb-4 sm:mb-6 text-center">
                   📋 Weekly Menu Card - {getCurrentPropertyName()}
                 </h3>
                 
                 {/* Scrollable container for small screens */}
                 <div className="overflow-x-auto">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4 min-w-max">
+                  {/* FIXED: Better grid for tablet - 2 columns on sm, 3 on md, 4 on lg, 7 on xl */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4 min-w-max">
                     {daysOfWeek.map(day => (
-                      <div key={day} className="border p-3 sm:p-4 bg-blue-50 rounded-lg min-w-[180px]">
+                      <div key={day} className="border p-3 sm:p-4 bg-blue-50 rounded-lg min-w-[180] sm:min-w-0">
                         <h4 className="font-semibold text-center mb-2 sm:mb-3 bg-blue-900 text-white py-1 px-2 text-sm sm:text-base rounded">
                           {day}
                         </h4>
@@ -420,7 +439,7 @@ const FoodMenu = () => {
                 
                 <div className="text-center mt-6 sm:mt-8">
                   <button 
-                    className="bg-gray-300 px-4 py-2 sm:px-6 sm:py-2 rounded-md text-sm sm:text-base w-full sm:w-auto"
+                    className="bg-gray-300 px-3 py-1.5 rounded text-xs w-full sm:w-auto focus:outline-none"
                     onClick={() => setShowMenuCard(false)}
                   >
                     Back
@@ -428,14 +447,15 @@ const FoodMenu = () => {
                 </div>
               </div>
             ) : !manualEntry ? (
-              /* Daily Menu View */
-              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md w-full max-w-2xl mx-auto">
+              /* Daily Menu View - FIXED: Better centering for tablet */
+              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md w-full max-w-2xl mx-auto mt-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                   <h3 className="font-semibold text-lg">Menu for</h3>
                   <select 
-                    className="border p-2 rounded w-full sm:w-auto text-sm sm:text-base"
+                    className="border p-2 rounded w-full sm:w-auto text-sm sm:text-base no-focus-outline"
                     value={viewDay} 
                     onChange={(e) => setViewDay(e.target.value)}
+                    style={{ outline: 'none' }}
                   >
                     {daysOfWeek.map(day => <option key={day} value={day}>{day}</option>)}
                   </select>
@@ -453,7 +473,7 @@ const FoodMenu = () => {
                 </div>
                 
                 <button 
-                  className="bg-blue-900 text-white px-4 py-2 rounded-md mt-4 w-full sm:w-auto text-sm sm:text-base"
+                  className="bg-blue-900 text-white px-3 py-1.5 rounded mt-4 w-full sm:w-auto text-xs focus:outline-none"
                   onClick={() => fetchMenuForDay(viewDay)}
                   disabled={loading}
                 >
@@ -461,8 +481,8 @@ const FoodMenu = () => {
                 </button>
               </div>
             ) : (
-              /* Manual Entry View */
-              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+              /* Manual Entry View - FIXED: Better width for tablet */
+              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg mt-2 mx-auto max-w-4xl">
                 <h3 className="text-lg sm:text-xl mb-4 text-center">
                   Daily Menu Entry for {selectedDay}
                 </h3>
@@ -473,7 +493,7 @@ const FoodMenu = () => {
                     {daysOfWeek.map(day => (
                       <button 
                         key={day}
-                        className={`px-3 py-2 rounded text-xs sm:text-sm min-w-[80px] sm:min-w-[100px] ${
+                        className={`px-3 py-1.5 rounded text-xs min-w-[80px] sm:min-w-[100px] focus:outline-none ${
                           selectedDay === day ? "bg-blue-900 text-white" : "border border-gray-300"
                         }`}
                         onClick={() => setSelectedDay(day)}
@@ -492,7 +512,7 @@ const FoodMenu = () => {
                       <input 
                         type="text" 
                         placeholder={`Enter ${meal} items (comma separated)`}
-                        className="w-full border p-2 sm:p-3 rounded text-sm sm:text-base"
+                        className="w-full border p-2 sm:p-3 rounded text-sm sm:text-base focus:outline-none"
                         value={foodEntries[meal]} 
                         onChange={(e) => handleFoodEntryChange(meal, e.target.value)}
                       />
@@ -501,15 +521,15 @@ const FoodMenu = () => {
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6">
+                <div className="flex flex-col sm:flex-row justify-center gap-2 mt-6">
                   <button 
-                    className="bg-gray-300 px-4 py-2 sm:px-6 sm:py-2 rounded text-sm sm:text-base w-full sm:w-auto"
+                    className="bg-gray-300 px-3 py-1.5 rounded text-xs w-full sm:w-auto focus:outline-none"
                     onClick={() => setManualEntry(false)}
                   >
                     Cancel
                   </button>
                   <button 
-                    className="bg-blue-900 text-white px-4 py-2 sm:px-6 sm:py-2 rounded text-sm sm:text-base w-full sm:w-auto"
+                    className="bg-blue-900 text-white px-3 py-1.5 rounded text-xs w-full sm:w-auto focus:outline-none"
                     onClick={saveFoodItems}
                     disabled={loading}
                   >
@@ -532,7 +552,7 @@ const FoodMenu = () => {
                                 <span className="text-sm">• {item.name}</span>
                                 <button 
                                   onClick={() => deleteFoodItem(item._id)}
-                                  className="ml-2 text-red-600 text-xs sm:text-sm hover:text-red-800"
+                                  className="ml-2 text-red-600 text-xs hover:text-red-800 focus:outline-none"
                                   disabled={loading}
                                 >
                                   Delete
