@@ -293,6 +293,18 @@ export default function ListingCard({ pg }) {
             <HeartOutline className="w-3 h-3 sm:w-4 sm:h-4" />
           )}
         </button>
+    
+      </div>
+      <div className="absolute top-14 right-3 z-10">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium shadow ${
+          displayData.gender?.toLowerCase() === 'male'
+            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+            : displayData.gender?.toLowerCase() === 'female'
+              ? 'bg-pink-100 text-pink-800 border border-pink-200'
+              : 'bg-purple-100 text-purple-800 border border-purple-200'
+        }`}>
+          {displayData.gender}
+        </span>
       </div>
 
      

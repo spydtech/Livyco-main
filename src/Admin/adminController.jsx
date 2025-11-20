@@ -18,7 +18,91 @@ api.interceptors.request.use((config) => {
 });
 
 
+export const adminNotificationAPI = {
+  // Get notifications based on user role
+  getNotifications: (params = {}) => 
+    api.get('/notifications', { params })
+      .then(response => {
+        console.log('📨 Notifications API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Notifications API Error:', error.response?.data || error.message);
+        throw error;
+      }),
 
+  // Get unread count
+  getUnreadCount: () => 
+    api.get('/notifications/unread-count')
+      .then(response => {
+        console.log('🔔 Unread Count API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Unread Count API Error:', error.response?.data || error.message);
+        throw error;
+      }),
+
+  // Mark notification as read
+  markAsRead: (notificationId) => 
+    api.patch(`/notifications/read/${notificationId}`)
+      .then(response => {
+        console.log('✅ Mark as Read API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Mark as Read API Error:', error.response?.data || error.message);
+        throw error;
+      }),
+
+  // Mark all notifications as read
+  markAllAsRead: () => 
+    api.patch('/notifications/read-all')
+      .then(response => {
+        console.log('✅ Mark All as Read API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Mark All as Read API Error:', error.response?.data || error.message);
+        throw error;
+      }),
+
+  // Delete notification
+  deleteNotification: (notificationId) => 
+    api.delete(`/notifications/${notificationId}`)
+      .then(response => {
+        console.log('✅ Delete Notification API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Delete Notification API Error:', error.response?.data || error.message);
+        throw error;
+      }),
+
+  // Debug endpoint to check all notifications
+  getDebugNotifications: () => 
+    api.get('/notifications/debug/all')
+      .then(response => {
+        console.log('🐛 Debug Notifications API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Debug Notifications API Error:', error.response?.data || error.message);
+        throw error;
+      }),
+
+  // Create test notification
+  createTestNotification: () => 
+    api.post('/notifications/test/admin')
+      .then(response => {
+        console.log('🧪 Test Notification API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Test Notification API Error:', error.response?.data || error.message);
+        throw error;
+      })
+};
 
 const propertyAPI = {
   getPropertyById: (id) => api.get(`/properties/complete?id=${id}`),

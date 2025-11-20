@@ -709,8 +709,440 @@
 
 
 
+// import React, { useState, useEffect } from "react";
+// import { ArrowLeft, Info, CheckCircle, XCircle, Clock } from "lucide-react";
+// import { useNavigate, useLocation } from "react-router-dom";
+// import Header from '../Header';
+// import { API_BASE_URL } from '../../Clients-components/PropertyController';
+
+// export default function Cart() {
+//   const navigate = useNavigate();
+//   const location = useLocation();
+//   const [processing, setProcessing] = useState(false);
+//   const [bookingData, setBookingData] = useState(null);
+//   const [existingBookingId, setExistingBookingId] = useState(null);
+
+//   const RAZORPAY_KEY_ID = "rzp_live_RWWvXeMcmTohhi";
+
+//   useEffect(() => {
+//     console.log('📍 Location state:', location.state);
+    
+//     if (location.state) {
+//       const state = location.state;
+//       let propertyId = state.propertyId || 
+//                       state.booking?.propertyId || 
+//                       state.booking?.property?._id ||
+//                       state.pgData?.id;
+
+//       if (!propertyId) {
+//         console.error('❌ Property ID missing from location state');
+//         alert('Property information missing. Please go back and try again.');
+//         navigate("/user/search");
+//         return;
+//       }
+
+//       console.log('✅ Property ID found:', propertyId);
+
+//       const enhancedBookingData = {
+//         ...state,
+//         propertyId: propertyId,
+//         booking: {
+//           ...state.booking,
+//           propertyId: propertyId
+//         }
+//       };
+
+//       setBookingData(enhancedBookingData);
+      
+//       // If there's an existing booking ID, store it
+//       if (state.booking?.id) {
+//         setExistingBookingId(state.booking.id);
+//         console.log('✅ Existing booking ID found:', state.booking.id);
+//       }
+//     } else {
+//       navigate("/user/search");
+//     }
+//   }, [location.state, navigate]);
+
+//   const loadRazorpayScript = () => {
+//     return new Promise((resolve) => {
+//       if (window.Razorpay) {
+//         resolve(true);
+//         return;
+//       }
+
+//       const script = document.createElement('script');
+//       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+//       script.onload = () => resolve(true);
+//       script.onerror = () => resolve(false);
+//       document.body.appendChild(script);
+//     });
+//   };
+
+//   const createBookingBeforePayment = async (bookingData) => {
+//     try {
+//       console.log('📝 Creating booking before payment...');
+      
+//       const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": `Bearer ${localStorage.getItem("token")}`
+//         },
+//         body: JSON.stringify(bookingData)
+//       });
+
+
+//       const result = await response.json();
+
+//       if (!response.ok || !result.success) {
+//         throw new Error(result.message || "Failed to create booking");
+//       }
+
+//       console.log('✅ Booking created successfully:', result.booking);
+//       return result.booking;
+
+//     } catch (error) {
+//       console.error('❌ Booking creation error:', error);
+//       throw error;
+//     }
+//   };
+
+//   const calculateTransferBreakdown = (totalAmount) => {
+//     const platformCommission = totalAmount * 0.05;
+//     const gstOnCommission = platformCommission * 0.18;
+//     const totalPlatformEarnings = platformCommission + gstOnCommission;
+//     const clientAmount = totalAmount - totalPlatformEarnings;
+
+//     return {
+//       platformCommission,
+//       gstOnCommission,
+//       totalPlatformEarnings,
+//       clientAmount
+//     };
+//   };
+
+//   const paymentHandler = async (e) => {
+//     e.preventDefault();
+    
+//     if (!bookingData) {
+//       alert("No booking data available");
+//       return;
+//     }
+
+//     setProcessing(true);
+
+//     try {
+//       // Load Razorpay script
+//       const isRazorpayLoaded = await loadRazorpayScript();
+//       if (!isRazorpayLoaded) {
+//         throw new Error("Razorpay SDK failed to load");
+//       }
+
+//       // Prepare complete booking data
+//       const completeBookingData = {
+//         propertyId: bookingData.propertyId,
+//         roomType: bookingData.booking?.roomType || bookingData.selectedRoomType || bookingData.roomType,
+//         selectedRooms: bookingData.selectedRooms || bookingData.booking?.selectedRooms || [],
+//         moveInDate: bookingData.selectedDate || bookingData.booking?.moveInDate || bookingData.moveInDate,
+//         endDate: bookingData.endDate || bookingData.booking?.endDate || bookingData.moveOutDate,
+//         durationType: bookingData.durationType || 'monthly',
+//         durationDays: bookingData.durationDays || 30,
+//         durationMonths: bookingData.durationMonths || 1,
+//         personCount: bookingData.personCount || 1,
+//         customerDetails: bookingData.customerDetails || {
+//           primary: {
+//             name: "Customer",
+//             email: "customer@example.com",
+//             mobile: "9999999999"
+//           }
+//         },
+//         pricing: {
+//           totalAmount: bookingData.totalAmount || bookingData.price || 0,
+//           advanceAmount: bookingData.advanceAmount || 0,
+//           securityDeposit: bookingData.securityDeposit || 0,
+//           maintenanceFee: bookingData.maintenanceFee || 0
+//         },
+//         bookingStatus: "pending_payment"
+//       };
+
+//       console.log('✅ Final booking data for payment:', completeBookingData);
+
+//       let bookingId = existingBookingId;
+
+//       // Create booking if it doesn't exist
+//       if (!bookingId) {
+//         const newBooking = await createBookingBeforePayment(completeBookingData);
+//         bookingId = newBooking.id;
+//         console.log('✅ New booking created with ID:', bookingId);
+//       } else {
+//         console.log('✅ Using existing booking ID:', bookingId);
+//       }
+
+//       // Validate amount
+//       const amount = bookingData.totalAmount || bookingData.price || 0;
+//       if (!amount || amount <= 0) {
+//         throw new Error("Invalid amount for payment");
+//       }
+
+//       // Convert to paise for Razorpay
+//       const amountInPaise = Math.round(parseFloat(amount) * 100);
+
+//       // Create Razorpay order
+//       console.log('💰 Creating order for amount:', amount, '(in paise:', amountInPaise, ')');
+      
+//       const orderResponse = await fetch(`${API_BASE_URL}/api/payments/create-order`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//           "Authorization": `Bearer ${localStorage.getItem("token")}`
+//         },
+//         body: JSON.stringify({
+//           amount: amountInPaise,
+//           currency: "INR",
+//           receipt: `booking_${Date.now()}`,
+//           bookingData: {
+//             ...completeBookingData,
+//             bookingId: bookingId // Include booking ID in payment data
+//           }
+//         })
+//       });
+
+//       const orderResult = await orderResponse.json();
+
+//       if (!orderResponse.ok || !orderResult.success) {
+//         console.error('❌ Order creation failed:', orderResult);
+//         throw new Error(orderResult.message || "Failed to create payment order");
+//       }
+
+//       console.log('✅ Order created:', orderResult.order.id);
+
+//       const options = {
+//         key: RAZORPAY_KEY_ID,
+//         amount: orderResult.order.amount,
+//         currency: orderResult.order.currency,
+//         name: "LivCo Properties",
+//         description: `Booking Payment for ${bookingData.propertyName || 'Property'}`,
+//         // image: window.location.origin + "/logo.png", // Use absolute URL
+//         order_id: orderResult.order.id,
+//         handler: async function (response) {
+//           try {
+//             console.log('✅ Payment successful, validating...', response);
+            
+//             const validationResponse = await fetch(`${API_BASE_URL}/api/payments/validate-payment`, {
+//               method: "POST",
+//               headers: {
+//                 "Content-Type": "application/json",
+//                 "Authorization": `Bearer ${localStorage.getItem("token")}`
+//               },
+//               body: JSON.stringify({
+//                 razorpay_order_id: response.razorpay_order_id,
+//                 razorpay_payment_id: response.razorpay_payment_id,
+//                 razorpay_signature: response.razorpay_signature,
+//                 bookingData: {
+//                   ...completeBookingData,
+//                   bookingId: bookingId // Send the booking ID for updating
+//                 }
+//               })
+//             });
+
+//             const validationResult = await validationResponse.json();
+//             console.log('✅ Payment validation result:', validationResult);
+
+//             if (validationResult.success) {
+//               let successMessage = "Payment successful! Your booking is confirmed.";
+              
+//               if (validationResult.transferInitiated) {
+//                 successMessage += " Funds transfer to property owner has been initiated.";
+//               } else {
+//                 successMessage += " Note: Automatic transfer to property owner failed and will be retried.";
+//               }
+              
+//               // Navigate to confirmation page
+//               navigate("/user/booking/conformation", { 
+//                 state: { 
+//                   booking: validationResult.booking,
+//                   transactionId: response.razorpay_payment_id,
+//                   paymentDetails: validationResult,
+//                   totalAmount: amount,
+//                   transferInitiated: validationResult.transferInitiated,
+//                   transferDetails: validationResult.transferDetails
+//                 } 
+//               });
+              
+//             } else {
+//               alert("Payment validation failed: " + validationResult.message);
+//             }
+//           } catch (error) {
+//             console.error("❌ Payment validation error:", error);
+//             alert("Payment validation error: " + error.message);
+//           } finally {
+//             setProcessing(false);
+//           }
+//         },
+//         prefill: {
+//           name: completeBookingData.customerDetails?.primary?.name || "Customer",
+//           email: completeBookingData.customerDetails?.primary?.email || "customer@example.com",
+//           contact: completeBookingData.customerDetails?.primary?.mobile || "9999999999",
+//         },
+//         notes: {
+//           bookingId: bookingId,
+//           propertyId: completeBookingData.propertyId
+//         },
+//         theme: {
+//           color: "#0033A1",
+//         },
+//       };
+
+//       const rzp1 = new window.Razorpay(options);
+      
+//       rzp1.on("payment.failed", function (response) {
+//         console.error("❌ Payment failed:", response.error);
+//         alert(`Payment Failed: ${response.error.description}`);
+//         setProcessing(false);
+//       });
+
+//       rzp1.on("modal.close", function () {
+//         console.log("Modal closed by user");
+//         setProcessing(false);
+//       });
+      
+//       rzp1.open();
+      
+//     } catch (error) {
+//       console.error("❌ Payment initiation error:", error);
+//       alert("Payment Error: " + error.message);
+//       setProcessing(false);
+//     }
+//   };
+
+//   if (!bookingData) {
+//     return (
+//       <>
+//         <Header />
+//         <div className="p-16">
+//           <div className="flex items-center p-1">
+//             <button
+//               className="flex text-xl items-center gap-2 px-4 py-2 rounded"
+//               onClick={() => navigate(-1)}
+//             >
+//               <ArrowLeft className="w-5 h-5" />
+//               Back
+//             </button>
+//           </div>
+//           <div className="text-center py-8">
+//             <p>Loading booking information...</p>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   }
+
+//   const amount = bookingData.totalAmount || bookingData.price || 0;
+//   const advanceAmount = bookingData.advanceAmount || 0;
+//   const securityDeposit = bookingData.securityDeposit || 0;
+//   const transferBreakdown = calculateTransferBreakdown(amount);
+
+//   return (
+//     <>
+//       <Header />
+//       <div className="p-16">
+//         <div className="flex items-center p-1">
+//           <button
+//             className="flex text-xl items-center gap-2 px-4 py-2 rounded"
+//             onClick={() => navigate(-1)}
+//           >
+//             <ArrowLeft className="w-5 h-5" />
+//             Pay Rent
+//           </button>
+//         </div>
+
+//         <div className="w-full sm:w-1/3 flex justify-center items-center mx-auto py-8">
+//           <div className="p-6 w-full bg-white rounded-md shadow-lg">
+//             <div className="flex justify-between text-sm text-gray-700">
+//               <h2 className="text-lg font-semibold mb-4">Total Amount to be Paid</h2>
+//               <span className="text-lg font-semibold mb-4">
+//                 ₹ {amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+//               </span>
+//             </div>
+
+//             <div className="mb-4">
+//               {advanceAmount > 0 && (
+//                 <div className="flex justify-between text-sm text-gray-700">
+//                   <span>Advance Amount</span>
+//                   <span>₹ {advanceAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+//                 </div>
+//               )}
+//               {securityDeposit > 0 && (
+//                 <div className="flex justify-between text-sm text-gray-700 mt-1">
+//                   <span>Security Deposit</span>
+//                   <span>₹ {securityDeposit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+//                 </div>
+//               )}
+              
+//               {/* Transfer Information */}
+//               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+//                 <div className="flex gap-2 text-sm text-blue-700 mb-2">
+//                   <Info className="w-4 h-4 mt-0.5" />
+//                   <p className="font-semibold">Automatic Fund Transfer</p>
+//                 </div>
+//                 <p className="text-xs text-blue-600 mb-2">
+//                   After payment, funds will be automatically transferred to the property owner:
+//                 </p>
+                
+//                 <div className="text-xs text-gray-600 space-y-1">
+//                   <div className="flex justify-between">
+//                     <span>Total Payment:</span>
+//                     <span>₹ {amount.toFixed(2)}</span>
+//                   </div>
+//                   <div className="flex justify-between">
+//                     <span>Platform Fee (5%):</span>
+//                     <span>- ₹ {transferBreakdown.platformCommission.toFixed(2)}</span>
+//                   </div>
+//                   <div className="flex justify-between">
+//                     <span>GST on Platform Fee (18%):</span>
+//                     <span>- ₹ {transferBreakdown.gstOnCommission.toFixed(2)}</span>
+//                   </div>
+//                   <div className="flex justify-between font-semibold border-t pt-1">
+//                     <span>Amount to Property Owner:</span>
+//                     <span>₹ {transferBreakdown.clientAmount.toFixed(2)}</span>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="flex justify-center items-center">
+//               <button
+//                 className="w-1/2 bg-[#FEE123] hover:bg-[#E6C200] text-black font-semibold py-3 rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+//                 onClick={paymentHandler}
+//                 disabled={processing}
+//               >
+//                 {processing ? (
+//                   <div className="flex items-center justify-center">
+//                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+//                     Processing...
+//                   </div>
+//                 ) : (
+//                   `Pay ₹${amount.toLocaleString()}`
+//                 )}
+//               </button>
+//             </div>
+
+//             <div className="mt-4 text-center">
+//               <p className="text-xs text-gray-500">
+//                 By proceeding, you agree to our Terms of Service and Privacy Policy
+//               </p>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </>
+//   );
+// }
+
+
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Info, CheckCircle, XCircle, Clock } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from '../Header';
 import { API_BASE_URL } from '../../Clients-components/PropertyController';
@@ -720,7 +1152,6 @@ export default function Cart() {
   const location = useLocation();
   const [processing, setProcessing] = useState(false);
   const [bookingData, setBookingData] = useState(null);
-  const [existingBookingId, setExistingBookingId] = useState(null);
 
   const RAZORPAY_KEY_ID = "rzp_live_RWWvXeMcmTohhi";
 
@@ -728,37 +1159,7 @@ export default function Cart() {
     console.log('📍 Location state:', location.state);
     
     if (location.state) {
-      const state = location.state;
-      let propertyId = state.propertyId || 
-                      state.booking?.propertyId || 
-                      state.booking?.property?._id ||
-                      state.pgData?.id;
-
-      if (!propertyId) {
-        console.error('❌ Property ID missing from location state');
-        alert('Property information missing. Please go back and try again.');
-        navigate("/user/search");
-        return;
-      }
-
-      console.log('✅ Property ID found:', propertyId);
-
-      const enhancedBookingData = {
-        ...state,
-        propertyId: propertyId,
-        booking: {
-          ...state.booking,
-          propertyId: propertyId
-        }
-      };
-
-      setBookingData(enhancedBookingData);
-      
-      // If there's an existing booking ID, store it
-      if (state.booking?.id) {
-        setExistingBookingId(state.booking.id);
-        console.log('✅ Existing booking ID found:', state.booking.id);
-      }
+      setBookingData(location.state);
     } else {
       navigate("/user/search");
     }
@@ -779,53 +1180,48 @@ export default function Cart() {
     });
   };
 
-  const createBookingBeforePayment = async (bookingData) => {
-    try {
-      console.log('📝 Creating booking before payment...');
-      
-      const response = await fetch(`${API_BASE_URL}/api/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(bookingData)
-      });
+  const prepareBookingData = () => {
+    if (!bookingData) return null;
 
-      const result = await response.json();
+    console.log('🔧 Preparing booking data from location state:', bookingData);
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to create booking");
+    // Extract complete booking data that was passed from AddProof
+    const completeBookingData = bookingData.bookingData || {
+      propertyId: bookingData.propertyId,
+      roomType: bookingData.selectedRoomType || bookingData.roomType,
+      selectedRooms: bookingData.selectedRooms || [],
+      moveInDate: bookingData.selectedDate || bookingData.moveInDate,
+      endDate: bookingData.endDate || bookingData.moveOutDate,
+      durationType: bookingData.durationType || 'monthly',
+      durationDays: bookingData.durationDays || 0,
+      durationMonths: bookingData.durationMonths || 1,
+      personCount: bookingData.personCount || 1,
+      customerDetails: bookingData.customerDetails || {},
+      pricing: {
+        monthlyRent: bookingData.monthlyRent || bookingData.price || 0,
+        advanceAmount: bookingData.advanceAmount || 0,
+        securityDeposit: bookingData.depositAmount || 0,
+        totalAmount: bookingData.totalAmount || bookingData.price || 0,
+        maintenanceFee: bookingData.maintenanceFee || 0
       }
-
-      console.log('✅ Booking created successfully:', result.booking);
-      return result.booking;
-
-    } catch (error) {
-      console.error('❌ Booking creation error:', error);
-      throw error;
-    }
-  };
-
-  const calculateTransferBreakdown = (totalAmount) => {
-    const platformCommission = totalAmount * 0.05;
-    const gstOnCommission = platformCommission * 0.18;
-    const totalPlatformEarnings = platformCommission + gstOnCommission;
-    const clientAmount = totalAmount - totalPlatformEarnings;
-
-    return {
-      platformCommission,
-      gstOnCommission,
-      totalPlatformEarnings,
-      clientAmount
     };
+
+    // Ensure we have all required fields
+    if (!completeBookingData.propertyId) {
+      console.error('Missing propertyId in booking data:', completeBookingData);
+      return null;
+    }
+
+    console.log('📦 Final booking data for payment:', completeBookingData);
+    return completeBookingData;
   };
 
   const paymentHandler = async (e) => {
     e.preventDefault();
     
-    if (!bookingData) {
-      alert("No booking data available");
+    const completeBookingData = prepareBookingData();
+    if (!completeBookingData) {
+      alert("Invalid booking data. Please go back and try again.");
       return;
     }
 
@@ -838,48 +1234,8 @@ export default function Cart() {
         throw new Error("Razorpay SDK failed to load");
       }
 
-      // Prepare complete booking data
-      const completeBookingData = {
-        propertyId: bookingData.propertyId,
-        roomType: bookingData.booking?.roomType || bookingData.selectedRoomType || bookingData.roomType,
-        selectedRooms: bookingData.selectedRooms || bookingData.booking?.selectedRooms || [],
-        moveInDate: bookingData.selectedDate || bookingData.booking?.moveInDate || bookingData.moveInDate,
-        endDate: bookingData.endDate || bookingData.booking?.endDate || bookingData.moveOutDate,
-        durationType: bookingData.durationType || 'monthly',
-        durationDays: bookingData.durationDays || 30,
-        durationMonths: bookingData.durationMonths || 1,
-        personCount: bookingData.personCount || 1,
-        customerDetails: bookingData.customerDetails || {
-          primary: {
-            name: "Customer",
-            email: "customer@example.com",
-            mobile: "9999999999"
-          }
-        },
-        pricing: {
-          totalAmount: bookingData.totalAmount || bookingData.price || 0,
-          advanceAmount: bookingData.advanceAmount || 0,
-          securityDeposit: bookingData.securityDeposit || 0,
-          maintenanceFee: bookingData.maintenanceFee || 0
-        },
-        bookingStatus: "pending_payment"
-      };
-
-      console.log('✅ Final booking data for payment:', completeBookingData);
-
-      let bookingId = existingBookingId;
-
-      // Create booking if it doesn't exist
-      if (!bookingId) {
-        const newBooking = await createBookingBeforePayment(completeBookingData);
-        bookingId = newBooking.id;
-        console.log('✅ New booking created with ID:', bookingId);
-      } else {
-        console.log('✅ Using existing booking ID:', bookingId);
-      }
-
       // Validate amount
-      const amount = bookingData.totalAmount || bookingData.price || 0;
+      const amount = completeBookingData.pricing.totalAmount;
       if (!amount || amount <= 0) {
         throw new Error("Invalid amount for payment");
       }
@@ -889,6 +1245,7 @@ export default function Cart() {
 
       // Create Razorpay order
       console.log('💰 Creating order for amount:', amount, '(in paise:', amountInPaise, ')');
+      console.log('📦 Sending booking data to create order:', completeBookingData);
       
       const orderResponse = await fetch(`${API_BASE_URL}/api/payments/create-order`, {
         method: "POST",
@@ -899,11 +1256,8 @@ export default function Cart() {
         body: JSON.stringify({
           amount: amountInPaise,
           currency: "INR",
-          receipt: `booking_${Date.now()}`,
-          bookingData: {
-            ...completeBookingData,
-            bookingId: bookingId // Include booking ID in payment data
-          }
+          receipt: `receipt_${Date.now()}`,
+          bookingData: completeBookingData // Send complete booking data
         })
       });
 
@@ -921,12 +1275,12 @@ export default function Cart() {
         amount: orderResult.order.amount,
         currency: orderResult.order.currency,
         name: "LivCo Properties",
-        description: `Booking Payment for ${bookingData.propertyName || 'Property'}`,
-        image: window.location.origin + "/logo.png", // Use absolute URL
+        description: `Booking Payment for ${completeBookingData.propertyId}`,
         order_id: orderResult.order.id,
         handler: async function (response) {
           try {
             console.log('✅ Payment successful, validating...', response);
+            console.log('📦 Sending booking data for validation and creation:', completeBookingData);
             
             const validationResponse = await fetch(`${API_BASE_URL}/api/payments/validate-payment`, {
               method: "POST",
@@ -938,37 +1292,32 @@ export default function Cart() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                bookingData: {
-                  ...completeBookingData,
-                  bookingId: bookingId // Send the booking ID for updating
-                }
+                bookingData: completeBookingData // Send complete booking data to create in DB
               })
             });
 
             const validationResult = await validationResponse.json();
-            console.log('✅ Payment validation result:', validationResult);
+            console.log('✅ Payment validation and booking creation result:', validationResult);
 
             if (validationResult.success) {
-              let successMessage = "Payment successful! Your booking is confirmed.";
+              // Store booking confirmation in localStorage for persistence
+              localStorage.setItem('lastBookingConfirmation', JSON.stringify({
+                booking: validationResult.booking,
+                paymentDetails: validationResult.paymentDetails,
+                transactionId: response.razorpay_payment_id,
+                timestamp: new Date().toISOString()
+              }));
               
-              if (validationResult.transferInitiated) {
-                successMessage += " Funds transfer to property owner has been initiated.";
-              } else {
-                successMessage += " Note: Automatic transfer to property owner failed and will be retried.";
-              }
+              console.log('🎉 Booking created successfully in database after payment');
               
-              // Navigate to confirmation page
+              // Navigate to confirmation page with all details
               navigate("/user/booking/conformation", { 
                 state: { 
                   booking: validationResult.booking,
-                  transactionId: response.razorpay_payment_id,
-                  paymentDetails: validationResult,
-                  totalAmount: amount,
-                  transferInitiated: validationResult.transferInitiated,
-                  transferDetails: validationResult.transferDetails
+                  paymentDetails: validationResult.paymentDetails,
+                  transactionId: response.razorpay_payment_id
                 } 
               });
-              
             } else {
               alert("Payment validation failed: " + validationResult.message);
             }
@@ -985,7 +1334,6 @@ export default function Cart() {
           contact: completeBookingData.customerDetails?.primary?.mobile || "9999999999",
         },
         notes: {
-          bookingId: bookingId,
           propertyId: completeBookingData.propertyId
         },
         theme: {
@@ -1001,11 +1349,6 @@ export default function Cart() {
         setProcessing(false);
       });
 
-      rzp1.on("modal.close", function () {
-        console.log("Modal closed by user");
-        setProcessing(false);
-      });
-      
       rzp1.open();
       
     } catch (error) {
@@ -1013,6 +1356,20 @@ export default function Cart() {
       alert("Payment Error: " + error.message);
       setProcessing(false);
     }
+  };
+
+  const calculateTransferBreakdown = (totalAmount) => {
+    const platformCommission = totalAmount * 0.05;
+    const gstOnCommission = platformCommission * 0.18;
+    const totalPlatformEarnings = platformCommission + gstOnCommission;
+    const clientAmount = totalAmount - totalPlatformEarnings;
+
+    return {
+      platformCommission,
+      gstOnCommission,
+      totalPlatformEarnings,
+      clientAmount
+    };
   };
 
   if (!bookingData) {
@@ -1038,8 +1395,6 @@ export default function Cart() {
   }
 
   const amount = bookingData.totalAmount || bookingData.price || 0;
-  const advanceAmount = bookingData.advanceAmount || 0;
-  const securityDeposit = bookingData.securityDeposit || 0;
   const transferBreakdown = calculateTransferBreakdown(amount);
 
   return (
@@ -1065,47 +1420,32 @@ export default function Cart() {
               </span>
             </div>
 
-            <div className="mb-4">
-              {advanceAmount > 0 && (
-                <div className="flex justify-between text-sm text-gray-700">
-                  <span>Advance Amount</span>
-                  <span>₹ {advanceAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-                </div>
-              )}
-              {securityDeposit > 0 && (
-                <div className="flex justify-between text-sm text-gray-700 mt-1">
-                  <span>Security Deposit</span>
-                  <span>₹ {securityDeposit.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
-                </div>
-              )}
+            {/* Transfer Information */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex gap-2 text-sm text-blue-700 mb-2">
+                <Info className="w-4 h-4 mt-0.5" />
+                <p className="font-semibold">Automatic Fund Transfer</p>
+              </div>
+              <p className="text-xs text-blue-600 mb-2">
+                After payment, funds will be automatically transferred to the property owner:
+              </p>
               
-              {/* Transfer Information */}
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex gap-2 text-sm text-blue-700 mb-2">
-                  <Info className="w-4 h-4 mt-0.5" />
-                  <p className="font-semibold">Automatic Fund Transfer</p>
+              <div className="text-xs text-gray-600 space-y-1">
+                <div className="flex justify-between">
+                  <span>Total Payment:</span>
+                  <span>₹ {amount.toFixed(2)}</span>
                 </div>
-                <p className="text-xs text-blue-600 mb-2">
-                  After payment, funds will be automatically transferred to the property owner:
-                </p>
-                
-                <div className="text-xs text-gray-600 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Total Payment:</span>
-                    <span>₹ {amount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Platform Fee (5%):</span>
-                    <span>- ₹ {transferBreakdown.platformCommission.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>GST on Platform Fee (18%):</span>
-                    <span>- ₹ {transferBreakdown.gstOnCommission.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold border-t pt-1">
-                    <span>Amount to Property Owner:</span>
-                    <span>₹ {transferBreakdown.clientAmount.toFixed(2)}</span>
-                  </div>
+                <div className="flex justify-between">
+                  <span>Platform Fee (5%):</span>
+                  <span>- ₹ {transferBreakdown.platformCommission.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>GST on Platform Fee (18%):</span>
+                  <span>- ₹ {transferBreakdown.gstOnCommission.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-semibold border-t pt-1">
+                  <span>Amount to Property Owner:</span>
+                  <span>₹ {transferBreakdown.clientAmount.toFixed(2)}</span>
                 </div>
               </div>
             </div>

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 
-// export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
 
 // Create a separate axios instance without interceptors for token refresh
 const refreshApi = axios.create({
@@ -14,6 +14,7 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    // 'credentials': 'include', // import to cookies
   },
   withCredentials: true,
   timeout: 10000,
@@ -96,6 +97,91 @@ api.interceptors.response.use(
     return Promise.reject(error.response.data || error);
   }
 );
+
+
+export const notificationAPI = {
+  // Get notifications based on user role
+  getNotifications: (params = {}) => 
+    api.get('/api/notifications', { params })
+      .then(response => {
+        console.log('📨 Notifications API response:', response.data);
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch notifications');
+        }
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ Notifications API error:', error);
+        throw error;
+      }),
+
+  // Get unread count
+  getUnreadCount: () => 
+    api.get('/api/notifications/unread-count')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch unread count');
+        }
+        return response;
+      }),
+
+  // Mark notification as read
+  markAsRead: (notificationId) => 
+    api.patch(`/api/notifications/read/${notificationId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to mark notification as read');
+        }
+        return response;
+      }),
+
+  // Mark all notifications as read
+  markAllAsRead: () => 
+    api.patch('/api/notifications/read-all')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to mark all notifications as read');
+        }
+        return response;
+      }),
+
+  // Delete notification
+  deleteNotification: (notificationId) => 
+    api.delete(`/api/notifications/${notificationId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to delete notification');
+        }
+        return response;
+      }),
+
+  // Debug endpoint
+  getDebugNotifications: () => 
+    api.get('/api/notifications/debug/user')
+      .then(response => {
+        console.log('🐛 Debug notifications:', response.data);
+        return response;
+      }),
+
+  // Test endpoints
+  createTestUserNotification: () => 
+    api.post('/api/notifications/test/user')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to create test notification');
+        }
+        return response;
+      }),
+
+  createTestPaymentNotification: () => 
+    api.post('/api/notifications/test/payment')
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to create test payment notification');
+        }
+        return response;
+      })
+};
 
 export const propertyAPI = {
   registerProperty: (propertyData) => api.post('/api/auth/properties/register', propertyData),

@@ -4,11 +4,11 @@ import { IoIosArrowDown } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../PropertyController";
-
-// const API_BASE_URL = "http://localhost:5000/api/auth";
+import ClientNotifications from "../clientNotification/ClientNotifications"; // Import your notifications component
 
 const ClientNav = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,7 +33,6 @@ const ClientNav = () => {
           throw new Error('No token found');
         }
 
-        // Verify token is still valid
         const response = await axios.get(`${API_BASE_URL}/api/auth/user`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -43,7 +42,6 @@ const ClientNav = () => {
         if (response.data.success) {
           setUser(response.data.user);
           
-          // Check if user is a client
           if (response.data.user.role !== 'client') {
             localStorage.removeItem('token');
             alert('Access restricted to clients only. Redirecting to login.');
@@ -56,7 +54,6 @@ const ClientNav = () => {
         console.error('Error fetching user:', error);
         setError(error.message);
         
-        // If token is invalid/expired, redirect to login
         if (error.response?.status === 401 || error.message === 'No token found') {
           localStorage.removeItem('token');
           navigate('/client/client-login');
@@ -83,8 +80,26 @@ const ClientNav = () => {
   };
 
   const handleNotificationClick = () => {
-    console.log("Notification clicked");
+    setNotificationOpen(true);
   };
+
+  const handleNotificationClose = () => {
+    setNotificationOpen(false);
+  };
+
+  // Close notification sidebar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationOpen && !event.target.closest('.notification-sidebar') && !event.target.closest('.notification-icon')) {
+        setNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [notificationOpen]);
 
   if (loading) {
     return <div className="bg-blue-900 py-4 px-6 text-white">Loading...</div>;
@@ -95,13 +110,14 @@ const ClientNav = () => {
   }
 
   if (!user) {
-    return null; // or redirect to login
+    return null;
   }
    
   return (
-    <nav className="bg-blue-900 py-4 px-6 flex items-center justify-between">
-      {/* Left Section - Logo */}
-      <div className="flex items-center">
+    <>
+      <nav className="bg-blue-900 py-4 px-6 flex items-center justify-between">
+        {/* Left Section - Logo */}
+        <div className="flex items-center">
       <svg width="140" height="81" viewBox="0 0 140 81" fill="none" xmlns="http://www.w3.org/2000/svg" xlinkHref="http://www.w3.org/1999/xlink">
 <g clipPath="url(#clip0_5137_71516)">
 <rect x="7" y="13.5586" width="60" height="53.886" fill="url(#pattern0_5137_71516)"/>
@@ -124,65 +140,109 @@ const ClientNav = () => {
         {/* <span className="text-white text-lg font-semibold">Livyco</span> */}
       </div>
 
-      {/* Center - Navigation Links */}
-      <ul className="hidden md:flex space-x-20 text-white font-medium">
-  {navLinks.map((link, index) => (
-    <li key={index}>
-      {link.path === "#" ? (
-        <span className="cursor-pointer hover:text-yellow-400">{link.name}</span>
-      ) : (
-        <Link to={link.path} className="cursor-pointer hover:text-yellow-400">
-          {link.name}
-        </Link>
-      )}
-    </li>
-  ))}
-</ul>
+        {/* Center - Navigation Links */}
+        <ul className="hidden md:flex space-x-20 text-white font-medium">
+          {navLinks.map((link, index) => (
+            <li key={index}>
+              {link.path === "#" ? (
+                <span className="cursor-pointer hover:text-yellow-400">{link.name}</span>
+              ) : (
+                <Link to={link.path} className="cursor-pointer hover:text-yellow-400">
+                  {link.name}
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
 
-      {/* Right Section - Notification Icon & Profile */}
-      <div className="flex items-center space-x-6">
-        <FaBell className="text-white text-xl cursor-pointer hover:text-yellow-400" />
-
-        {/* Profile Section */}
-         {/* Profile Section */}
-         <div className="relative">
-          <div
-            className="flex items-center bg-white px-3 py-2 rounded-lg shadow-md cursor-pointer"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <img src="/profile.png" alt="Profile" className="w-8 h-8 rounded-full mr-2" />
-           <div className="text-sm">
-              <p className="font-medium">{user?.name || "Guest"}</p>
-              <p className="text-gray-500 text-xs">{user?.location || "Location"}</p>
-            </div>
-            <IoIosArrowDown className="ml-2 text-gray-500" />
+        {/* Right Section - Notification Icon & Profile */}
+        <div className="flex items-center space-x-6">
+          {/* Notification Icon */}
+          <div className="relative">
+            <FaBell 
+              className="text-white text-xl cursor-pointer hover:text-yellow-400 notification-icon" 
+              onClick={handleNotificationClick}
+            />
+            {/* You can add a notification badge here if needed */}
+            {/* <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              3
+            </span> */}
           </div>
 
-          {/* Dropdown Menu */}
-          {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg">
-            <div className="py-2">
-              <Link 
-                to="/client/profile"
-                className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              >
-                Profile
-              </Link>
+          {/* Profile Section */}
+          <div className="relative">
+            <div
+              className="flex items-center bg-white px-3 py-2 rounded-lg shadow-md cursor-pointer"
+              onClick={handleDropdownToggle}
+            >
+              <img src="/profile.png" alt="Profile" className="w-8 h-8 rounded-full mr-2" />
+              <div className="text-sm">
+                <p className="font-medium">{user?.name || "Guest"}</p>
+                <p className="text-gray-500 text-xs">{user?.location || "Location"}</p>
               </div>
-
-
-
-              <button
-                onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
-              >
-                Logout
-              </button>
+              <IoIosArrowDown className="ml-2 text-gray-500" />
             </div>
-          )}
+
+            {/* Dropdown Menu */}
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg z-50">
+                <div className="py-2">
+                  <Link 
+                    to="/client/profile"
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    onClick={handleDropdownClose}
+                  >
+                    Profile
+                  </Link>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Notification Sidebar */}
+      <div className={`fixed inset-0 z-50 transition-all duration-300 ease-in-out ${
+        notificationOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+      }`}>
+        {/* Backdrop */}
+        <div 
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+            notificationOpen ? 'opacity-50' : 'opacity-0'
+          }`}
+          onClick={handleNotificationClose}
+        />
+        
+        {/* Sidebar */}
+        <div className={`notification-sidebar absolute top-0 right-0 h-full w-full max-w-xl bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          notificationOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}>
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-blue-900 text-white">
+            <h2 className="text-xl font-semibold">Notifications</h2>
+            <button
+              onClick={handleNotificationClose}
+              className="p-2 hover:bg-blue-800 rounded-full transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          {/* Notifications Content */}
+          <div className="h-full overflow-y-auto">
+            <ClientNotifications />
+          </div>
         </div>
       </div>
-    </nav>
+    </>
   );
 };
 

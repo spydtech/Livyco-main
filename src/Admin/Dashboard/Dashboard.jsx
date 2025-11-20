@@ -16,8 +16,10 @@ import Tabs from "../AdminSettings/Tabs";
 import Bookings from "../BookingDetails/Bookings";
 import SupportDashboard from "../SupportTickets/AdminSupportdashboard";
 import CustomReviewsPage from "../CustomReviews/CustomReviewsPage";
+import { adminNotificationAPI } from "../adminController";
 
 import axios from "axios";
+import AdminNotifications from "../adminNotification/AdminNotifications";
 
 const menuItems = [
   { name: "Dashboard", icon: HiOutlineViewGrid, path: "/admin/dashboard" },
@@ -33,6 +35,8 @@ const menuItems = [
 
 const Dashboard = () => {
   const [adminEmail, setAdminEmail] = useState("");
+   const [showNotifications, setShowNotifications] = useState(false);
+   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,9 +60,53 @@ const Dashboard = () => {
 
     fetchAdminProfile();
   }, [navigate]);
+// Fetch unread count for the bell icon badge
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+       
+
+        const response = await adminNotificationAPI.getUnreadCount();
+
+        if (response.data.success) {
+          setUnreadCount(response.data.unreadCount);
+        }
+      } catch (error) {
+        console.error("Failed to fetch unread count:", error);
+      }
+    };
+
+    fetchUnreadCount();
+    
+    // Refresh unread count every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getInitial = (email) => {
     return email ? email[0].toUpperCase() : "";
+  };
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifications && !event.target.closest('.notification-container')) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
+  const handleBellClick = () => {
+    setShowNotifications(!showNotifications);
+  };
+
+  const handleUnreadCountUpdate = (count) => {
+    setUnreadCount(count);
   };
   return (
     <div className="flex h-screen bg-gray-100 ">
@@ -96,7 +144,29 @@ const Dashboard = () => {
             />
           </div>
           <div className="flex items-center space-x-4">
-            <FaBell className="text-gray-500 text-lg cursor-pointer" />
+             <div className="relative notification-container">
+              <button
+                onClick={handleBellClick}
+                className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <FaBell className="text-lg" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 top-12 w-[500px] bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-auto overflow-auto">
+                  <AdminNotifications 
+                    onClose={() => setShowNotifications(false)}
+                    onUnreadCountUpdate={handleUnreadCountUpdate}
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex items-center space-x-2 bg-gray-200 p-2 rounded-lg cursor-pointer">
               <div className="text-gray-500 text-2xl rounded-full bg-white w-10 h-10 flex items-center justify-center">
                <span>{getInitial(adminEmail)}</span>

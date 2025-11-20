@@ -2320,40 +2320,59 @@ const FigmaDeluxeHostel = () => {
             </div>
           </div>
 
-          {/* Room Types */}
+                  {/* Room Types */}
           <div className="space-y-4 sm:space-y-6 md:space-y-8">
-            {filteredTypes.map((roomType, index) => {
-              const roomConfig = bookingData?.rooms?.floorConfig?.floors?.[0]?.rooms || {};
-              
-              return (
-                <div key={index} className="flex flex-col lg:flex-row gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-lg shadow">
-                  <div className="w-full lg:w-1/4 flex flex-col items-center justify-center border rounded-lg p-3 sm:p-4">
-                    <VisualBox boxes={roomType.boxes} />
-                    <p className="text-sm font-medium mt-2 text-center">{roomType.label}</p>
-                    <p className="text-base sm:text-lg text-green-600 font-semibold mt-1">₹{roomType.price}</p>
-                    <p className="text-xs text-gray-500">Deposit: ₹{roomType.deposit}</p>
-                    <p className="text-xs text-gray-500">Capacity: {roomType.capacity} persons</p>
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Available Rooms - Floor 1</h3>
-                    <FloorRow
-                      sharing={roomType.type}
-                      floorLabel="Floor 1"
-                      roomsConfig={roomConfig}
-                      selectedRoomsMap={selectedRoomsMap}
-                      toggleRoom={toggleRoom}
-                      globalSelectedRooms={globalSelectedRooms}
-                      selectedRoomType={selectedRoomType}
-                      setSelectedRoomType={setSelectedRoomType}
-                      unavailableRooms={unavailableRooms}
-                      bedStatus={bedStatus}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+  {filteredTypes.map((roomType, index) => {
+    // Get all rooms from floor configuration
+    const allRooms = bookingData?.rooms?.floorConfig?.floors?.[0]?.rooms || {};
+   
+    // Filter rooms based on number of beds matching the room type capacity
+    const filteredRooms = Object.keys(allRooms).reduce((acc, roomNumber) => {
+      const beds = allRooms[roomNumber];
+     
+      // Check if number of beds matches the room type capacity
+      if (beds && Array.isArray(beds) && beds.length === roomType.capacity) {
+        acc[roomNumber] = beds;
+      }
+      return acc;
+    }, {});
+   
+    return (
+      <div key={index} className="flex flex-col lg:flex-row gap-4 sm:gap-6 bg-white p-3 sm:p-4 rounded-lg shadow">
+        <div className="w-full lg:w-1/4 flex flex-col items-center justify-center border rounded-lg p-3 sm:p-4">
+          <VisualBox boxes={roomType.boxes} />
+          <p className="text-sm font-medium mt-2 text-center">{roomType.label}</p>
+          <p className="text-base sm:text-lg text-green-600 font-semibold mt-1">₹{roomType.price}</p>
+          <p className="text-xs text-gray-500">Deposit: ₹{roomType.deposit}</p>
+          <p className="text-xs text-gray-500">Capacity: {roomType.capacity} persons</p>
+        </div>
+       
+        <div className="flex-1">
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Available {roomType.label} Rooms - Floor 1</h3>
+          {Object.keys(filteredRooms).length > 0 ? (
+            <FloorRow
+              sharing={roomType.type}
+              floorLabel="Floor 1"
+              roomsConfig={filteredRooms}
+              selectedRoomsMap={selectedRoomsMap}
+              toggleRoom={toggleRoom}
+              globalSelectedRooms={globalSelectedRooms}
+              selectedRoomType={selectedRoomType}
+              setSelectedRoomType={setSelectedRoomType}
+              unavailableRooms={unavailableRooms}
+              bedStatus={bedStatus}
+            />
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              No {roomType.label} rooms available on this floor
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  })}
+</div>
+ 
 
           <div className="mt-6 sm:mt-8">
   {/* Mobile Layout (unchanged) */}
