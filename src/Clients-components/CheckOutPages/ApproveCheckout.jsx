@@ -111,44 +111,32 @@ const ApproveCheckout = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [vacateRequest, setVacateRequest] = useState({});
+  const [vacateRequest, setVacateRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    // First check if we have data from navigation state
-    if (location.state) {
-      setVacateRequest(location.state);
-      setLoading(false);
-    } else if (id) {
-      // If no state data, fetch from API
+    if (id) {
       fetchVacateRequestDetails(id);
     }
-  }, [id, location.state]);
+  }, [id]);
 
   const fetchVacateRequestDetails = async (requestId) => {
     try {
       setLoading(true);
       setError("");
       
-      // Since your API returns an array of requests, we need to find the specific one
-      const response = await vacateAPI.getVacateRequests();
+      const response = await vacateAPI.getVacateRequestById(requestId);
       
-      if (response.data?.success && response.data.requests) {
-        const request = response.data.requests.find(req => req.id === requestId);
-        
-        if (request) {
-          setVacateRequest(request);
-        } else {
-          setError("Request not found");
-        }
+      if (response.data?.success) {
+        setVacateRequest(response.data.request);
       } else {
         setError("Failed to load request details");
       }
     } catch (err) {
-      setError(err.message || "Failed to load request details");
       console.error("Error fetching request details:", err);
+      setError(err.response?.data?.message || "Failed to load request details");
     } finally {
       setLoading(false);
     }
@@ -156,22 +144,34 @@ const ApproveCheckout = () => {
 
   const handleRejectRequest = async () => {
     const reason = prompt("Please provide reason for rejection:");
-    if (!reason) return;
+    if (!reason || reason.trim() === "") {
+      alert("Please provide a reason for rejection");
+      return;
+    }
 
     try {
       setProcessing(true);
-      await vacateAPI.processVacateRequest(id, {
-        action: "reject",
-        notes: reason
+      await vacateAPI.rejectVacateRequest(id, {
+        notes: reason.trim()
       });
       alert("Vacate request rejected successfully!");
       navigate("/client/tenant-checkout-requests");
     } catch (err) {
-      setError(err.message || "Failed to reject request");
-      alert("Error rejecting request: " + err.message);
+      console.error("Reject request error:", err);
+      setError(err.response?.data?.message || "Failed to reject request");
+      alert("Error rejecting request: " + (err.response?.data?.message || err.message));
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleApproveRequest = () => {
+    navigate(`/client/confirm-booking/${id}`, { 
+      state: { 
+        ...vacateRequest, 
+        calculatedRefund: vacateRequest?.refundAmount || 0 
+      } 
+    });
   };
 
   if (loading) {
@@ -185,7 +185,7 @@ const ApproveCheckout = () => {
     );
   }
 
-  if (error) {
+  if (error && !vacateRequest) {
     return (
       <>
         <ClientNav />
@@ -204,10 +204,35 @@ const ApproveCheckout = () => {
     );
   }
 
-  // Calculate refund amount based on your API response structure
-  const securityDeposit = vacateRequest.booking?.pricing?.securityDeposit || 0;
+  if (!vacateRequest) {
+    return (
+      <>
+        <ClientNav />
+        <div className="p-6 bg-white min-h-screen">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            Request not found
+          </div>
+          <button 
+            onClick={() => navigate(-1)}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Go Back
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // Extract data with safe fallbacks
+  const user = vacateRequest.userId || {};
+  const property = vacateRequest.propertyId || {};
+  const booking = vacateRequest.bookingId || {};
+  const pricing = booking.pricing || {};
+  const roomDetails = booking.roomDetails || [];
+
+  const securityDeposit = pricing.securityDeposit || 0;
   const outstandingAmount = vacateRequest.outstandingAmount || 0;
-  const calculatedRefund = Math.max(0, securityDeposit - outstandingAmount);
+  const calculatedRefund = vacateRequest.refundAmount || Math.max(0, securityDeposit - outstandingAmount);
 
   return (
     <>
@@ -233,14 +258,14 @@ const ApproveCheckout = () => {
         <div className="bg-white p-6 flex items-center space-x-6 mb-6 justify-between">
           <div className="flex gap-4 items-center">
             <img 
-              src={vacateRequest.user?.profileImage || "https://randomuser.me/api/portraits/men/1.jpg"} 
+              src={user.profileImage || "https://randomuser.me/api/portraits/men/1.jpg"} 
               alt="Profile" 
               className="w-16 h-16 rounded-full border" 
             />
             <div>
-              <h2 className="text-xl font-semibold">{vacateRequest.user?.name || 'N/A'}</h2>
-              <p className="text-gray-500">Phone: {vacateRequest.user?.phone || 'N/A'}</p>
-              <p className="text-gray-500">Client ID: {vacateRequest.user?.clientId || 'N/A'}</p>
+              <h2 className="text-xl font-semibold">{user.name || 'N/A'}</h2>
+              <p className="text-gray-500">Phone: {user.phone || 'N/A'}</p>
+              <p className="text-gray-500">Client ID: {vacateRequest.clientId || 'N/A'}</p>
             </div>
           </div>
           
@@ -263,11 +288,13 @@ const ApproveCheckout = () => {
               <h3 className="font-semibold text-gray-700 mb-4">Vacate Request Details</h3>
               <div className="space-y-2 text-gray-600">
                 <p><strong>Requested Date:</strong> {vacateRequest.requestedDate ? new Date(vacateRequest.requestedDate).toLocaleDateString() : 'N/A'}</p>
-                <p><strong>moveIn Date:</strong> {vacateRequest.moveInDate ? new Date(vacateRequest.moveInDate).toLocaleDateString() : 'N/A'}</p>
-                <p><strong>Status:</strong> {vacateRequest.status || 'N/A'}</p>
+                <p><strong>Move In Date:</strong> {booking.moveInDate ? new Date(booking.moveInDate).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Status:</strong> <span className={`font-semibold ${vacateRequest.status === 'pending' ? 'text-yellow-600' : vacateRequest.status === 'approved' ? 'text-green-600' : 'text-red-600'}`}>
+                  {vacateRequest.status?.toUpperCase() || 'N/A'}
+                </span></p>
                 <p><strong>Reason:</strong> {vacateRequest.reason || 'No reason provided'}</p>
                 <p><strong>Client ID:</strong> {vacateRequest.clientId || 'N/A'}</p>
-                <p><strong>Request ID:</strong> {vacateRequest.id || 'N/A'}</p>
+                <p><strong>Request ID:</strong> {vacateRequest._id || 'N/A'}</p>
                 <p><strong>Created At:</strong> {vacateRequest.createdAt ? new Date(vacateRequest.createdAt).toLocaleDateString() : 'N/A'}</p>
               </div>
             </div>
@@ -276,10 +303,10 @@ const ApproveCheckout = () => {
             <div className="bg-white p-6 rounded-lg border-2 md:w-[600px]">
               <h3 className="font-semibold text-gray-700 mb-4">Property & Room Details</h3>
               <div className="space-y-2 text-gray-600">
-                <p className="font-semibold">{vacateRequest.property?.name || 'N/A'}</p>
-                <p className="text-gray-500">{vacateRequest.property?.locality || 'N/A'}, {vacateRequest.property?.city || 'N/A'}</p>
+                <p className="font-semibold">{property.name || 'N/A'}</p>
+                <p className="text-gray-500">{property.locality || 'N/A'}, {property.city || 'N/A'}</p>
                 
-                {vacateRequest.booking?.roomDetails?.map((room, index) => (
+                {roomDetails.map((room, index) => (
                   <div key={index} className="mt-3 p-2 bg-gray-50 rounded">
                     <p><strong>Room:</strong> {room.roomNumber} - {room.bed}</p>
                     <p><strong>Floor:</strong> {room.floor}</p>
@@ -294,11 +321,21 @@ const ApproveCheckout = () => {
           <div className="bg-white p-6 rounded-lg border-2 mt-6 md:w-[600px]">
             <h3 className="font-semibold text-gray-700 mb-4">Financial Details</h3>
             <div className="space-y-2 text-gray-600">
-              <p><strong>Monthly Rent:</strong> ₹{vacateRequest.booking?.pricing?.monthlyRent || '0'}</p>
-              <p><strong>Security Deposit:</strong> ₹{vacateRequest.booking?.pricing?.securityDeposit || '0'}</p>
-              <p><strong>Outstanding Amount:</strong> ₹{vacateRequest.outstandingAmount || '0'}</p>
+              <p><strong>Monthly Rent:</strong> ₹{pricing.monthlyRent || '0'}</p>
+              <p><strong>Security Deposit:</strong> ₹{securityDeposit}</p>
+              <p><strong>Outstanding Amount:</strong> ₹{outstandingAmount}</p>
               <p><strong>Calculated Refund:</strong> ₹{calculatedRefund}</p>
-              <p className="text-sm text-gray-500">
+              {vacateRequest.deductions && vacateRequest.deductions.length > 0 && (
+                <div className="mt-3">
+                  <p className="font-semibold">Deductions:</p>
+                  {vacateRequest.deductions.map((deduction, index) => (
+                    <p key={index} className="text-sm">
+                      - {deduction.description}: ₹{deduction.amount}
+                    </p>
+                  ))}
+                </div>
+              )}
+              <p className="text-sm text-gray-500 mt-2">
                 (Security deposit ₹{securityDeposit} - Outstanding amount ₹{outstandingAmount})
               </p>
             </div>
@@ -309,7 +346,7 @@ const ApproveCheckout = () => {
         <div className="flex justify-center mt-8 space-x-4">
           <button 
             className="w-48 py-3 bg-red-600 text-white text-lg font-semibold rounded-md shadow-md hover:bg-red-700 transition disabled:opacity-50"
-            disabled={processing}
+            disabled={processing || vacateRequest.status !== 'pending'}
             onClick={handleRejectRequest}
           >
             {processing ? "Processing..." : "Reject Request"}
@@ -317,12 +354,18 @@ const ApproveCheckout = () => {
           
           <button 
             className="w-64 py-3 bg-blue-600 text-white text-lg font-semibold rounded-md shadow-md hover:bg-blue-700 transition disabled:opacity-50"
-            disabled={processing}
-            onClick={() => navigate(`/client/confirm-booking/${id}`, { state: { ...vacateRequest, calculatedRefund } })}
+            disabled={processing || vacateRequest.status !== 'pending'}
+            onClick={handleApproveRequest}
           >
             {processing ? "Processing..." : "Approve and Process Refund"}
           </button>
         </div>
+
+        {vacateRequest.status !== 'pending' && (
+          <div className="text-center mt-4 text-orange-600">
+            This request has already been {vacateRequest.status}. No further actions can be taken.
+          </div>
+        )}
       </div>
     </>
   );

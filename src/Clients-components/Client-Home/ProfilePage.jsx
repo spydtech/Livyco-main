@@ -9,6 +9,7 @@ import ProfileTabs from "./ProfileTabs";
 const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const menuItems = [
     { label: "Theme", hasArrow: false },
@@ -22,19 +23,26 @@ const ProfilePage = () => {
     { label: "Term & policy", hasArrow: true }
   ];
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
   const fetchUser = async () => {
     try {
       const res = await userAPI.getUser();
       const user = res.data.user;
-      setProfile(user);
+      
+      // Add timestamp to force image refresh
+      const updatedUser = {
+        ...user,
+        _timestamp: Date.now()
+      };
+      
+      setProfile(updatedUser);
     } catch (err) {
       console.error("Error fetching user", err);
     }
   };
+
+  useEffect(() => {
+    fetchUser();
+  }, [refreshTrigger]);
 
   const openEditModal = () => {
     setIsModalOpen(true);
@@ -45,7 +53,8 @@ const ProfilePage = () => {
   };
 
   const handleProfileUpdateComplete = (updatedUser) => {
-    setProfile(updatedUser);
+    // Force refresh of profile data
+    setRefreshTrigger(prev => prev + 1);
     closeEditModal();
   };
 
@@ -63,6 +72,18 @@ const ProfilePage = () => {
     );
   }
 
+  // Default profile image
+  const defaultProfileImage = "https://randomuser.me/api/portraits/men/75.jpg";
+
+  // Get profile image with cache-busting
+  const getProfileImageUrl = () => {
+    if (!profile.profileImage) return defaultProfileImage;
+    
+    // Add timestamp to prevent caching
+    const timestamp = profile._timestamp || Date.now();
+    return `${profile.profileImage}?t=${timestamp}`;
+  };
+
   return (
     <div>
       <ClientNav />
@@ -71,9 +92,13 @@ const ProfilePage = () => {
         <div className="flex items-center gap-10 mb-10">
           <div className="flex items-center space-x-4">
             <img
-              src={"https://randomuser.me/api/portraits/men/75.jpg"}
+              src={getProfileImageUrl()}
               alt="Profile"
               className="w-16 h-16 rounded-full object-cover"
+              key={profile._timestamp} // Force re-render when timestamp changes
+              onError={(e) => {
+                e.target.src = defaultProfileImage;
+              }}
             />
             <div>
               <h2 className="font-semibold text-lg">{profile.name}</h2>
@@ -120,7 +145,7 @@ const ProfilePage = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             {/* Close button */}
-            <div className="flex justify-end px-4 sticky top-0 bg-white z-10 ">
+            <div className="flex justify-end px-4 sticky top-0 bg-white z-10">
               <button
                 onClick={closeEditModal}
                 className="text-gray-500 hover:text-gray-700 text-2xl"

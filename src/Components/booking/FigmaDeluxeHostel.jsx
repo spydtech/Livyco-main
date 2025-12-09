@@ -1610,7 +1610,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../Clients-components/PropertyController"
 
 const VisualBox = ({ boxes }) => {
-  const boxSize = "w-[40px] h-[50px] sm:w-[50px] sm:h-[60px] bg-yellow-400 rounded-sm";
+  const boxSize = "w-[40px] h-[50px] sm:w-[50px] sm:h-[60px] bg-yellow-400 rounded-sm  border-2 ";
 
   switch (boxes) {
     case 1:
@@ -1750,8 +1750,8 @@ const FloorRow = ({
   unavailableRooms,
   bedStatus
 }) => (
-  <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg">
-    <div className="text-[14px] sm:text-[16px] font-semibold mb-2 sm:mb-3 text-blue-800">{floorLabel}</div>
+  <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-100 rounded-lg border-2">
+    <div className="text-[14px] sm:text-[16px] font-semibold mb-2 sm:mb-3 text-blue-900">{floorLabel}</div>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
       {Object.entries(roomsConfig).map(([roomNumber, beds]) => (
         <RoomBlock
@@ -2132,22 +2132,25 @@ const FigmaDeluxeHostel = () => {
   return (
     <>
       <Headers />
-      <div className="min-h-screen w-full py-20 sm:py-24 bg-cover bg-center" style={{ backgroundImage: `url('${bgImage}')` }}>
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 xl:px-20 pt-4 sm:pt-6 pb-12 sm:pb-16 bg-white bg-opacity-95">
-          <div className="text-[20px] sm:text-[24px] md:text-[28px] lg:text-[32px] font-bold mb-1 sm:text-start ">
-            {propertyName}
+      <div className="min-h-screen w-full py-20 sm:py-24 bg-cover bg-center " style={{ backgroundImage: `url('${bgImage}')` }}>
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 xl:px-20 pt-4 sm:pt-6 pb-12 sm:pb-16  bg-opacity-95">
+
+          <div className="text-[20px] sm:text-[24px] md:text-[28px] lg:text-[32px] font-bold mb-1 sm:text-start flex flex-col-2">
+            <h1>Hostel-</h1>
+            <p className="">({propertyName})</p>
           </div>
 
           <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 my-3 sm:my-4 justify-center md:justify-start">
             {bookingData.roomTypes && bookingData.roomTypes[0]?.amenities?.map((amenity, i) => (
-              <div key={i} className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-gray-100 px-2 sm:px-3 py-1 sm:py-2 rounded-full">
+              <div key={i} className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm bg-gray-100 px-2 sm:px-3 py-1 sm:py-2 rounded-full border border-gray-400">
                 <span className="text-xs sm:text-sm">{amenity}</span>
               </div>
             ))}
           </div>
 
           {/* Search and Filter Section - Responsive */}
-          <div className="bg-white shadow-md rounded-md p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-center justify-center w-full max-w-[900px] mx-auto mb-4 sm:mb-6">
+          <hr className="border border-gray-300"/>
+          <div className="bg-white shadow-md rounded-md p-3 sm:p-4 flex flex-col sm:flex-row gap-0 items-center justify-center w-full max-w-[950px] mx-auto mb-4 sm:mb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 w-full">
               <input
                 type="date"
@@ -2226,8 +2229,9 @@ const FigmaDeluxeHostel = () => {
                 </div>
               )}
             </div>
+           
             
-            <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+            <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 md:-ml-[14%] ml-0">
               <button
                 className="bg-[#0120c8] text-white text-xs sm:text-sm px-3 sm:px-4 py-2 rounded flex-1 sm:flex-none"
                 onClick={handleSearch}
@@ -2242,7 +2246,10 @@ const FigmaDeluxeHostel = () => {
                 🔄
               </button>
             </div>
+             
           </div>
+           <hr className="border border-gray-300"/>
+         
 
           {/* Status Messages */}
           {!availabilityChecked && selectedDate && (
@@ -2311,7 +2318,7 @@ const FigmaDeluxeHostel = () => {
               <span className="text-xs sm:text-sm">Pending Booking</span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-600 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-900 rounded"></div>
               <span className="text-xs sm:text-sm">Selected</span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">

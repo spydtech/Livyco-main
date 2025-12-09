@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 
- //export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
 
 // Create a separate axios instance without interceptors for token refresh
 const refreshApi = axios.create({
@@ -114,6 +114,8 @@ export const notificationAPI = {
         console.error('❌ Notifications API error:', error);
         throw error;
       }),
+
+   
 
   // Get unread count
   getUnreadCount: () => 
@@ -850,23 +852,46 @@ export const chatAPI = {
   }
 };
 export const userAPI = {
-// registerByClient: (userData) => {
-//   // ... existing code ...
-//   return api.post('/client/register', formData, {
-//     headers: {
-//       'Content-Type': 'multipart/form-data',
-//     }
-//   });
-// }
 updateUser: (data) => api.put('/api/auth/user/profile', data),
-getUser: () => api.get('/api/auth/user'),
-addTenantByClient: (formData) => {
-  return api.post('/api/auth/client/register-by-client', formData, {
+  getUser: () => api.get('/api/auth/user'),
+ 
+  // ✅ Profile image upload API
+  uploadProfileImage: (formData) => {
+    return api.post('/api/auth/user/upload-profile-image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       }
+    })
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to upload profile image');
+      }
+      return response;
     });
-}
+  },
+ 
+  // ✅ Update user with image
+  updateUserWithImage: (formData) => {
+    return api.put('/api/auth/user/profile-with-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    })
+    .then(response => {
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || 'Failed to update profile with image');
+      }
+      return response;
+    });
+  },
+ 
+  addTenantByClient: (formData) => {
+    return api.post('/api/auth/client/register-by-client', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+  }
 };
 
 export const bookingAPI = {
@@ -875,7 +900,7 @@ export const bookingAPI = {
    * Requires client role on the backend for this endpoint.
    * @returns {Promise<AxiosResponse>} A promise that resolves to the API response.
    */
-  getBookingDetails: (bookingId) => api.get(`/api/auth/bookings/${bookingId}`) 
+  getBookingDetails: (bookingId) => api.get(`/api/bookings/${bookingId}`) 
     .then(response => {
       // Basic success check for the response structure
       if (!response.data?.success) {
@@ -884,7 +909,31 @@ export const bookingAPI = {
       return response;
     }),
 
-  approveBooking: (bookingId) => api.patch(`/api/auth/bookings/${bookingId}/approve`)
+  getBookingsByUser: () => {
+  const token = localStorage.getItem('token');
+  return api
+    .get('/api/bookings/user', {  
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((response) => {
+      if (!response.data?.success) {
+        throw new Error(
+          response.data?.message || 'Invalid response format for fetching user bookings'
+        );
+      }
+      return response;
+    })
+    .catch((error) => {
+      console.error("Error fetching user bookings:", error);
+      throw new Error(
+        error.response?.data?.message || 'Failed to fetch user bookings'
+      );
+    });
+},
+
+  approveBooking: (bookingId) => api.patch(`/api/bookings/${bookingId}/approve`)
   .then(response => {
     if (!response.data?.success) {
       throw new Error(response.data?.message || 'Booking approval failed');
@@ -892,7 +941,7 @@ export const bookingAPI = {
     return response;
   }),
 
-  rejectBooking: (bookingId, reason) => api.post(`/api/auth/bookings/${bookingId}/reject`, { reason })
+  rejectBooking: (bookingId, reason) => api.post(`/api/bookings/${bookingId}/reject`, { reason })
     .then(response => {
       // Basic success check for the response structure
       if (!response.data?.success) {
@@ -900,7 +949,7 @@ export const bookingAPI = {
       }
       return response;
     }),
-  getAllBookings: () => api.get('/api/auth/bookings')
+  getAllBookings: () => api.get('/api/bookings')
     .then(response => {
       // Basic success check for the response structure
       if (!response.data?.success) {
@@ -972,23 +1021,25 @@ export const bookingAPI = {
 };
 
 export const vacateAPI = {
-  requestVacate: (bookingId, data) => 
+  requestVacate: (bookingId, data) =>
     api.post(`/api/auth/vacate/${bookingId}/request`, data),
-  getVacateStatus: (bookingId) => 
+  getVacateStatus: (bookingId) =>
     api.get(`/api/auth/vacate/${bookingId}/status`),
-  getVacateRequests: () => 
+  getVacateRequests: () =>
     api.get('/api/auth/vacate/requests'),
-  getVacateRequestById: (requestId) => 
+  getVacateRequestById: (requestId) =>
     api.get(`/api/auth/vacate/${requestId}`),
-  processDuePayment: (requestId, data) => 
+  processDuePayment: (requestId, data) =>
     api.post(`/api/auth/vacate/${requestId}/process-due-payment`, data),
-  approveVacateRequest: (requestId, data) => 
+  approveVacateRequest: (requestId, data) =>
     api.put(`/api/auth/vacate/${requestId}/approve`, data),
-  initiateRefund: (requestId) => 
+  rejectVacateRequest: (requestId, data) =>
+    api.put(`/api/auth/vacate/${requestId}/reject`, data),
+  initiateRefund: (requestId) =>
     api.post(`/api/auth/vacate/${requestId}/initiate-refund`),
-  completeRefund: (requestId, data) => 
+  completeRefund: (requestId, data) =>
     api.post(`/api/auth/vacate/${requestId}/complete-refund`, data),
-  addDeduction: (requestId, data) => 
+  addDeduction: (requestId, data) =>
     api.post(`/api/auth/vacate/${requestId}/add-deduction`, data)
 };
 
@@ -1381,3 +1432,1452 @@ export const apiCallWithRetry = async (apiCall, maxRetries = 2, delay = 1000) =>
     }
   }
 };
+
+
+
+
+
+// //testing api encription
+// import axios from 'axios';
+// import { EncryptionUtils } from '../utils/encryptionUtils.js';
+
+// export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+// // TEMPORARY FIX - Disable encryption until backend is properly configured
+// const ENCRYPTION_ENABLED = false;
+
+
+// // Encrypted API route mapping (must match backend)
+// const encryptedRoutes = {
+//   "auth": {
+//     "base": "U2FsdGVkX1/4m5z6X8A2rD9gH1jK3lM7nO0pQ2sT4uV6wX8yZ==",
+//     "endpoints": {
+//       "checkUserExists": "U2FsdGVkX19Q7uJ4J8wJ6K8n7M2V1X6Y9zA8bR2tH4fC6vD3gE==",
+//       "verifyFirebaseOTP": "U2FsdGVkX1+3k5m7n9p1q3s5u7w9y2b4d6f8h0j2k4l6==",
+//       "register": "U2FsdGVkX1+2j4l6k8m0n2p4r6t8v1x3z5b7d9f1h3==",
+//       "getUser": "U2FsdGVkX1+1i3k5m7o9q1s3u5w7y9z2b4d6f8h0j2l4==",
+//       "sendOTP": "U2FsdGVkX1+0h2j4l6n8p0r2t4v6x8z1b3d5f7h9j1l3==",
+//       "verifyOTP": "U2FsdGVkX1+9g1i3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//       "updateUserProfile": "U2FsdGVkX1+8f0h2j4l6n8p0r2t4v6x8z1b3d5f7h9j==",
+//       "getAllUsers": "U2FsdGVkX1+7e9g1i3k5m7o9q1s3u5w7y9z2b4d6f8==",
+//       "addTenantByClient": "U2FsdGVkX1+6d8f0h2j4l6n8p0r2t4v6x8z1b3d5f7h9==",
+//       "healthCheck": "U2FsdGVkX1+5c7e9g1i3k5m7o9q1s3u5w7y9z2b4d6=="
+//     }
+//   },
+//   "properties": {
+//     "base": "U2FsdGVkX1+4b6d8f0h2j4l6n8p0r2t4v6x8z1b3d5f7==",
+//     "endpoints": {
+//       "registerProperty": "U2FsdGVkX1+3a5c7e9g1i3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "getProperty": "U2FsdGVkX1+2z4b6d8f0h2j4l6n8p0r2t4v6x8z1b3d5==",
+//       "updateProperty": "U2FsdGVkX1+1y3a5c7e9g1i3k5m7o9q1s3u5w7y9z2b4==",
+//       "getCompletePropertyData": "U2FsdGVkX1+0x2z4b6d8f0h2j4l6n8p0r2t4v6x8z1b3==",
+//       "getAllClientProperties": "U2FsdGVkX1+9w1y3a5c7e9g1i3k5m7o9q1s3u5w7y9z2==",
+//       "deleteProperty": "U2FsdGVkX1+8v0x2z4b6d8f0h2j4l6n8p0r2t4v6x8z1=="
+//     }
+//   },
+//   "media": {
+//     "base": "U2FsdGVkX1+7u9w1y3a5c7e9g1i3k5m7o9q1s3u5w7y9==",
+//     "endpoints": {
+//       "upload": "U2FsdGVkX1+6t8v0x2z4b6d8f0h2j4l6n8p0r2t4v6x8==",
+//       "getMedia": "U2FsdGVkX1+5s7u9w1y3a5c7e9g1i3k5m7o9q1s3u5w7==",
+//       "deleteMediaItem": "U2FsdGVkX1+4r6t8v0x2z4b6d8f0h2j4l6n8p0r2t4v6==",
+//       "editMediaItem": "U2FsdGVkX1+3q5s7u9w1y3a5c7e9g1i3k5m7o9q1s3u5==",
+//       "getMediaByPropertyId": "U2FsdGVkX1+2p4r6t8v0x2z4b6d8f0h2j4l6n8p0r2t4=="
+//     }
+//   },
+//   "rooms": {
+//     "base": "U2FsdGVkX1+1o3q5s7u9w1y3a5c7e9g1i3k5m7o9q1s3==",
+//     "endpoints": {
+//       "createRoomTypes": "U2FsdGVkX1+0n2p4r6t8v0x2z4b6d8f0h2j4l6n8p0r2==",
+//       "getRoomTypes": "U2FsdGVkX1+9m1o3q5s7u9w1y3a5c7e9g1i3k5m7o9q1==",
+//       "saveFloorData": "U2FsdGVkX1+8l0n2p4r6t8v0x2z4b6d8f0h2j4l6n8p0==",
+//       "getFloorData": "U2FsdGVkX1+7k9m1o3q5s7u9w1y3a5c7e9g1i3k5m7o9==",
+//       "saveRoomRentData": "U2FsdGVkX1+6j8l0n2p4r6t8v0x2z4b6d8f0h2j4l6n8==",
+//       "getRoomRentData": "U2FsdGVkX1+5i7k9m1o3q5s7u9w1y3a5c7e9g1i3k5m7==",
+//       "deleteRoomType": "U2FsdGVkX1+4h6j8l0n2p4r6t8v0x2z4b6d8f0h2j4l6==",
+//       "updateRoomType": "U2FsdGVkX1+3g5i7k9m1o3q5s7u9w1y3a5c7e9g1i3k5=="
+//     }
+//   },
+//   "bookings": {
+//     "base": "U2FsdGVkX1+2f4h6j8l0n2p4r6t8v0x2z4b6d8f0h2j4==",
+//     "endpoints": {
+//       "createBooking": "U2FsdGVkX1+1e3g5i7k9m1o3q5s7u9w1y3a5c7e9g1i3==",
+//       "cancelBooking": "U2FsdGVkX1+0d2f4h6j8l0n2p4r6t8v0x2z4b6d8f0h2==",
+//       "getBookingsByProperty": "U2FsdGVkX1+9c1e3g5i7k9m1o3q5s7u9w1y3a5c7e9g1==",
+//       "getUserBookings": "U2FsdGVkX1+8b0d2f4h6j8l0n2p4r6t8v0x2z4b6d8f0==",
+//       "getBookingById": "U2FsdGVkX1+7a9c1e3g5i7k9m1o3q5s7u9w1y3a5c7e9==",
+//       "approveBooking": "U2FsdGVkX1+6z8b0d2f4h6j8l0n2p4r6t8v0x2z4b6d8==",
+//       "rejectBooking": "U2FsdGVkX1+5y7a9c1e3g5i7k9m1o3q5s7u9w1y3a5c7==",
+//       "getallBookings": "U2FsdGVkX1+4x6z8b0d2f4h6j8l0n2p4r6t8v0x2z4b6==",
+//       "checkRoomAvailability": "U2FsdGVkX1+3w5y7a9c1e3g5i7k9m1o3q5s7u9w1y3a5==",
+//       "getAvailableRoomsAndBeds": "U2FsdGVkX1+2v4x6z8b0d2f4h6j8l0n2p4r6t8v0x2z4==",
+//       "getAvailableBedsByRoomType": "U2FsdGVkX1+1u3w5y7a9c1e3g5i7k9m1o3q5s7u9w1y3==",
+//       "getAllAvailableBeds": "U2FsdGVkX1+0t2v4x6z8b0d2f4h6j8l0n2p4r6t8v0x2=="
+//     }
+//   },
+//   "vacate": {
+//     "base": "U2FsdGVkX1+9s1u3w5y7a9c1e3g5i7k9m1o3q5s7u9w1==",
+//     "endpoints": {
+//       "requestVacate": "U2FsdGVkX1+8r0t2v4x6z8b0d2f4h6j8l0n2p4r6t8v0==",
+//       "getVacateRequests": "U2FsdGVkX1+7q9s1u3w5y7a9c1e3g5i7k9m1o3q5s7u9==",
+//       "getVacateRequestById": "U2FsdGVkX1+6p8r0t2v4x6z8b0d2f4h6j8l0n2p4r6t8==",
+//       "processDuePayment": "U2FsdGVkX1+5o7q9s1u3w5y7a9c1e3g5i7k9m1o3q5s7==",
+//       "approveVacateRequest": "U2FsdGVkX1+4n6p8r0t2v4x6z8b0d2f4h6j8l0n2p4r6==",
+//       "initiateRefund": "U2FsdGVkX1+3m5o7q9s1u3w5y7a9c1e3g5i7k9m1o3q5==",
+//       "completeRefund": "U2FsdGVkX1+2l4n6p8r0t2v4x6z8b0d2f4h6j8l0n2p4==",
+//       "getVacateStatus": "U2FsdGVkX1+1k3m5o7q9s1u3w5y7a9c1e3g5i7k9m1o3==",
+//       "getUserVacateRequests": "U2FsdGVkX1+0j2l4n6p8r0t2v4x6z8b0d2f4h6j8l0n2==",
+//       "addDeduction": "U2FsdGVkX1+9i1k3m5o7q9s1u3w5y7a9c1e3g5i7k9m1=="
+//     }
+//   },
+//   "pg": {
+//     "base": "U2FsdGVkX1+8h0j2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//     "endpoints": {
+//       "savePGProperty": "U2FsdGVkX1+7g9i1k3m5o7q9s1u3w5y7a9c1e3g5i7k9==",
+//       "getPGProperty": "U2FsdGVkX1+6f8h0j2l4n6p8r0t2v4x6z8b0d2f4h6j8==",
+//       "deletePGProperty": "U2FsdGVkX1+5e7g9i1k3m5o7q9s1u3w5y7a9c1e3g5i7=="
+//     }
+//   },
+//   "admin": {
+//     "base": "U2FsdGVkX1+4d6f8h0j2l4n6p8r0t2v4x6z8b0d2f4h6==",
+//     "endpoints": {
+//       "login": "U2FsdGVkX1+3c5e7g9i1k3m5o7q9s1u3w5y7a9c1e3g5==",
+//       "getProfile": "U2FsdGVkX1+2b4d6f8h0j2l4n6p8r0t2v4x6z8b0d2f4==",
+//       "approveProperty": "U2FsdGVkX1+1a3c5e7g9i1k3m5o7q9s1u3w5y7a9c1e3==",
+//       "rejectProperty": "U2FsdGVkX1+0z2b4d6f8h0j2l4n6p8r0t2v4x6z8b0d2=="
+//     }
+//   },
+//   "notifications": {
+//     "base": "U2FsdGVkX1+9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//     "endpoints": {
+//       "getNotifications": "U2FsdGVkX1+8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//       "getUnreadCount": "U2FsdGVkX1+7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "markAsRead": "U2FsdGVkX1+6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8==",
+//       "markAllAsRead": "U2FsdGVkX1+5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8==",
+//       "deleteNotification": "U2FsdGVkX1+4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6=="
+//     }
+//   },
+//   "payments": {
+//     "base": "U2FsdGVkX1+3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6==",
+//     "endpoints": {
+//       "createOrder": "U2FsdGVkX1+2a4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4==",
+//       "validatePayment": "U2FsdGVkX1+1z3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4==",
+//       "getPaymentDetails": "U2FsdGVkX1+0y2a4c6e8g0i2l4n6p8r0t2v4x6z8b0d2==",
+//       "refundPayment": "U2FsdGVkX1+9x1z3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b==",
+//       "getUserPayments": "U2FsdGVkX1+8w0y2a4c6e8g0i2l4n6p8r0t2v4x6z8b0=="
+//     }
+//   },
+//    "concerns": {
+//     "base": "U2FsdGVkX1+9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//     "endpoints": {
+//       "submitConcern": "U2FsdGVkX1+8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//       "getUserConcerns": "U2FsdGVkX1+7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "getPropertyConcerns": "U2FsdGVkX1+6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8==",
+//       "getConcernById": "U2FsdGVkX1+5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8==",
+//       "cancelConcern": "U2FsdGVkX1+4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6==",
+//       "approveConcern": "U2FsdGVkX1+3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6==",
+//       "rejectConcern": "U2FsdGVkX1+2a4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4==",
+//       "completeConcern": "U2FsdGVkX1+1z3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4==",
+//       "addInternalNote": "U2FsdGVkX1+0y2a4c6e8g0i2l4n6p8r0t2v4x6z8b0d2=="
+//     }
+//   },
+
+//   "menu": {
+//     "base": "U2FsdGVkX1+9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//     "endpoints": {
+//       "getFoodItems": "U2FsdGVkX1+8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//       "getWeeklyMenu": "U2FsdGVkX1+7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "addFoodItem": "U2FsdGVkX1+6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8==",
+//       "deleteFoodItem": "U2FsdGVkX1+5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8==",
+//       "clearDayMenu": "U2FsdGVkX1+4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6==",
+//       "getFoodItemsByBooking": "U2FsdGVkX1+3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6==",
+//       "getFoodItemsByBookingAndDay": "U2FsdGVkX1+2a4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4=="
+//     }
+//   },
+//   "map": {
+//     "base": "U2FsdGVkX1+9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//     "endpoints": {
+//       "addOrUpdateMap": "U2FsdGVkX1+8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//       "getAllMaps": "U2FsdGVkX1+7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "getMapByProperty": "U2FsdGVkX1+6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8=="
+//     }
+//   },
+//   "tickets": {
+//     "base": "U2FsdGVkX1+9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//     "endpoints": {
+//       "createTicket": "U2FsdGVkX1+8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//       "getTicketsByClient": "U2FsdGVkX1+7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "getAllTickets": "U2FsdGVkX1+6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8==",
+//       "updateTicket": "U2FsdGVkX1+5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8==",
+//       "getTicketById": "U2FsdGVkX1+4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6==",
+//       "closeTicket": "U2FsdGVkX1+3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6==",
+//       "addComment": "U2FsdGVkX1+2a4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4=="
+//     }
+//   },
+//    "chat": {
+//     "base": "U2FsdGVkX1+9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//     "endpoints": {
+//       "getConversations": "U2FsdGVkX1+8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//       "getMessages": "U2FsdGVkX1+7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "sendMessage": "U2FsdGVkX1+6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8==",
+//       "getUnreadCount": "U2FsdGVkX1+5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8==",
+//       "markAsRead": "U2FsdGVkX1+4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6=="
+//     }
+//   },
+//   "bankAccounts": {
+//     "base": "U2FsdGVkX1+9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0j2==",
+//     "endpoints": {
+//       "addBankAccount": "U2FsdGVkX1+8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8l0==",
+//       "getMyBankAccounts": "U2FsdGVkX1+7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8h0==",
+//       "getPropertyBankAccount": "U2FsdGVkX1+6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6j8==",
+//       "updateBankAccount": "U2FsdGVkX1+5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6f8==",
+//       "deleteBankAccount": "U2FsdGVkX1+4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4h6==",
+//       "getAllBankAccounts": "U2FsdGVkX1+3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4d6==",
+//       "getBankAccountStats": "U2FsdGVkX1+2a4c6e8g0i2l4n6p8r0t2v4x6z8b0d2f4==",
+//       "verifyBankAccount": "U2FsdGVkX1+1z3b5d7f9h1j3k5m7o9q1s3u5w7y9z2b4=="
+//     }
+//   }
+
+// };
+
+// // Create axios instance
+// const api = axios.create({
+//   baseURL: API_BASE_URL,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+//   withCredentials: true,
+//   timeout: 10000,
+// });
+
+// // Request interceptor
+// api.interceptors.request.use(
+//   (config) => {
+//     // Get encrypted token
+//     const encryptedToken = localStorage.getItem('encryptedToken');
+//     if (encryptedToken) {
+//       config.headers.Authorization = `Bearer ${encryptedToken}`;
+//     }
+
+//     // Only encrypt if encryption is enabled
+//     if (ENCRYPTION_ENABLED && config.data && (config.method === 'post' || config.method === 'put' || config.method === 'patch')) {
+//       try {
+//         config.data = {
+//           encryptedData: EncryptionUtils.encryptPayload(config.data)
+//         };
+//         console.log('🔐 Request encrypted');
+//       } catch (error) {
+//         console.error('Request encryption failed:', error);
+//       }
+//     }
+
+//     return config;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
+
+// // Response interceptor
+// api.interceptors.response.use(
+//   (response) => {
+//     // Decrypt response if encryption is enabled
+//     if (ENCRYPTION_ENABLED && response.data && response.data.encryptedData) {
+//       try {
+//         response.data = EncryptionUtils.decryptResponse(response.data.encryptedData);
+//         console.log('🔓 Response decrypted');
+//       } catch (error) {
+//         console.error('Response decryption failed:', error);
+//       }
+//     }
+//     return response;
+//   },
+//   async (error) => {
+//     const originalRequest = error.config;
+    
+//     // Handle network errors
+//     if (!error.response) {
+//       if (error.code === 'ECONNABORTED') {
+//         return Promise.reject({ message: 'Request timeout. Please try again.' });
+//       }
+//       return Promise.reject({ message: 'Network error. Please check your connection.' });
+//     }
+
+//     // Handle 401 Unauthorized (token expired)
+//     if (error.response.status === 401 && !originalRequest._retry) {
+//       originalRequest._retry = true;
+      
+//       try {
+//         const refreshResponse = await api.post('/api/auth/refresh-token', {}, { withCredentials: true });
+//         const newEncryptedToken = refreshResponse.data.token;
+//         localStorage.setItem('encryptedToken', newEncryptedToken);
+//         originalRequest.headers.Authorization = `Bearer ${newEncryptedToken}`;
+//         return api(originalRequest);
+//       } catch (refreshError) {
+//         localStorage.removeItem('encryptedToken');
+//         localStorage.removeItem('user');
+//         window.location.href = '/user/login';
+//         return Promise.reject(refreshError);
+//       }
+//     }
+
+//     return Promise.reject(error.response.data || error);
+//   }
+// );
+
+// // Secure API Client Class
+// class SecureApiClient {
+//   constructor() {
+//     this.routes = encryptedRoutes;
+//   }
+
+//   // Generic method to make API calls
+//   async makeEncryptedCall(route, endpoint, data = null, method = 'GET', options = {}) {
+//     let url;
+    
+//     if (ENCRYPTION_ENABLED) {
+//       const encryptedRoute = this.routes[route]?.base;
+//       const encryptedEndpoint = this.routes[route]?.endpoints[endpoint];
+      
+//       if (encryptedRoute && encryptedEndpoint) {
+//         url = `/api/${encryptedRoute}/${encryptedEndpoint}`;
+//       } else {
+//         console.warn(`Encrypted route not found for ${route}/${endpoint}, using unencrypted`);
+//         url = `/api/${route}/${endpoint}`;
+//       }
+//     } else {
+//       url = `/api/${route}/${endpoint}`;
+//     }
+
+//     console.log(`🌐 Making ${method} request to: ${url}`);
+
+//     const config = {
+//       method: method.toLowerCase(),
+//       url,
+//       ...options
+//     };
+
+//     if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+//       config.data = data;
+//     }
+
+//     try {
+//       const response = await api(config);
+//       return response;
+//     } catch (error) {
+//       console.error(`API call failed for ${route}/${endpoint}:`, error);
+//       throw error;
+//     }
+//   }
+
+//   // Store encrypted token
+//   storeEncryptedToken(token) {
+//     localStorage.setItem('encryptedToken', token);
+//   }
+
+//   // Get encrypted token
+//   getEncryptedToken() {
+//     return localStorage.getItem('encryptedToken');
+//   }
+
+//   // Remove token
+//   removeToken() {
+//     localStorage.removeItem('encryptedToken');
+//     localStorage.removeItem('user');
+//   }
+
+//   // Check if encryption is enabled
+//   isEncryptionEnabled() {
+//     return ENCRYPTION_ENABLED;
+//   }
+// }
+
+// // Create singleton instance
+// const secureApiClient = new SecureApiClient();
+
+// // Export the secure API methods
+// export const secureAPI = secureApiClient;
+
+// // Individual API modules using the secure client
+// export const notificationAPI = {
+//   getNotifications: (params = {}) => 
+//     secureApiClient.makeEncryptedCall('notifications', 'getNotifications', null, 'GET', { params })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch notifications');
+//         }
+//         return response;
+//       }),
+
+//   getUnreadCount: () => 
+//     secureApiClient.makeEncryptedCall('notifications', 'getUnreadCount')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch unread count');
+//         }
+//         return response;
+//       }),
+
+//   markAsRead: (notificationId) => 
+//     secureApiClient.makeEncryptedCall('notifications', 'markAsRead', { notificationId }, 'PATCH')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to mark notification as read');
+//         }
+//         return response;
+//       }),
+
+//   markAllAsRead: () => 
+//     secureApiClient.makeEncryptedCall('notifications', 'markAllAsRead', {}, 'PATCH')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to mark all notifications as read');
+//         }
+//         return response;
+//       }),
+
+//   deleteNotification: (notificationId) => 
+//     secureApiClient.makeEncryptedCall('notifications', 'deleteNotification', null, 'DELETE', {
+//       data: { notificationId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to delete notification');
+//         }
+//         return response;
+//       })
+// };
+
+// export const propertyAPI = {
+//   registerProperty: (propertyData) => 
+//     secureApiClient.makeEncryptedCall('properties', 'registerProperty', propertyData, 'POST'),
+
+//   getProperty: () => 
+//     secureApiClient.makeEncryptedCall('properties', 'getProperty'),
+
+//   updateProperty: (propertyId, updates) => 
+//     secureApiClient.makeEncryptedCall('properties', 'updateProperty', { propertyId, ...updates }, 'PUT'),
+
+//   deleteProperty: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('properties', 'deleteProperty', { propertyId }, 'DELETE'),
+
+//   getCompletePropertyData: () => 
+//     secureApiClient.makeEncryptedCall('properties', 'getCompletePropertyData')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Invalid response format');
+//         }
+//         return response;
+//       }),
+
+//   getAllClientProperties: (params = {}) =>
+//     secureApiClient.makeEncryptedCall('properties', 'getAllClientProperties', null, 'GET', { params })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Invalid response format');
+//         }
+//         return response;
+//       }),
+
+//   reverseGeocode: (lat, lon) => 
+//     api.get(`/api/map/geocode?lat=${lat}&lon=${lon}`) // This endpoint might not be encrypted
+// };
+
+// export const authAPI = {
+//   checkUserExists: (phone) => 
+//     secureApiClient.makeEncryptedCall('auth', 'checkUserExists', { phone }, 'POST'),
+
+//   sendOTP: (phone) => 
+//     secureApiClient.makeEncryptedCall('auth', 'sendOTP', { phone }, 'POST'),
+
+//   verifyOTP: (otpData) => 
+//     secureApiClient.makeEncryptedCall('auth', 'verifyOTP', otpData, 'POST'),
+
+//   register: (userData) => 
+//     secureApiClient.makeEncryptedCall('auth', 'register', userData, 'POST'),
+
+//   getUser: () => 
+//     secureApiClient.makeEncryptedCall('auth', 'getUser'),
+
+//   updateUserProfile: (userData) => 
+//     secureApiClient.makeEncryptedCall('auth', 'updateUserProfile', userData, 'PUT'),
+
+//   addTenantByClient: (formData) => {
+//     // For file uploads, use FormData directly with unencrypted endpoint for now
+//     return api.post('/api/auth/client/register-by-client', formData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       }
+//     });
+//   }
+// };
+
+// export const bookingAPI = {
+//   createBooking: (bookingData) => 
+//     secureApiClient.makeEncryptedCall('bookings', 'createBooking', bookingData, 'POST'),
+
+//   getBookingDetails: (bookingId) => 
+//     secureApiClient.makeEncryptedCall('bookings', 'getBookingById', null, 'GET', {
+//       params: { bookingId }
+//     }),
+
+//   getUserBookings: () => 
+//     secureApiClient.makeEncryptedCall('bookings', 'getUserBookings'),
+
+//   getBookingsByProperty: () => 
+//     secureApiClient.makeEncryptedCall('bookings', 'getBookingsByProperty'),
+
+//   approveBooking: (bookingId) => 
+//     secureApiClient.makeEncryptedCall('bookings', 'approveBooking', { bookingId }, 'PATCH'),
+
+//   rejectBooking: (bookingId, reason) => 
+//     secureApiClient.makeEncryptedCall('bookings', 'rejectBooking', { bookingId, reason }, 'POST'),
+
+//   cancelBooking: (bookingId) => 
+//     secureApiClient.makeEncryptedCall('bookings', 'cancelBooking', { bookingId }, 'POST'),
+
+//   checkRoomAvailability: (data) => 
+//     secureApiClient.makeEncryptedCall('bookings', 'checkRoomAvailability', data, 'POST')
+// };
+
+// export const paymentAPI = {
+//   createOrder: (data) => 
+//     secureApiClient.makeEncryptedCall('payments', 'createOrder', data, 'POST'),
+
+//   validatePayment: (data) => 
+//     secureApiClient.makeEncryptedCall('payments', 'validatePayment', data, 'POST'),
+
+//   getPaymentDetails: (paymentId) => 
+//     secureApiClient.makeEncryptedCall('payments', 'getPaymentDetails', null, 'GET', {
+//       params: { paymentId }
+//     }),
+
+//   getUserPayments: () => 
+//     secureApiClient.makeEncryptedCall('payments', 'getUserPayments')
+// };
+
+// export const mediaAPI = {
+//   uploadMedia: (formData) => {
+//     const encryptedRoute = encryptedRoutes.media.base;
+//     const encryptedEndpoint = encryptedRoutes.media.endpoints.upload;
+    
+//     return api.post(`/api/${encryptedRoute}/${encryptedEndpoint}`, formData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       },
+//       timeout: 30000,
+//     });
+//   },
+
+//   getMedia: () => 
+//     secureApiClient.makeEncryptedCall('media', 'getMedia'),
+
+//   deleteMediaItem: (mediaId) => 
+//     secureApiClient.makeEncryptedCall('media', 'deleteMediaItem', { mediaId }, 'DELETE'),
+
+//   getMediaByProperty: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('media', 'getMediaByPropertyId', null, 'GET', {
+//       params: { propertyId }
+//     })
+// };
+
+// export const roomAPI = {
+//   createRoomTypes: (propertyId, data) => 
+//     secureApiClient.makeEncryptedCall('rooms', 'createRoomTypes', { propertyId, ...data }, 'POST'),
+
+//   getRoomTypes: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('rooms', 'getRoomTypes', null, 'GET', {
+//       params: { propertyId }
+//     }),
+
+//   saveFloorData: (propertyId, data) => 
+//     secureApiClient.makeEncryptedCall('rooms', 'saveFloorData', { propertyId, ...data }, 'POST'),
+
+//   getFloorData: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('rooms', 'getFloorData', null, 'GET', {
+//       params: { propertyId }
+//     }),
+
+//   saveRoomRentData: (propertyId, data) => 
+//     secureApiClient.makeEncryptedCall('rooms', 'saveRoomRentData', { propertyId, ...data }, 'POST'),
+
+//   getRoomRentData: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('rooms', 'getRoomRentData', null, 'GET', {
+//       params: { propertyId }
+//     })
+// };
+
+// export const vacateAPI = {
+//   requestVacate: (bookingId, data) => 
+//     secureApiClient.makeEncryptedCall('vacate', 'requestVacate', { bookingId, ...data }, 'POST'),
+
+//   getVacateStatus: (bookingId) => 
+//     secureApiClient.makeEncryptedCall('vacate', 'getVacateStatus', null, 'GET', {
+//       params: { bookingId }
+//     }),
+
+//   getVacateRequests: () => 
+//     secureApiClient.makeEncryptedCall('vacate', 'getVacateRequests'),
+
+//   approveVacateRequest: (requestId, data) => 
+//     secureApiClient.makeEncryptedCall('vacate', 'approveVacateRequest', { requestId, ...data }, 'PUT')
+// };
+
+// export const pgAPI = {
+//   savePGProperty: (propertyId, formData) => {
+//     const encryptedRoute = encryptedRoutes.pg.base;
+//     const encryptedEndpoint = encryptedRoutes.pg.endpoints.savePGProperty;
+    
+//     const url = propertyId 
+//       ? `/api/${encryptedRoute}/${encryptedEndpoint}?propertyId=${propertyId}`
+//       : `/api/${encryptedRoute}/${encryptedEndpoint}`;
+    
+//     return api.put(url, formData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       }
+//     });
+//   },
+
+//   getPGProperty: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('pg', 'getPGProperty', null, 'GET', {
+//       params: { propertyId }
+//     }),
+
+//   deletePGProperty: (pgId) => 
+//     secureApiClient.makeEncryptedCall('pg', 'deletePGProperty', { pgId }, 'DELETE')
+// };
+
+// export const concernAPI = {
+//   // Submit a new concern
+//   submitConcern: (concernData) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'submitConcern', concernData, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to submit concern');
+//         }
+//         return response;
+//       }),
+
+//   // Get user's concerns
+//   getUserConcerns: () => 
+//     secureApiClient.makeEncryptedCall('concerns', 'getUserConcerns')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch concerns');
+//         }
+//         return response;
+//       }),
+
+//   // Get specific concern by ID
+//   getConcernById: (concernId) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'getConcernById', null, 'GET', {
+//       params: { concernId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch concern');
+//         }
+//         return response;
+//       }),
+
+//   // Cancel a concern
+//   cancelConcern: (concernId) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'cancelConcern', { concernId }, 'PUT')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to cancel concern');
+//         }
+//         return response;
+//       }),
+
+//   // Get property concerns (for clients)
+//   getPropertyConcerns: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'getPropertyConcerns', null, 'GET', {
+//       params: { propertyId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch property concerns');
+//         }
+//         return response;
+//       }),
+
+//   // Approve concern (for clients)
+//   approveConcern: (concernId, adminNotes) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'approveConcern', { concernId, adminNotes }, 'PUT')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to approve concern');
+//         }
+//         return response;
+//       }),
+
+//   // Reject concern (for clients)
+//   rejectConcern: (concernId, rejectionReason) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'rejectConcern', { concernId, rejectionReason }, 'PUT')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to reject concern');
+//         }
+//         return response;
+//       }),
+
+//   // Complete concern (for clients)
+//   completeConcern: (concernId, completionNotes) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'completeConcern', { concernId, completionNotes }, 'PUT')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to complete concern');
+//         }
+//         return response;
+//       }),
+
+//   // Add internal note (for clients)
+//   addInternalNote: (concernId, note) => 
+//     secureApiClient.makeEncryptedCall('concerns', 'addInternalNote', { concernId, note }, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to add note');
+//         }
+//         return response;
+//       })
+// };
+
+
+// export const menuAPI = {
+//   // Get food items with property and booking filtering
+//   getFoodItems: (filters = {}) => {
+//     const params = {};
+//     if (filters.day) params.day = filters.day;
+//     if (filters.propertyId) params.propertyId = filters.propertyId;
+//     if (filters.bookingId) params.bookingId = filters.bookingId;
+//     if (filters.category) params.category = filters.category;
+ 
+//     return secureApiClient.makeEncryptedCall('menu', 'getFoodItems', null, 'GET', { params })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch food items');
+//         }
+//         return response;
+//       });
+//   },
+ 
+//   // Get weekly menu
+//   getWeeklyMenu: (filters = {}) => {
+//     const params = {};
+//     if (filters.propertyId) params.propertyId = filters.propertyId;
+//     if (filters.bookingId) params.bookingId = filters.bookingId;
+ 
+//     return secureApiClient.makeEncryptedCall('menu', 'getWeeklyMenu', null, 'GET', { params })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch weekly menu');
+//         }
+//         return response;
+//       });
+//   },
+ 
+//   // Add new food item
+//   addFoodItem: (foodItemData) => {
+//     return secureApiClient.makeEncryptedCall('menu', 'addFoodItem', foodItemData, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to add food item');
+//         }
+//         return response;
+//       });
+//   },
+ 
+//   // Delete food item
+//   deleteFoodItem: (foodItemId) => {
+//     return secureApiClient.makeEncryptedCall('menu', 'deleteFoodItem', { foodItemId }, 'DELETE')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to delete food item');
+//         }
+//         return response;
+//       });
+//   },
+ 
+//   // Clear day menu
+//   clearDayMenu: (filters = {}) => {
+//     const params = {};
+//     if (filters.day) params.day = filters.day;
+//     if (filters.propertyId) params.propertyId = filters.propertyId;
+//     if (filters.bookingId) params.bookingId = filters.bookingId;
+ 
+//     return secureApiClient.makeEncryptedCall('menu', 'clearDayMenu', null, 'DELETE', { params })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to clear day menu');
+//         }
+//         return response;
+//       });
+//   },
+ 
+//   // Get food items by specific booking
+//   getFoodItemsByBooking: (bookingId) => {
+//     return secureApiClient.makeEncryptedCall('menu', 'getFoodItemsByBooking', null, 'GET', {
+//       params: { bookingId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch booking menu');
+//         }
+//         return response;
+//       });
+//   },
+ 
+//   // Get food items by booking and day
+//   getFoodItemsByBookingAndDay: (bookingId, day) => {
+//     return secureApiClient.makeEncryptedCall('menu', 'getFoodItemsByBookingAndDay', null, 'GET', {
+//       params: { bookingId, day }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch booking day menu');
+//         }
+//         return response;
+//       });
+//   }
+// };
+
+
+// export const userAPI = {
+//   // Update user profile
+//   updateUser: (userData) => 
+//     secureApiClient.makeEncryptedCall('user', 'updateUser', userData, 'PUT')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to update user');
+//         }
+//         return response;
+//       }),
+
+//   // Get user data
+//   getUser: () => 
+//     secureApiClient.makeEncryptedCall('user', 'getUser')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch user data');
+//         }
+//         return response;
+//       }),
+
+//   // Add tenant by client (with file upload)
+//   addTenantByClient: (formData) => {
+//     const encryptedRoute = encryptedRoutes.user.base;
+//     const encryptedEndpoint = encryptedRoutes.user.endpoints.addTenantByClient;
+    
+//     return api.post(`/api/${encryptedRoute}/${encryptedEndpoint}`, formData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       }
+//     });
+//   }
+// };
+
+// export const mapAPI = {
+//   // Add or update map location
+//   addOrUpdateMap: (payload) => 
+//     secureApiClient.makeEncryptedCall('map', 'addOrUpdateMap', payload, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to save map location');
+//         }
+//         return response;
+//       }),
+
+//   // Get all maps
+//   getAllMaps: () => 
+//     secureApiClient.makeEncryptedCall('map', 'getAllMaps')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch maps');
+//         }
+//         return response;
+//       }),
+
+//   // Get map by property ID
+//   getMapByProperty: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('map', 'getMapByProperty', null, 'GET', {
+//       params: { propertyId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch map data');
+//         }
+//         return response;
+//       })
+// };
+
+// export const ticketAPI = {
+//   // Create a new ticket
+//   createTicket: (ticketData) => 
+//     secureApiClient.makeEncryptedCall('tickets', 'createTicket', ticketData, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to create ticket');
+//         }
+//         return response;
+//       }),
+
+//   // Get all tickets for a specific client
+//   getTicketsByClient: (clientId) => 
+//     secureApiClient.makeEncryptedCall('tickets', 'getTicketsByClient', null, 'GET', {
+//       params: { clientId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch client tickets');
+//         }
+//         return response;
+//       }),
+
+//   // Get all tickets (admin only)
+//   getAllTickets: (params = {}) => 
+//     secureApiClient.makeEncryptedCall('tickets', 'getAllTickets', null, 'GET', { params })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch all tickets');
+//         }
+//         return response;
+//       }),
+
+//   // Update ticket (admin only)
+//   updateTicket: (ticketId, updates) => 
+//     secureApiClient.makeEncryptedCall('tickets', 'updateTicket', { ticketId, ...updates }, 'PUT')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to update ticket');
+//         }
+//         return response;
+//       }),
+
+//   // Get ticket by ID
+//   getTicketById: (ticketId) => 
+//     secureApiClient.makeEncryptedCall('tickets', 'getTicketById', null, 'GET', {
+//       params: { ticketId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch ticket');
+//         }
+//         return response;
+//       }),
+
+//   // Close ticket
+//   closeTicket: (ticketId, resolutionNotes = '') => 
+//     secureApiClient.makeEncryptedCall('tickets', 'closeTicket', { ticketId, resolutionNotes }, 'PATCH')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to close ticket');
+//         }
+//         return response;
+//       }),
+
+//   // Add comment to ticket
+//   addComment: (ticketId, comment) => 
+//     secureApiClient.makeEncryptedCall('tickets', 'addComment', { ticketId, comment }, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to add comment');
+//         }
+//         return response;
+//       }),
+
+//   // Utility functions for ticket management
+//   validateTicketData: (ticketData) => {
+//     const errors = [];
+    
+//     if (!ticketData.title?.trim()) {
+//       errors.push('Ticket title is required');
+//     }
+    
+//     if (!ticketData.description?.trim()) {
+//       errors.push('Ticket description is required');
+//     }
+    
+//     if (!ticketData.category?.trim()) {
+//       errors.push('Ticket category is required');
+//     }
+    
+//     if (!ticketData.priority) {
+//       errors.push('Ticket priority is required');
+//     }
+    
+//     return {
+//       isValid: errors.length === 0,
+//       errors
+//     };
+//   },
+
+//   formatTicketStatus: (status) => {
+//     const statusMap = {
+//       'open': 'Open',
+//       'in_progress': 'In Progress',
+//       'resolved': 'Resolved',
+//       'closed': 'Closed',
+//       'pending': 'Pending'
+//     };
+//     return statusMap[status] || status;
+//   },
+
+//   formatPriority: (priority) => {
+//     const priorityMap = {
+//       'low': 'Low',
+//       'medium': 'Medium',
+//       'high': 'High',
+//       'urgent': 'Urgent'
+//     };
+//     return priorityMap[priority] || priority;
+//   }
+// };
+
+// export const chatAPI = {
+//   // Get conversations
+//   getConversations: async () => {
+//     try {
+//       const response = await secureApiClient.makeEncryptedCall('chat', 'getConversations');
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Invalid response format');
+//       }
+//       return response.data;
+//     } catch (error) {
+//       console.error('Error fetching conversations:', error);
+//       throw error;
+//     }
+//   },
+    
+//   // Get messages for a specific conversation
+//   getMessages: async (recipientId, propertyId) => {
+//     try {
+//       if (!recipientId || !propertyId) {
+//         console.error('Missing parameters:', { recipientId, propertyId });
+//         throw new Error('Recipient ID and Property ID are required');
+//       }
+      
+//       const response = await secureApiClient.makeEncryptedCall('chat', 'getMessages', null, 'GET', {
+//         params: { recipientId, propertyId }
+//       });
+      
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Invalid response format');
+//       }
+//       return response.data;
+//     } catch (error) {
+//       console.error(`Error fetching messages for ${recipientId}/${propertyId}:`, error);
+//       throw error;
+//     }
+//   },
+      
+//   // Send a message
+//   sendMessage: async (messageData) => {
+//     try {
+//       const requiredFields = ['recipientId', 'propertyId', 'content'];
+//       const missingFields = requiredFields.filter(field => !messageData[field]);
+      
+//       if (missingFields.length > 0) {
+//         throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+//       }
+
+//       const response = await secureApiClient.makeEncryptedCall('chat', 'sendMessage', messageData, 'POST');
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to send message');
+//       }
+//       return response.data;
+//     } catch (error) {
+//       console.error('Error sending message:', error);
+//       throw error;
+//     }
+//   },
+  
+//   // Get unread message count
+//   getUnreadCount: async () => {
+//     try {
+//       const response = await secureApiClient.makeEncryptedCall('chat', 'getUnreadCount');
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to get unread count');
+//       }
+//       return response.data;
+//     } catch (error) {
+//       console.error('Error getting unread count:', error);
+//       throw error;
+//     }
+//   },
+  
+//   // Mark messages as read
+//   markAsRead: async (messageIds) => {
+//     try {
+//       if (!messageIds || messageIds.length === 0) {
+//         throw new Error('Message IDs are required');
+//       }
+//       const response = await secureApiClient.makeEncryptedCall('chat', 'markAsRead', { messageIds }, 'PATCH');
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to mark messages as read');
+//       }
+//       return response.data;
+//     } catch (error) {
+//       console.error('Error marking messages as read:', error);
+//       throw error;
+//     }
+//   }
+// };
+
+
+// export const bankAccountAPI = {
+//   // Add bank account
+//   addBankAccount: (accountData) => {
+//     const payload = {
+//       propertyId: accountData.propertyId,
+//       bankDetails: {
+//         accountHolderName: accountData.accountHolderName,
+//         accountNumber: accountData.accountNumber,
+//         ifscCode: accountData.ifscCode,
+//         bankName: accountData.bankName,
+//         branchName: accountData.branchName,
+//         accountType: accountData.accountType || 'savings'
+//       }
+//     };
+    
+//     console.log('API sending payload:', payload);
+    
+//     return secureApiClient.makeEncryptedCall('bankAccounts', 'addBankAccount', payload, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to add bank account');
+//         }
+//         return response;
+//       });
+//   },
+
+//   // Get my bank accounts
+//   getMyBankAccounts: () => 
+//     secureApiClient.makeEncryptedCall('bankAccounts', 'getMyBankAccounts')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch bank accounts');
+//         }
+//         return response;
+//       }),
+
+//   // Get property bank account
+//   getPropertyBankAccount: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('bankAccounts', 'getPropertyBankAccount', null, 'GET', {
+//       params: { propertyId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch property bank account');
+//         }
+//         return response;
+//       }),
+
+//   // Update bank account
+//   updateBankAccount: (accountId, updates) => 
+//     secureApiClient.makeEncryptedCall('bankAccounts', 'updateBankAccount', { accountId, ...updates }, 'PUT')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to update bank account');
+//         }
+//         return response;
+//       }),
+
+//   // Delete bank account
+//   deleteBankAccount: (accountId) => 
+//     secureApiClient.makeEncryptedCall('bankAccounts', 'deleteBankAccount', { accountId }, 'DELETE')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to delete bank account');
+//         }
+//         return response;
+//       }),
+
+//   // Get all bank accounts (admin)
+//   getAllBankAccounts: (params = {}) => 
+//     secureApiClient.makeEncryptedCall('bankAccounts', 'getAllBankAccounts', null, 'GET', { params })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch all bank accounts');
+//         }
+//         return response;
+//       }),
+
+//   // Get bank account statistics (admin)
+//   getBankAccountStats: () => 
+//     secureApiClient.makeEncryptedCall('bankAccounts', 'getBankAccountStats')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch bank account statistics');
+//         }
+//         return response;
+//       }),
+
+//   // Verify bank account (admin)
+//   verifyBankAccount: (accountId, verificationData = {}) => 
+//     secureApiClient.makeEncryptedCall('bankAccounts', 'verifyBankAccount', { accountId, ...verificationData }, 'PATCH')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to verify bank account');
+//         }
+//         return response;
+//       }),
+
+//   // Utility functions for bank account validation
+//   validateBankAccount: (accountData) => {
+//     const errors = [];
+    
+//     if (!accountData.accountHolderName?.trim()) {
+//       errors.push('Account holder name is required');
+//     }
+    
+//     if (!accountData.accountNumber?.trim()) {
+//       errors.push('Account number is required');
+//     } else if (!/^\d{9,18}$/.test(accountData.accountNumber.replace(/\s/g, ''))) {
+//       errors.push('Account number must be 9-18 digits');
+//     }
+    
+//     if (!accountData.ifscCode?.trim()) {
+//       errors.push('IFSC code is required');
+//     } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(accountData.ifscCode.toUpperCase())) {
+//       errors.push('Invalid IFSC code format');
+//     }
+    
+//     if (!accountData.bankName?.trim()) {
+//       errors.push('Bank name is required');
+//     }
+    
+//     if (!accountData.branchName?.trim()) {
+//       errors.push('Branch name is required');
+//     }
+    
+//     return {
+//       isValid: errors.length === 0,
+//       errors
+//     };
+//   },
+
+//   formatAccountNumber: (accountNumber) => {
+//     if (!accountNumber) return '';
+//     const cleaned = accountNumber.replace(/\s/g, '');
+//     return cleaned.replace(/(\d{4})(?=\d)/g, '$1 ');
+//   },
+
+//   maskAccountNumber: (accountNumber) => {
+//     if (!accountNumber) return '';
+//     const cleaned = accountNumber.replace(/\s/g, '');
+//     if (cleaned.length <= 8) return cleaned;
+//     return 'X'.repeat(cleaned.length - 4) + cleaned.slice(-4);
+//   },
+
+//   validateIFSC: (ifscCode) => {
+//     const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+//     return ifscRegex.test(ifscCode.toUpperCase());
+//   }
+// };
+
+
+
+// // WISHLIST API - This was missing and causing the error
+// export const wishlistAPI = {
+//   // Add property to wishlist (send both userId and propertyId)
+//   addToWishlist: (userId, propertyId) =>
+//     secureApiClient.makeEncryptedCall('wishlist', 'addToWishlist', { userId, propertyId }, 'POST')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to add to wishlist');
+//         }
+//         return response;
+//       }),
+
+//   // Remove property from wishlist
+//   removeFromWishlist: (userId, propertyId) =>
+//     secureApiClient.makeEncryptedCall('wishlist', 'removeFromWishlist', { userId, propertyId }, 'DELETE')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to remove from wishlist');
+//         }
+//         return response;
+//       }),
+
+//   // Get wishlist for a user
+//   getUserWishlist: (userId) =>
+//     secureApiClient.makeEncryptedCall('wishlist', 'getUserWishlist', null, 'GET', {
+//       params: { userId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch wishlist');
+//         }
+//         return response;
+//       }),
+
+//   // Check if property is in wishlist
+//   checkWishlistStatus: (userId, propertyId) =>
+//     secureApiClient.makeEncryptedCall('wishlist', 'checkWishlistStatus', null, 'GET', {
+//       params: { userId, propertyId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to check wishlist status');
+//         }
+//         return response;
+//       }),
+
+//   // Get single wishlist item by ID
+//   getWishlistItem: (wishlistItemId) =>
+//     secureApiClient.makeEncryptedCall('wishlist', 'getWishlistItem', null, 'GET', {
+//       params: { wishlistItemId }
+//     })
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch wishlist item');
+//         }
+//         return response;
+//       }),
+
+//   // Admin: Get all wishlist items
+//   getAllWishlistItems: () =>
+//     secureApiClient.makeEncryptedCall('wishlist', 'getAllWishlistItems')
+//       .then(response => {
+//         if (!response.data?.success) {
+//           throw new Error(response.data?.message || 'Failed to fetch all wishlist items');
+//         }
+//         return response;
+//       })
+// };
+
+// // REVIEW API
+// export const reviewAPI = {
+//   // Get reviews for a property
+//   getPropertyReviews: (propertyId, status = 'approved') => 
+//     secureApiClient.makeEncryptedCall('reviews', 'getPropertyReviews', null, 'GET', { 
+//       params: { propertyId, status } 
+//     })
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to fetch reviews');
+//       }
+//       return response;
+//     }),
+
+//   // Create a new review
+//   createReview: (reviewData) => 
+//     secureApiClient.makeEncryptedCall('reviews', 'createReview', reviewData, 'POST')
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to create review');
+//       }
+//       return response;
+//     }),
+
+//   // Get user's reviews
+//   getUserReviews: (userId) => 
+//     secureApiClient.makeEncryptedCall('reviews', 'getUserReviews', null, 'GET', {
+//       params: { userId }
+//     })
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to fetch user reviews');
+//       }
+//       return response;
+//     }),
+
+//   // Update a review
+//   updateReview: (reviewId, updates) => 
+//     secureApiClient.makeEncryptedCall('reviews', 'updateReview', { reviewId, ...updates }, 'PUT')
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to update review');
+//       }
+//       return response;
+//     }),
+
+//   // Delete a review
+//   deleteReview: (reviewId) => 
+//     secureApiClient.makeEncryptedCall('reviews', 'deleteReview', { reviewId }, 'DELETE')
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to delete review');
+//       }
+//       return response;
+//     }),
+
+//   // Get review statistics
+//   getReviewStats: (propertyId) => 
+//     secureApiClient.makeEncryptedCall('reviews', 'getReviewStats', null, 'GET', {
+//       params: { propertyId }
+//     })
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to fetch review statistics');
+//       }
+//       return response;
+//     }),
+
+//   // Admin: Get all reviews (with filtering)
+//   getAllReviews: (params = {}) => 
+//     secureApiClient.makeEncryptedCall('reviews', 'getAllReviews', null, 'GET', { params })
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to fetch all reviews');
+//       }
+//       return response;
+//     }),
+
+//   // Admin: Update review status
+//   updateReviewStatus: (reviewId, status, adminNotes = '') => 
+//     secureApiClient.makeEncryptedCall('reviews', 'updateReviewStatus', { reviewId, status, adminNotes }, 'PATCH')
+//     .then(response => {
+//       if (!response.data?.success) {
+//         throw new Error(response.data?.message || 'Failed to update review status');
+//       }
+//       return response;
+//     })
+// };
+// // Utility functions
+// export const handleApiError = (error) => {
+//   const errorResponse = {
+//     success: false,
+//     message: 'An unexpected error occurred',
+//     status: error.response?.status || 500,
+//     error: null
+//   };
+
+//   if (error.response) {
+//     errorResponse.message = error.response.data?.message || 'Request failed';
+//     errorResponse.error = error.response.data?.error || error.response.data;
+//   } else if (error.request) {
+//     errorResponse.message = 'No response from server - please check your connection';
+//   } else {
+//     errorResponse.message = error.message || 'Request setup failed';
+//   }
+
+//   console.error('API Error:', {
+//     message: errorResponse.message,
+//     status: errorResponse.status,
+//     config: error.config,
+//     response: error.response?.data
+//   });
+
+//   return errorResponse;
+// };
+
+// export const apiCallWithRetry = async (apiCall, maxRetries = 2, delay = 1000) => {
+//   for (let i = 0; i < maxRetries; i++) {
+//     try {
+//       const response = await apiCall();
+//       return response;
+//     } catch (error) {
+//       if (i === maxRetries - 1) throw error;
+//       await new Promise(resolve => setTimeout(resolve, delay));
+//       delay *= 2;
+//     }
+//   }
+// };
+
+// // Export the main API instance for direct use if needed
+// export { api, secureApiClient };
+
+// export default secureApiClient;

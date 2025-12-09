@@ -1158,46 +1158,46 @@ export default function BookPG() {
     },
   ];
 
-  const neighborhoodData = [
-    {
-      icon: <Plane className="w-5 h-5 text-blue-600" />,
-      title: "Airport",
-      name: "Rajiv Gandhi Intl. Airport",
-      walk: "km | hrs",
-    },
-    {
-      icon: <TrainFront />,
-      title: "Metro Station",
-      name: "Kukatpally Metro Station",
-      walk: "km | hrs",
-    },
-    {
-      icon: <Bus />,
-      title: "Bus Stop",
-      name: "KPHB Bus Stop",
-      walk: "km | hrs",
-    },
-    {
-      icon: <TrainFront />,
-      title: "Railway Station",
-      name: "Hafeezpet Station",
-      walk: "km | hrs",
-    },
-    {
-      icon: <Hospital />,
-      title: "Hospital",
-      name: "Rainbow Hospital",
-      walk: "km | hrs",
-    },
-    {
-      icon: <ShoppingCart />,
-      title: "Market",
-      name: "Forum Mall Kukatpally",
-      walk: "km | hrs",
-    },
-  ];
+  // const neighborhoodData = [
+  //   {
+  //     icon: <Plane className="w-5 h-5 text-blue-600" />,
+  //     title: "Airport",
+  //     name: "Rajiv Gandhi Intl. Airport",
+  //     walk: "km | hrs",
+  //   },
+  //   {
+  //     icon: <TrainFront />,
+  //     title: "Metro Station",
+  //     name: "Kukatpally Metro Station",
+  //     walk: "km | hrs",
+  //   },
+  //   {
+  //     icon: <Bus />,
+  //     title: "Bus Stop",
+  //     name: "KPHB Bus Stop",
+  //     walk: "km | hrs",
+  //   },
+  //   {
+  //     icon: <TrainFront />,
+  //     title: "Railway Station",
+  //     name: "Hafeezpet Station",
+  //     walk: "km | hrs",
+  //   },
+  //   {
+  //     icon: <Hospital />,
+  //     title: "Hospital",
+  //     name: "Rainbow Hospital",
+  //     walk: "km | hrs",
+  //   },
+  //   {
+  //     icon: <ShoppingCart />,
+  //     title: "Market",
+  //     name: "Forum Mall Kukatpally",
+  //     walk: "km | hrs",
+  //   },
+  // ];
 
-  const displayedData = showAll ? neighborhoodData : neighborhoodData.slice(0, 4);
+  // const displayedData = showAll ? neighborhoodData : neighborhoodData.slice(0, 4);
   const pins = locationData?.pins || [];
   const hasPins = pins.length > 0;
   const property = getPropertyId();
@@ -1333,7 +1333,7 @@ export default function BookPG() {
 
           {/* Reviews Section Header with Add Review Button */}
           <div className="flex justify-between items-center bg-white py-4 mt-5 rounded-lg shadow-sm px-6">
-            <p className="text-xl font-semibold">Feedbacks From Our Users</p>
+            <p className="md:text-xl text-[10px] font-semibold">Feedbacks From Our Users</p>
             {user && (
               <button
                 onClick={() => {
@@ -1353,7 +1353,7 @@ export default function BookPG() {
                     });
                   }
                 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className="bg-[#facc14] text-white md:px-4 md:py-4 px-2 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
                 Add Review
               </button>
@@ -1378,7 +1378,7 @@ export default function BookPG() {
               <p className="text-gray-600">{reviewsError}</p>
               <button
                 onClick={fetchPropertyReviews}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                className="mt-4 bg-[#facc14] text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
               >
                 Try Again
               </button>
@@ -1475,10 +1475,10 @@ export default function BookPG() {
               <img
                 src={pg.owner?.profilePicture || "https://placehold.co/150x150"}
                 alt="Owner"
-                className="w-16 h-16 rounded-full object-cover"
+                className="md:w-16 md:h-16 w-8 h-8 rounded-full object-cover"
               />
               <div className="flex flex-col">
-                <p className="text-sm font-medium text-gray-800">
+                <p className="md:text-sm text-xs font-medium text-gray-800">
                   {pg.owner?.name?.trim() || pg.name || "PG Owner"}
                 </p>
                 <p className="text-xs text-gray-500">Property Owner</p>
@@ -1503,18 +1503,18 @@ export default function BookPG() {
           {/* Location Section with MapLocationAdmin */}
           <div className="mt-5 bg-white rounded-lg shadow-sm">
             <div className="p-4 border-b flex justify-between items-center">
-              <p className="flex items-center gap-2 text-gray-700 font-semibold">
+              <p className="flex items-center gap-2 text-gray-700 font-semibold md:text-lg text-[10px]">
                 <MapPin className="w-5 h-5" />
                 Property Location
                 {hasPins && (
                   <span className="text-sm font-normal text-gray-500 ml-2">
-                    ({pins.length} location pin{pins.length !== 1 ? 's' : ''})
+                    ({pins.length} {pins.length !== 1 ? 's' : ''})
                   </span>
                 )}
               </p>
               <button
                 onClick={toggleMapView}
-                className="bg-[#facc14] text-black px-4 py-2 rounded-lg text-sm transition-colors"
+                className="bg-[#facc14] text-black md:px-4 md:py-2 px-2 py-1 rounded-lg md:text-sm text-[10px] transition-colors"
               >
                 {showMapView ? "Show Simple View" : "Show Detailed Map"}
               </button>
@@ -1625,7 +1625,7 @@ export default function BookPG() {
           </div>
 
           {/* Neighborhood */}
-          <div className="mt-5 px-4 bg-white p-4 rounded-lg shadow-sm">
+          {/* <div className="mt-5 px-4 bg-white p-4 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Neighborhood</h2>
             <div className="grid text-xs grid-cols-1 gap-4">
               {displayedData.map((item, index) => (
@@ -1653,7 +1653,7 @@ export default function BookPG() {
             >
               {showAll ? "Show Less" : "View All"}
             </button>
-          </div>
+          </div> */}
 
           {/* Nearby Properties */}
           <div className="flex bg-white mt-5 p-4 rounded-lg shadow-sm">

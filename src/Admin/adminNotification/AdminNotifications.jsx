@@ -1083,6 +1083,7 @@
 
 
 
+
 import React, { useEffect, useState } from "react";
 import { adminNotificationAPI } from "../adminController";
 import notifyImg from "../../assets/notification/undraw_my-notifications_fy5v.png";
@@ -1094,7 +1095,7 @@ const AdminNotifications = () => {
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
 
-  // Fetch admin notifications - FIXED version
+  // Fetch admin notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -1111,19 +1112,15 @@ const AdminNotifications = () => {
         console.log('📨 Admin Notifications Full Response:', notifRes);
         console.log('🔔 Admin Unread Count Full Response:', unreadRes);
 
-        // FIXED: Properly handle the response structure
         let notificationsData = [];
         let unreadCountData = 0;
 
-        // Handle notifications response
         if (notifRes.success) {
           notificationsData = notifRes.data?.notifications || [];
         } else {
-          // Fallback to direct access
           notificationsData = notifRes.notifications || notifRes.data?.notifications || [];
         }
 
-        // Handle unread count response
         if (unreadRes.success) {
           unreadCountData = unreadRes.data?.unreadCount || 0;
         } else {
@@ -1133,7 +1130,6 @@ const AdminNotifications = () => {
         console.log('✅ Processed admin notifications:', notificationsData);
         console.log('✅ Processed admin unread count:', unreadCountData);
 
-        // Ensure we have an array
         const safeNotifications = Array.isArray(notificationsData) ? notificationsData : [];
         setNotifications(safeNotifications);
         setUnreadCount(Number(unreadCountData) || 0);
@@ -1147,7 +1143,6 @@ const AdminNotifications = () => {
         console.error("📋 Error details:", err.response?.data || err.message || err);
         setError(err.response?.data?.message || err.message || "Failed to fetch notifications");
         
-        // Set empty state on error
         setNotifications([]);
         setUnreadCount(0);
       } finally {
@@ -1158,13 +1153,16 @@ const AdminNotifications = () => {
     fetchNotifications();
   }, []);
 
-  // Filter notifications based on selected filter
+  // Filter notifications - UPDATED WITH FOOD MENU FILTER
   const filteredNotifications = notifications.filter(notification => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !notification.isRead;
     if (filter === 'property') return notification.type && notification.type.includes('property');
     if (filter === 'booking') return notification.type && notification.type.includes('booking');
     if (filter === 'payment') return notification.type && notification.type.includes('payment');
+    if (filter === 'vacate') return notification.type && notification.type.includes('vacate');
+    if (filter === 'concern') return notification.type && notification.type.includes('concern');
+    if (filter === 'food') return notification.type && notification.type.includes('food'); // NEW FOOD FILTER
     return true;
   });
 
@@ -1283,7 +1281,7 @@ const AdminNotifications = () => {
     }
   };
 
-  // Get notification icon based on type
+  // Get notification icon based on type - UPDATED WITH FOOD MENU ICONS
   const getNotificationIcon = (type) => {
     if (!type) return '🔔';
     
@@ -1307,6 +1305,30 @@ const AdminNotifications = () => {
       payment_failed: '❌',
       payment_refunded: '↩️',
       
+      // Vacate room notifications
+      vacate_requested: '🚪',
+      vacate_approved: '✅',
+      vacate_rejected: '❌',
+      vacate_refund_initiated: '💰',
+      vacate_refund_completed: '✅',
+      vacate_payment_received: '💳',
+      vacate_deduction_added: '📝',
+      
+      // Concern notifications
+      concern_submitted: '📝',
+      concern_approved: '✅',
+      concern_rejected: '❌',
+      concern_completed: '✅',
+      concern_priority_updated: '⚠️',
+      
+      // Food Menu notifications - NEW
+      food_item_added: '🍽️',
+      food_item_updated: '✏️',
+      food_item_deleted: '🗑️',
+      food_price_changed: '💰',
+      food_menu_cleared: '📋',
+      food_bulk_updated: '📅',
+      
       // System notifications
       system_alert: '⚠️',
       reminder: '⏰'
@@ -1314,7 +1336,7 @@ const AdminNotifications = () => {
     return icons[type] || '🔔';
   };
 
-  // Get notification background color based on type
+  // Get notification background color based on type - UPDATED WITH FOOD MENU COLORS
   const getNotificationColor = (type) => {
     if (!type) return 'border-l-gray-500 bg-gray-50';
     
@@ -1338,6 +1360,30 @@ const AdminNotifications = () => {
       payment_failed: 'border-l-red-500 bg-red-50',
       payment_refunded: 'border-l-yellow-500 bg-yellow-50',
 
+      // Vacate room notifications
+      vacate_requested: 'border-l-purple-500 bg-purple-50',
+      vacate_approved: 'border-l-green-500 bg-green-50',
+      vacate_rejected: 'border-l-red-500 bg-red-50',
+      vacate_refund_initiated: 'border-l-blue-500 bg-blue-50',
+      vacate_refund_completed: 'border-l-emerald-500 bg-emerald-50',
+      vacate_payment_received: 'border-l-green-500 bg-green-50',
+      vacate_deduction_added: 'border-l-orange-500 bg-orange-50',
+
+      // Concern notifications
+      concern_submitted: 'border-l-indigo-500 bg-indigo-50',
+      concern_approved: 'border-l-green-500 bg-green-50',
+      concern_rejected: 'border-l-red-500 bg-red-50',
+      concern_completed: 'border-l-emerald-500 bg-emerald-50',
+      concern_priority_updated: 'border-l-orange-500 bg-orange-50',
+
+      // Food Menu notifications - NEW
+      food_item_added: 'border-l-amber-500 bg-amber-50',
+      food_item_updated: 'border-l-orange-500 bg-orange-50',
+      food_item_deleted: 'border-l-rose-500 bg-rose-50',
+      food_price_changed: 'border-l-lime-500 bg-lime-50',
+      food_menu_cleared: 'border-l-gray-500 bg-gray-50',
+      food_bulk_updated: 'border-l-teal-500 bg-teal-50',
+
       // System notifications
       system_alert: 'border-l-amber-500 bg-amber-50',
       reminder: 'border-l-indigo-500 bg-indigo-50'
@@ -1345,7 +1391,7 @@ const AdminNotifications = () => {
     return colors[type] || 'border-l-gray-500 bg-gray-50';
   };
 
-  // Get notification type label
+  // Get notification type label - UPDATED WITH FOOD MENU LABELS
   const getNotificationTypeLabel = (type) => {
     if (!type) return 'Notification';
     
@@ -1369,6 +1415,30 @@ const AdminNotifications = () => {
       payment_failed: 'Payment Failed',
       payment_refunded: 'Payment Refunded',
 
+      // Vacate room notifications
+      vacate_requested: 'Vacate Request',
+      vacate_approved: 'Vacate Approved',
+      vacate_rejected: 'Vacate Rejected',
+      vacate_refund_initiated: 'Refund Initiated',
+      vacate_refund_completed: 'Refund Completed',
+      vacate_payment_received: 'Payment Received',
+      vacate_deduction_added: 'Deduction Applied',
+
+      // Concern notifications
+      concern_submitted: 'Concern Submitted',
+      concern_approved: 'Concern Approved',
+      concern_rejected: 'Concern Rejected',
+      concern_completed: 'Concern Completed',
+      concern_priority_updated: 'Priority Updated',
+
+      // Food Menu notifications - NEW
+      food_item_added: 'Food Item Added',
+      food_item_updated: 'Food Item Updated',
+      food_item_deleted: 'Food Item Deleted',
+      food_price_changed: 'Price Changed',
+      food_menu_cleared: 'Day Menu Cleared',
+      food_bulk_updated: 'Weekly Menu Updated',
+
       // System notifications
       system_alert: 'System Alert',
       reminder: 'Reminder'
@@ -1379,22 +1449,31 @@ const AdminNotifications = () => {
   // Handle property action
   const handlePropertyAction = (propertyId, action) => {
     console.log(`🏠 Property ${action} clicked for:`, propertyId);
-    // Navigate to property management page
     window.location.href = `/admin/properties/${propertyId}`;
   };
 
   // Handle booking action
   const handleBookingAction = (bookingId, action) => {
     console.log(`📅 Booking ${action} clicked for:`, bookingId);
-    // Navigate to booking management page
     window.location.href = `/admin/bookings/${bookingId}`;
   };
 
-  // Handle payment action
-  const handlePaymentAction = (paymentId, action) => {
-    console.log(`💰 Payment ${action} clicked for:`, paymentId);
-    // Navigate to payment management page
-    window.location.href = `/admin/payments/${paymentId}`;
+  // Handle vacate action
+  const handleVacateAction = (vacateRequestId, action) => {
+    console.log(`🚪 Vacate ${action} clicked for:`, vacateRequestId);
+    window.location.href = `/admin/vacate-requests/${vacateRequestId}`;
+  };
+
+  // Handle concern action
+  const handleConcernAction = (concernId, action) => {
+    console.log(`📝 Concern ${action} clicked for:`, concernId);
+    window.location.href = `/admin/concerns/${concernId}`;
+  };
+
+  // Handle food menu action - NEW
+  const handleFoodMenuAction = (propertyId, bookingId) => {
+    console.log(`🍽️ View food menu clicked for:`, { propertyId, bookingId });
+    window.location.href = `/admin/food-menu?property=${propertyId}${bookingId ? `&booking=${bookingId}` : ''}`;
   };
 
   if (loading) {
@@ -1434,7 +1513,7 @@ const AdminNotifications = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Notifications</h1>
-              <p className="text-gray-600">Manage property approvals, bookings, and system alerts</p>
+              <p className="text-gray-600">Manage property approvals, bookings, payments, vacate requests, concerns, and food menu changes</p>
               {unreadCount > 0 && (
                 <p className="text-blue-600 font-medium mt-2">
                   {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
@@ -1468,7 +1547,7 @@ const AdminNotifications = () => {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters - UPDATED WITH FOOD FILTER */}
         {notifications.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
             <div className="flex flex-wrap gap-2">
@@ -1477,7 +1556,10 @@ const AdminNotifications = () => {
                 { key: 'unread', label: 'Unread' },
                 { key: 'property', label: 'Properties' },
                 { key: 'booking', label: 'Bookings' },
-                { key: 'payment', label: 'Payments' }
+                { key: 'payment', label: 'Payments' },
+                { key: 'vacate', label: 'Vacate Requests' },
+                { key: 'concern', label: 'Concerns' },
+                { key: 'food', label: 'Food Menu' } // NEW FILTER
               ].map((filterType) => (
                 <button
                   key={filterType.key}
@@ -1517,7 +1599,7 @@ const AdminNotifications = () => {
             </h3>
             <p className="text-gray-600 max-w-md mx-auto">
               {filter === 'all' 
-                ? "You'll see notifications here for property approvals, bookings, payments, and system alerts."
+                ? "You'll see notifications here for property approvals, bookings, payments, vacate requests, concerns, and food menu changes."
                 : `No ${filter} notifications found. Try changing the filter.`
               }
             </p>
@@ -1554,7 +1636,7 @@ const AdminNotifications = () => {
                             {notification.title || 'Notification'}
                           </h3>
                           
-                          {/* Notification Type Badge */}
+                          {/* Notification Type Badge - UPDATED WITH FOOD COLORS */}
                           <span className={`px-3 py-1 text-xs font-medium rounded-full border ${
                             notification.type && notification.type.includes('property') 
                               ? 'bg-purple-100 text-purple-800 border-purple-200' 
@@ -1562,6 +1644,12 @@ const AdminNotifications = () => {
                               ? 'bg-blue-100 text-blue-800 border-blue-200'
                               : notification.type && notification.type.includes('payment')
                               ? 'bg-green-100 text-green-800 border-green-200'
+                              : notification.type && notification.type.includes('vacate')
+                              ? 'bg-purple-100 text-purple-800 border-purple-200'
+                              : notification.type && notification.type.includes('concern')
+                              ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                              : notification.type && notification.type.includes('food')
+                              ? 'bg-amber-100 text-amber-800 border-amber-200' // NEW FOOD COLOR
                               : 'bg-gray-100 text-gray-800 border-gray-200'
                           }`}>
                             {getNotificationTypeLabel(notification.type)}
@@ -1576,7 +1664,7 @@ const AdminNotifications = () => {
                           {notification.message || 'No message content'}
                         </p>
                         
-                        {/* Action buttons */}
+                        {/* Action buttons - UPDATED WITH FOOD ACTIONS */}
                         <div className="flex flex-wrap items-center gap-3 mb-4">
                           {notification.type === 'property_submitted' && notification.metadata?.propertyId && (
                             <button
@@ -1596,12 +1684,30 @@ const AdminNotifications = () => {
                             </button>
                           )}
                           
-                          {notification.type && notification.type.includes('payment') && notification.metadata?.paymentId && (
+                          {notification.type && notification.type.includes('vacate') && notification.metadata?.vacateRequestId && (
                             <button
-                              onClick={() => handlePaymentAction(notification.metadata.paymentId, 'view')}
+                              onClick={() => handleVacateAction(notification.metadata.vacateRequestId, 'view')}
                               className="px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-600 transition-colors"
                             >
-                              View Payment
+                              View Vacate Request
+                            </button>
+                          )}
+                          
+                          {notification.type && notification.type.includes('concern') && notification.metadata?.concernId && (
+                            <button
+                              onClick={() => handleConcernAction(notification.metadata.concernId, 'view')}
+                              className="px-4 py-2 bg-indigo-500 text-white text-sm font-medium rounded-lg hover:bg-indigo-600 transition-colors"
+                            >
+                              View Concern
+                            </button>
+                          )}
+                          
+                          {notification.type && notification.type.includes('food') && notification.metadata?.propertyId && (
+                            <button
+                              onClick={() => handleFoodMenuAction(notification.metadata.propertyId, notification.metadata.bookingId)}
+                              className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
+                            >
+                              View Food Menu
                             </button>
                           )}
                           
@@ -1612,6 +1718,65 @@ const AdminNotifications = () => {
                           )}
                         </div>
                         
+                        {/* Food menu change details - NEW */}
+                        {notification.type && notification.type.includes('food') && (
+                          <div className="bg-amber-50 rounded-lg p-3 mb-4 border border-amber-200">
+                            <div className="space-y-2 text-sm">
+                              {notification.metadata?.foodItemName && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-amber-700">Food Item:</span>
+                                  <span className="text-amber-800">{notification.metadata.foodItemName}</span>
+                                </div>
+                              )}
+                              {notification.metadata?.changedByName && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-amber-700">Changed By:</span>
+                                  <span className="text-amber-800">{notification.metadata.changedByName}</span>
+                                </div>
+                              )}
+                              {notification.metadata?.day && notification.metadata?.category && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-amber-700">When:</span>
+                                  <span className="text-amber-800">{notification.metadata.day} - {notification.metadata.category}</span>
+                                </div>
+                              )}
+                              {notification.metadata?.oldData?.price && notification.metadata?.newData?.price && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-amber-700">Price Change:</span>
+                                  <span className="text-amber-800">
+                                    ₹{notification.metadata.oldData.price} → ₹{notification.metadata.newData.price}
+                                  </span>
+                                </div>
+                              )}
+                              {notification.metadata?.changesSummary && (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-amber-700">Summary:</span>
+                                  <span className="text-amber-800">{notification.metadata.changesSummary}</span>
+                                </div>
+                              )}
+                              {notification.metadata?.action === 'item_updated' && notification.metadata?.oldData && notification.metadata?.newData && (
+                                <div className="mt-2">
+                                  <p className="font-semibold text-amber-700 mb-1">Detailed Changes:</p>
+                                  <ul className="text-amber-800 text-xs space-y-1">
+                                    {notification.metadata.oldData.name !== notification.metadata.newData.name && (
+                                      <li>• <span className="font-medium">Name:</span> "{notification.metadata.oldData.name}" → "{notification.metadata.newData.name}"</li>
+                                    )}
+                                    {notification.metadata.oldData.price !== notification.metadata.newData.price && (
+                                      <li>• <span className="font-medium">Price:</span> ₹{notification.metadata.oldData.price} → ₹{notification.metadata.newData.price}</li>
+                                    )}
+                                    {notification.metadata.oldData.description !== notification.metadata.newData.description && (
+                                      <li>• <span className="font-medium">Description</span> was updated</li>
+                                    )}
+                                    {notification.metadata.oldData.category !== notification.metadata.newData.category && (
+                                      <li>• <span className="font-medium">Category:</span> {notification.metadata.oldData.category} → {notification.metadata.newData.category}</li>
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Payment amount display */}
                         {notification.metadata?.amount && (
                           <div className="bg-gray-50 rounded-lg p-3 mb-4">
@@ -1624,8 +1789,28 @@ const AdminNotifications = () => {
                             </div>
                           </div>
                         )}
+
+                        {/* Refund amount display for vacate */}
+                        {notification.metadata?.refundAmount && (
+                          <div className="bg-green-50 rounded-lg p-3 mb-4 border border-green-200">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-semibold text-green-700">Refund Amount:</span>
+                              <span className="text-green-600 font-bold">₹{notification.metadata.refundAmount}</span>
+                            </div>
+                          </div>
+                        )}
                         
-                        {/* Metadata information */}
+                        {/* Rejection reason display */}
+                        {notification.metadata?.rejectionReason && (
+                          <div className="bg-red-50 rounded-lg p-3 mb-4 border border-red-200">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-semibold text-red-700">Reason:</span>
+                              <span className="text-red-600">{notification.metadata.rejectionReason}</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Metadata information - UPDATED WITH FOOD METADATA */}
                         {notification.metadata && Object.keys(notification.metadata).length > 0 && (
                           <div className="bg-gray-50 rounded-lg p-3 mb-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-gray-600">
@@ -1644,19 +1829,43 @@ const AdminNotifications = () => {
                               {notification.metadata.bookingId && (
                                 <div className="flex items-center gap-2">
                                   <span>📅</span>
-                                  <span>Booking ID: {notification.metadata.bookingId}</span>
+                                  <span>Booking ID: {notification.metadata.bookingId.substring(0, 8)}...</span>
+                                </div>
+                              )}
+                              {notification.metadata.vacateRequestId && (
+                                <div className="flex items-center gap-2">
+                                  <span>🚪</span>
+                                  <span>Vacate Request: {notification.metadata.vacateRequestId.substring(0, 8)}...</span>
+                                </div>
+                              )}
+                              {notification.metadata.concernId && (
+                                <div className="flex items-center gap-2">
+                                  <span>📝</span>
+                                  <span>Concern: {notification.metadata.concernId.substring(0, 8)}...</span>
+                                </div>
+                              )}
+                              {notification.metadata.foodItemName && (
+                                <div className="flex items-center gap-2">
+                                  <span>🍽️</span>
+                                  <span>Food: {notification.metadata.foodItemName}</span>
+                                </div>
+                              )}
+                              {notification.metadata.concernType && (
+                                <div className="flex items-center gap-2">
+                                  <span>⚡</span>
+                                  <span>Type: {notification.metadata.concernType.replace('-', ' ')}</span>
                                 </div>
                               )}
                               {notification.metadata.action && (
                                 <div className="flex items-center gap-2">
-                                  <span>⚡</span>
+                                  <span>🎯</span>
                                   <span>Action: {notification.metadata.action}</span>
                                 </div>
                               )}
-                              {notification.metadata.rejectionReason && (
+                              {notification.metadata.changedByName && (
                                 <div className="flex items-center gap-2">
-                                  <span>📝</span>
-                                  <span>Reason: {notification.metadata.rejectionReason}</span>
+                                  <span>👤</span>
+                                  <span>Changed By: {notification.metadata.changedByName}</span>
                                 </div>
                               )}
                             </div>
@@ -1707,7 +1916,7 @@ const AdminNotifications = () => {
           </div>
         )}
 
-        {/* Load More Button (if pagination is implemented) */}
+        {/* Load More Button */}
         {filteredNotifications.length > 0 && (
           <div className="mt-8 text-center">
             <button className="text-blue-500 text-sm font-medium hover:text-blue-700 transition-colors">

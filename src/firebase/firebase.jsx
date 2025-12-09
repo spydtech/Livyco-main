@@ -128,9 +128,9 @@ const auth = getAuth(app);
 // }
 
 //Emulator only in development
-// if (window.location.hostname === 'localhost') {
-//   connectAuthEmulator(auth, 'http://localhost:9099');
-// }
+if (window.location.hostname === 'localhost') {
+  connectAuthEmulator(auth, 'http://localhost:9099');
+}
 
 export { auth, RecaptchaVerifier, signInWithPhoneNumber };
 

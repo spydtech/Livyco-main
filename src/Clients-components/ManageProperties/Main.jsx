@@ -7,7 +7,7 @@ function Main() {
   const [showTracker, setShowTracker] = useState(false);
 
   return (
-    <div className="py-4 bg-[#f8f8ff] justify-center items-center mx-2">
+    <div className="py-0 bg-[#f8f8ff] justify-center items-center mx-0">
       <ClientNav />
       <div className="header">Home / List Properties</div>
 

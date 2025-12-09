@@ -133,6 +133,7 @@
 // }
 
 
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import React from "react";
@@ -148,7 +149,6 @@ import image12 from "../../assets/user/pgsearch/images/image12.png";
 import { FiShare2 as Share2, FiHeart as HeartOutline } from 'react-icons/fi';
 import { FaHeart as HeartSolid } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-
 
 import { wishlistAPI } from "../../Clients-components/PropertyController";  
 
@@ -173,6 +173,9 @@ export default function ListingCard({ pg }) {
 
   const propertyId = pg._id || pg.id;
 
+  // CHANGED: Check if property status is approved
+  const isApproved = pg?.status?.toLowerCase() === 'approved';
+
   const getCurrentUserId = () => {
     try {
       const userData = localStorage.getItem('user');
@@ -187,6 +190,9 @@ export default function ListingCard({ pg }) {
   };
 
   useEffect(() => {
+    // CHANGED: Only check wishlist status if property is approved
+    if (!isApproved) return;
+
     const checkWishlistStatus = async () => {
       const userId = getCurrentUserId();
       if (!userId || !propertyId) return;
@@ -202,14 +208,24 @@ export default function ListingCard({ pg }) {
     };
 
     checkWishlistStatus();
-  }, [propertyId]);
+  }, [propertyId, isApproved]); // CHANGED: Added isApproved to dependency array
 
   const handleCardClick = () => {
+    // CHANGED: Only allow navigation if property is approved
+    if (!isApproved) {
+      toast.info('This property is not available for viewing');
+      return;
+    }
     navigate(`/user/view-pg/${propertyId}`, { state: { pg: propertyDetails } });
   };
 
   const handleShare = (e) => {
     e.stopPropagation();
+    // CHANGED: Only allow sharing if property is approved
+    if (!isApproved) {
+      toast.info('This property is not available for sharing');
+      return;
+    }
     navigate(`/share/${propertyId}`);
   };
 
@@ -220,6 +236,12 @@ export default function ListingCard({ pg }) {
   const handleWishlist = async (e) => {
     e.stopPropagation();
     e.preventDefault();
+
+    // CHANGED: Only allow wishlist operations if property is approved
+    if (!isApproved) {
+      toast.info('This property is not available for wishlisting');
+      return;
+    }
 
     const userId = getCurrentUserId();
     if (!userId) {
@@ -268,9 +290,20 @@ export default function ListingCard({ pg }) {
 
   const displayData = propertyDetails || pg;
 
+  // CHANGED: Use actual images from API response instead of default Pgimg
+  const displayImage = displayData.images?.[0]?.url || 
+                     displayData.image?.url || 
+                     Pgimg;
+
+  // CHANGED: Return null if property is not approved
+  if (!isApproved) {
+    return null;
+  }
+
   return (
-    <div className="relative bg-white rounded-xl  overflow-hidden hover:shadow-lg lg:w-full md:w-full sm:w-[300px] justify-center  -ml-14 lg:-ml-0 m-d:ml-0 sm:-ml-10 w-[280px] transition duration-300">
+    <div className="relative bg-white rounded-xl overflow-hidden hover:shadow-lg lg:w-full md:w-full sm:w-[300px] justify-center -ml-8 lg:-ml-0 m-d:ml-0 sm:-ml-10 w-[280px] transition duration-300">
       {/* Top Right Icons */}
+      <div className="relative">
       <div className="absolute top-3 right-3 flex gap-2 z-10">
         <button
           onClick={handleShare}
@@ -293,9 +326,10 @@ export default function ListingCard({ pg }) {
             <HeartOutline className="w-3 h-3 sm:w-4 sm:h-4" />
           )}
         </button>
-    
       </div>
-      <div className="absolute top-14 right-3 z-10">
+      
+      {/* Status Badge - CHANGED: Show approved status */}
+      <div className="absolute top-14 right-3 z-10 flex flex-col gap-1">
         <span className={`px-2 py-1 rounded-full text-xs font-medium shadow ${
           displayData.gender?.toLowerCase() === 'male'
             ? 'bg-blue-100 text-blue-800 border border-blue-200'
@@ -305,23 +339,28 @@ export default function ListingCard({ pg }) {
         }`}>
           {displayData.gender}
         </span>
+        
+      </div>
       </div>
 
-     
       <div 
         onClick={handleCardClick} 
         className="cursor-pointer flex flex-col lg:flex-row w-full lg:w-full md:w-full border-2 border-gray-200 rounded-lg hover:border-yellow-400 transition-colors"
       >
-        {/* Image Section  */}
-        <div className="w-full lg:w-1/3 h-48 sm:h-56  lg:h-40 p-4 lg:p-4">
+        {/* Image Section - CHANGED: Use actual property images */}
+        <div className="w-full lg:w-1/3 h-48 sm:h-56 lg:h-40 p-4 lg:p-4">
           <img
-            src={Pgimg}
+            src={displayImage}
             className="w-full h-full object-cover rounded-lg lg:rounded-md"
             alt={displayData.name}
+            onError={(e) => {
+              // Fallback to default image if property image fails to load
+              e.target.src = Pgimg;
+            }}
           />
         </div>
 
-        {/* Content Section  */}
+        {/* Content Section */}
         <div className="w-full sm:w-full lg:w-2/3 p-4 lg:p-4 flex flex-col justify-between">
           <div>
             {/* Title and Location */}
@@ -329,7 +368,7 @@ export default function ListingCard({ pg }) {
               {displayData.name}
             </h2>
             <p className="text-sm sm:text-base text-gray-600 mt-1 line-clamp-1">
-              {displayData.location}
+              {displayData.locality || displayData.street || displayData.city}
             </p>
             
             {/* Price */}

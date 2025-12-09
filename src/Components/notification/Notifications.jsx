@@ -513,6 +513,645 @@
 
 // export default UserNotifications;
 
+
+
+// import React, { useEffect, useState } from "react";
+// import { notificationAPI } from "../../Clients-components/PropertyController";
+// import notifyImg from "../../assets/notification/undraw_my-notifications_fy5v.png";
+
+// const UserNotifications = ({ onFilterClick }) => {
+//   const [notifications, setNotifications] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [unreadCount, setUnreadCount] = useState(0);
+//   const [filter, setFilter] = useState('all');
+//   const [error, setError] = useState(null);
+
+//   // Fetch user notifications
+//   useEffect(() => {
+//     const fetchNotifications = async () => {
+//       try {
+//         setLoading(true);
+//         setError(null);
+        
+//         // console.log('🔄 Fetching user notifications...');
+        
+//         const [notifRes, unreadRes] = await Promise.all([
+//           notificationAPI.getNotifications(),
+//           notificationAPI.getUnreadCount()
+//         ]);
+
+//         // console.log('📨 User Notifications Full Response:', notifRes);
+//         // console.log('🔔 User Unread Count Full Response:', unreadRes);
+
+//         let notificationsData = [];
+//         let unreadCountData = 0;
+
+//         // Handle notifications response
+//         if (notifRes.success) {
+//           notificationsData = notifRes.data?.notifications || [];
+//         } else {
+//           notificationsData = notifRes.notifications || notifRes.data?.notifications || [];
+//         }
+
+//         // Handle unread count response
+//         if (unreadRes.success) {
+//           unreadCountData = unreadRes.data?.unreadCount || 0;
+//         } else {
+//           unreadCountData = unreadRes.unreadCount || unreadRes.data?.unreadCount || 0;
+//         }
+
+//         // console.log('✅ Processed user notifications:', notificationsData);
+//         // console.log('✅ Processed user unread count:', unreadCountData);
+
+//         const safeNotifications = Array.isArray(notificationsData) ? notificationsData : [];
+//         setNotifications(safeNotifications);
+//         setUnreadCount(Number(unreadCountData) || 0);
+        
+//         if (safeNotifications.length === 0) {
+//           // console.log('ℹ️ No notifications found for user');
+//         }
+        
+//       } catch (err) {
+//         console.error("❌ Error fetching user notifications:", err);
+//         console.error("📋 Error details:", err.response?.data || err.message || err);
+//         setError(err.response?.data?.message || err.message || "Failed to fetch notifications");
+        
+//         setNotifications([]);
+//         setUnreadCount(0);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchNotifications();
+//   }, []);
+
+//   // Filter notifications
+//   const filteredNotifications = notifications.filter(notification => {
+//     if (filter === 'all') return true;
+//     if (filter === 'unread') return !notification.isRead;
+//     if (filter === 'booking') return notification.type && notification.type.includes('booking');
+//     if (filter === 'payment') return notification.type && notification.type.includes('payment');
+//     if (filter === 'payment_request') return notification.type && notification.type.includes('payment_request');
+//     return true;
+//   });
+
+//   // Mark one notification as read
+//   const markAsRead = async (notificationId) => {
+//     try {
+//       await notificationAPI.markAsRead(notificationId);
+      
+//       setNotifications(prev => 
+//         prev.map(n => 
+//           n._id === notificationId ? { ...n, isRead: true } : n
+//         )
+//       );
+//       setUnreadCount(prev => Math.max(0, prev - 1));
+//     } catch (err) {
+//       console.error("❌ Error marking notification as read:", err);
+//       alert("Failed to mark notification as read");
+//     }
+//   };
+
+//   // Mark all as read
+//   const markAllAsRead = async () => {
+//     try {
+//       await notificationAPI.markAllAsRead();
+      
+//       setNotifications(prev => 
+//         prev.map(n => ({ ...n, isRead: true }))
+//       );
+//       setUnreadCount(0);
+//     } catch (err) {
+//       console.error("❌ Error marking all notifications as read:", err);
+//       alert("Failed to mark all notifications as read");
+//     }
+//   };
+
+//   // Delete notification
+//   const deleteNotification = async (notificationId) => {
+//     try {
+//       await notificationAPI.deleteNotification(notificationId);
+      
+//       const notification = notifications.find(n => n._id === notificationId);
+//       setNotifications(prev => prev.filter(n => n._id !== notificationId));
+      
+//       if (notification && !notification.isRead) {
+//         setUnreadCount(prev => Math.max(0, prev - 1));
+//       }
+//     } catch (err) {
+//       console.error("❌ Error deleting notification:", err);
+//       alert("Failed to delete notification");
+//     }
+//   };
+
+//   // Refresh notifications
+//   const refreshNotifications = async () => {
+//     try {
+//       setLoading(true);
+//       setError(null);
+      
+//       const [notifRes, unreadRes] = await Promise.all([
+//         notificationAPI.getNotifications(),
+//         notificationAPI.getUnreadCount()
+//       ]);
+
+//       let notificationsData = [];
+//       let unreadCountData = 0;
+
+//       if (notifRes.success) {
+//         notificationsData = notifRes.data?.notifications || [];
+//       } else {
+//         notificationsData = notifRes.notifications || notifRes.data?.notifications || [];
+//       }
+
+//       if (unreadRes.success) {
+//         unreadCountData = unreadRes.data?.unreadCount || 0;
+//       } else {
+//         unreadCountData = unreadRes.unreadCount || unreadRes.data?.unreadCount || 0;
+//       }
+
+//       setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
+//       setUnreadCount(Number(unreadCountData) || 0);
+      
+//     } catch (err) {
+//       console.error("❌ Error refreshing notifications:", err);
+//       setError(err.response?.data?.message || err.message || "Failed to refresh notifications");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Format date
+//   const formatDate = (dateString) => {
+//     if (!dateString) return 'Unknown date';
+    
+//     try {
+//       const date = new Date(dateString);
+//       const now = new Date();
+//       const diffTime = Math.abs(now - date);
+//       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+//       const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+//       const diffMinutes = Math.floor(diffTime / (1000 * 60));
+      
+//       if (diffMinutes < 1) return 'Just now';
+//       if (diffMinutes < 60) return `${diffMinutes}m ago`;
+//       if (diffHours < 24) return `${diffHours}h ago`;
+//       if (diffDays === 1) return 'Yesterday';
+//       if (diffDays < 7) return `${diffDays}d ago`;
+      
+//       return date.toLocaleDateString('en-US', { 
+//         month: 'short', 
+//         day: 'numeric',
+//         hour: '2-digit',
+//         minute: '2-digit'
+//       });
+//     } catch (error) {
+//       return 'Invalid date';
+//     }
+//   };
+
+//   // Get notification icon based on type
+//   const getNotificationIcon = (type) => {
+//     if (!type) return '🔔';
+    
+//     const icons = {
+//       booking_created: '📋',
+//       booking_approved: '✅',
+//       booking_rejected: '❌',
+//       booking_cancelled: '🚫',
+//       booking_paid: '💰',
+//       payment_received: '💳',
+//       payment_failed: '❌',
+//       payment_refunded: '↩️',
+//       payment_request: '💰',
+//       system_alert: '⚠️',
+//       reminder: '⏰'
+//     };
+//     return icons[type] || '🔔';
+//   };
+
+//   // Get notification background color based on type
+//   const getNotificationColor = (type) => {
+//     if (!type) return 'border-l-gray-500 bg-gray-50';
+    
+//     const colors = {
+//       booking_created: 'border-l-blue-500 bg-blue-50',
+//       booking_approved: 'border-l-green-500 bg-green-50',
+//       booking_rejected: 'border-l-red-500 bg-red-50',
+//       booking_cancelled: 'border-l-orange-500 bg-orange-50',
+//       booking_paid: 'border-l-emerald-500 bg-emerald-50',
+//       payment_received: 'border-l-green-500 bg-green-50',
+//       payment_failed: 'border-l-red-500 bg-red-50',
+//       payment_refunded: 'border-l-yellow-500 bg-yellow-50',
+//       payment_request: 'border-l-purple-500 bg-purple-50',
+//       system_alert: 'border-l-amber-500 bg-amber-50',
+//       reminder: 'border-l-indigo-500 bg-indigo-50'
+//     };
+//     return colors[type] || 'border-l-gray-500 bg-gray-50';
+//   };
+
+//   // Get notification type label
+//   const getNotificationTypeLabel = (type) => {
+//     if (!type) return 'Notification';
+    
+//     const labels = {
+//       booking_created: 'Booking Submitted',
+//       booking_approved: 'Booking Approved',
+//       booking_rejected: 'Booking Rejected',
+//       booking_cancelled: 'Booking Cancelled',
+//       booking_paid: 'Booking Confirmed',
+//       payment_received: 'Payment Received',
+//       payment_failed: 'Payment Failed',
+//       payment_refunded: 'Payment Refunded',
+//       payment_request: 'Payment Request',
+//       system_alert: 'System Alert',
+//       reminder: 'Reminder'
+//     };
+//     return labels[type] || 'Notification';
+//   };
+
+//   // Handle booking action
+//   const handleBookingAction = (bookingId) => {
+//     // console.log('📅 View booking clicked:', bookingId);
+//     window.location.href = `/user/bookings/${bookingId}`;
+//   };
+
+//   // Handle payment request action
+//   const handlePaymentRequest = (notification) => {
+//     // console.log('💰 Payment request clicked:', notification);
+//     // Navigate to payment page or show payment modal
+//     if (notification.metadata?.bookingId) {
+//       window.location.href = `/user/bookings/${notification.metadata.bookingId}?payment=true`;
+//     }
+//   };
+
+//   // Handle filter change - FIXED: Stop event propagation
+//   const handleFilterChange = (filterKey, event) => {
+//     // Stop the event from bubbling up to parent elements
+//     if (event) {
+//       event.stopPropagation();
+//       event.nativeEvent.stopImmediatePropagation();
+//     }
+    
+//     setFilter(filterKey);
+//     if (onFilterClick) {
+//       onFilterClick();
+//     }
+//   };
+
+//   // Handle button clicks inside notifications - FIXED
+//   const handleButtonClick = (event) => {
+//     event.stopPropagation();
+//     event.nativeEvent.stopImmediatePropagation();
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="flex-1 flex items-center justify-center p-8">
+//         <div className="text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+//           <p className="text-gray-600">Loading notifications...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <div className="flex-1 flex items-center justify-center p-8">
+//         <div className="text-center">
+//           <div className="text-red-500 text-6xl mb-4">⚠️</div>
+//           <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Notifications</h3>
+//           <p className="text-gray-600 mb-4">{error}</p>
+//           <button
+//             onClick={refreshNotifications}
+//             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+//           >
+//             Try Again
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="flex-1 bg-gray-50">
+//       <div className="p-4">
+//         {/* Header Stats */}
+//         <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+//           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+//             <div>
+//               <h1 className="text-lg font-bold text-gray-900">Notifications</h1>
+//               <p className="text-gray-600 text-sm">Stay updated with your activity</p>
+//               {unreadCount > 0 && (
+//                 <p className="text-blue-600 font-medium mt-1 text-sm">
+//                   {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+//                 </p>
+//               )}
+//             </div>
+            
+//             <div className="flex flex-wrap gap-2">
+//               <button
+//                 onClick={(e) => {
+//                   handleButtonClick(e);
+//                   refreshNotifications();
+//                 }}
+//                 className="flex items-center gap-2 px-3 py-2 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+//               >
+//                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+//                 </svg>
+//                 Refresh
+//               </button>
+              
+//               {notifications.length > 0 && unreadCount > 0 && (
+//                 <button
+//                   onClick={(e) => {
+//                     handleButtonClick(e);
+//                     markAllAsRead();
+//                   }}
+//                   className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors"
+//                 >
+//                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+//                   </svg>
+//                   Mark all read
+//                 </button>
+//               )}
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Filters - FIXED: Added event parameter and stopPropagation */}
+//         {notifications.length > 0 && (
+//           <div className="bg-white rounded-xl shadow-sm p-3 mb-4">
+//             <div className="flex flex-wrap gap-1">
+//               {[
+//                 { key: 'all', label: 'All' },
+//                 { key: 'unread', label: 'Unread' },
+//                 { key: 'booking', label: 'Bookings' },
+//                 { key: 'payment', label: 'Payments' },
+//                 { key: 'payment_request', label: 'Payment Requests' }
+//               ].map((filterType) => (
+//                 <button
+//                   key={filterType.key}
+//                   onClick={(e) => handleFilterChange(filterType.key, e)}
+//                   className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+//                     filter === filterType.key 
+//                       ? 'bg-blue-500 text-white' 
+//                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+//                   }`}
+//                 >
+//                   <span>{filterType.label}</span>
+//                   {filterType.key === 'unread' && unreadCount > 0 && (
+//                     <span className={`px-1.5 py-0.5 text-xs rounded-full min-w-5 ${
+//                       filter === filterType.key 
+//                         ? 'bg-blue-200 text-blue-800' 
+//                         : 'bg-gray-200 text-gray-700'
+//                     }`}>
+//                       {unreadCount}
+//                     </span>
+//                   )}
+//                 </button>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Notifications List */}
+//         {filteredNotifications.length === 0 ? (
+//           <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+//             <img
+//               src={notifyImg}
+//               alt="No Notifications"
+//               className="w-32 h-32 mx-auto mb-4 opacity-60"
+//             />
+//             <h3 className="text-lg font-semibold text-gray-900 mb-2">
+//               {filter === 'all' ? 'No notifications yet' : `No ${filter} notifications`}
+//             </h3>
+//             <p className="text-gray-600 text-sm max-w-xs mx-auto">
+//               {filter === 'all' 
+//                 ? "You'll see notifications here for booking updates and payment confirmations."
+//                 : `No ${filter} notifications found.`
+//               }
+//             </p>
+//             <button
+//               onClick={(e) => {
+//                 handleButtonClick(e);
+//                 refreshNotifications();
+//               }}
+//               className="mt-4 px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+//             >
+//               Refresh
+//             </button>
+//           </div>
+//         ) : (
+//           <div className="space-y-3">
+//             {filteredNotifications.map((notification) => (
+//               <div
+//                 key={notification._id}
+//                 className={`bg-white rounded-lg shadow-sm border-l-4 ${getNotificationColor(notification.type)} ${
+//                   notification.isRead ? 'opacity-75' : 'shadow-md'
+//                 } transition-all duration-200 hover:shadow-lg`}
+//               >
+//                 <div className="p-4">
+//                   <div className="flex items-start justify-between">
+//                     <div className="flex items-start space-x-3 flex-1">
+//                       <div className={`text-xl mt-0.5 ${
+//                         notification.isRead ? 'text-gray-400' : 'text-blue-500'
+//                       }`}>
+//                         {getNotificationIcon(notification.type)}
+//                       </div>
+                      
+//                       <div className="flex-1 min-w-0">
+//                         <div className="flex flex-wrap items-center gap-1.5 mb-2">
+//                           <h3 className={`font-semibold text-sm ${
+//                             notification.isRead ? 'text-gray-600' : 'text-gray-900'
+//                           }`}>
+//                             {notification.title || 'Notification'}
+//                           </h3>
+                          
+//                           {/* Notification Type Badge */}
+//                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${
+//                             notification.type && notification.type.includes('booking') 
+//                               ? 'bg-blue-100 text-blue-800 border-blue-200' 
+//                               : notification.type && notification.type.includes('payment_request')
+//                               ? 'bg-purple-100 text-purple-800 border-purple-200'
+//                               : notification.type && notification.type.includes('payment')
+//                               ? 'bg-green-100 text-green-800 border-green-200'
+//                               : 'bg-gray-100 text-gray-800 border-gray-200'
+//                           }`}>
+//                             {getNotificationTypeLabel(notification.type)}
+//                           </span>
+                          
+//                           {!notification.isRead && (
+//                             <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+//                           )}
+//                         </div>
+                        
+//                         <p className="text-gray-700 text-sm mb-3 leading-relaxed">
+//                           {notification.message || 'No message content'}
+//                         </p>
+                        
+//                         {/* Action buttons for bookings */}
+//                         {notification.type && notification.type.includes('booking') && notification.metadata?.bookingId && (
+//                           <div className="flex flex-wrap items-center gap-2 mb-3">
+//                             <button
+//                               onClick={(e) => {
+//                                 handleButtonClick(e);
+//                                 handleBookingAction(notification.metadata.bookingId);
+//                               }}
+//                               className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors"
+//                             >
+//                               View Booking
+//                             </button>
+//                           </div>
+//                         )}
+
+//                         {/* Action buttons for payment requests */}
+//                         {/* {notification.type && notification.type.includes('payment_request') && notification.metadata?.bookingId && (
+//                           <div className="flex flex-wrap items-center gap-2 mb-3">
+//                             <button
+//                               onClick={(e) => {
+//                                 handleButtonClick(e);
+//                                 handlePaymentRequest(notification);
+//                               }}
+//                               className="px-3 py-1.5 bg-purple-500 text-white text-xs font-medium rounded-lg hover:bg-purple-600 transition-colors"
+//                             >
+//                               Pay Now
+//                             </button>
+//                             <button
+//                               onClick={(e) => {
+//                                 handleButtonClick(e);
+//                                 handleBookingAction(notification.metadata.bookingId);
+//                               }}
+//                               className="px-3 py-1.5 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+//                             >
+//                               View Details
+//                             </button>
+//                           </div>
+//                         )} */}
+
+//                         {/* Payment amount display */}
+//                         {notification.metadata?.amount && (
+//                           <div className="bg-gray-50 rounded p-2 mb-3">
+//                             <div className="flex items-center gap-1.5 text-xs">
+//                               <span className="font-semibold text-gray-700">Amount:</span>
+//                               <span className={`font-bold ${
+//                                 notification.type && notification.type.includes('payment_request') 
+//                                   ? 'text-purple-600' 
+//                                   : 'text-green-600'
+//                               }`}>
+//                                 ₹{notification.metadata.amount}
+//                               </span>
+//                               {notification.metadata.paymentType && (
+//                                 <span className="text-gray-500">• {notification.metadata.paymentType}</span>
+//                               )}
+//                               {notification.metadata.requestedBy && (
+//                                 <span className="text-gray-500">• Requested by: {notification.metadata.requestedBy}</span>
+//                               )}
+//                             </div>
+//                           </div>
+//                         )}
+                        
+//                         {/* Metadata information */}
+//                         {notification.metadata && Object.keys(notification.metadata).length > 0 && (
+//                           <div className="bg-gray-50 rounded p-2 mb-3">
+//                             <div className="grid grid-cols-1 gap-1.5 text-xs text-gray-600">
+//                               {notification.metadata.propertyName && (
+//                                 <div className="flex items-center gap-1.5">
+//                                   <span>🏠</span>
+//                                   <span className="font-medium">{notification.metadata.propertyName}</span>
+//                                 </div>
+//                               )}
+//                               {notification.metadata.bookingId && (
+//                                 <div className="flex items-center gap-1.5">
+//                                   <span>📅</span>
+//                                   <span>Booking: {notification.metadata.bookingId}</span>
+//                                 </div>
+//                               )}
+//                               {notification.metadata.clientNote && (
+//                                 <div className="flex items-start gap-1.5">
+//                                   <span>💬</span>
+//                                   <span>Note: {notification.metadata.clientNote}</span>
+//                                 </div>
+//                               )}
+//                             </div>
+//                           </div>
+//                         )}
+                        
+//                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+//                           <div className="flex items-center space-x-3 text-xs text-gray-500">
+//                             <span className="flex items-center gap-1">
+//                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                               </svg>
+//                               {formatDate(notification.createdAt)}
+//                             </span>
+//                           </div>
+                          
+//                           <div className="flex items-center space-x-2">
+//                             {!notification.isRead && (
+//                               <button
+//                                 onClick={(e) => {
+//                                   handleButtonClick(e);
+//                                   markAsRead(notification._id);
+//                                 }}
+//                                 className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded hover:bg-blue-100 transition-colors"
+//                               >
+//                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+//                                 </svg>
+//                                 Read
+//                               </button>
+//                             )}
+                            
+//                             <button
+//                               onClick={(e) => {
+//                                 handleButtonClick(e);
+//                                 deleteNotification(notification._id);
+//                               }}
+//                               className="flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 text-xs font-medium rounded hover:bg-red-100 transition-colors"
+//                               title="Delete notification"
+//                             >
+//                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+//                               </svg>
+//                               Delete
+//                             </button>
+//                           </div>
+//                         </div>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         )}
+
+//         {/* Load More Button */}
+//         {filteredNotifications.length > 0 && (
+//           <div className="mt-6 text-center">
+//             <button 
+//               onClick={handleButtonClick}
+//               className="text-blue-500 text-xs font-medium hover:text-blue-700 transition-colors"
+//             >
+//               Load more notifications
+//             </button>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default UserNotifications;
+
+
+
+
 import React, { useEffect, useState } from "react";
 import { notificationAPI } from "../../Clients-components/PropertyController";
 import notifyImg from "../../assets/notification/undraw_my-notifications_fy5v.png";
@@ -590,6 +1229,11 @@ const UserNotifications = ({ onFilterClick }) => {
     if (filter === 'unread') return !notification.isRead;
     if (filter === 'booking') return notification.type && notification.type.includes('booking');
     if (filter === 'payment') return notification.type && notification.type.includes('payment');
+    if (filter === 'vacate') return notification.type && notification.type.includes('vacate');
+    if (filter === 'concern') return notification.type && notification.type.includes('concern');
+    if (filter === 'chat') return notification.type && notification.type.includes('chat');
+    if (filter === 'food') return notification.type && notification.type.includes('food');
+    if (filter === 'payment_request') return notification.type && notification.type.includes('payment_request');
     return true;
   });
 
@@ -708,57 +1352,159 @@ const UserNotifications = ({ onFilterClick }) => {
     }
   };
 
-  // Get notification icon based on type
+  // Get notification icon 
   const getNotificationIcon = (type) => {
     if (!type) return '🔔';
     
     const icons = {
+      // Booking notifications
       booking_created: '📋',
       booking_approved: '✅',
       booking_rejected: '❌',
       booking_cancelled: '🚫',
       booking_paid: '💰',
+      
+      // Payment notifications
       payment_received: '💳',
       payment_failed: '❌',
       payment_refunded: '↩️',
+      payment_request: '💰', 
+      
+      // Vacate room notifications
+      vacate_requested: '🚪',
+      vacate_approved: '✅',
+      vacate_rejected: '❌',
+      vacate_refund_initiated: '💰',
+      vacate_refund_completed: '✅',
+      vacate_payment_received: '💳',
+      vacate_deduction_added: '📝',
+      
+      // Concern notifications
+      concern_submitted: '📝',
+      concern_approved: '✅',
+      concern_rejected: '❌',
+      concern_completed: '✅',
+      concern_priority_updated: '⚠️',
+
+      // Chat notifications
+      chat_message_received: '💬',
+      chat_urgent_message: '🚨',
+
+      // Food Menu notifications
+      food_item_added: '🍽️',
+      food_item_updated: '✏️',
+      food_item_deleted: '🗑️',
+      food_price_changed: '💰',
+      food_menu_cleared: '📋',
+      food_bulk_updated: '📅',
+      
+      // System notifications
       system_alert: '⚠️',
       reminder: '⏰'
     };
     return icons[type] || '🔔';
   };
 
-  // Get notification background color based on type
+  // Get notification background color 
   const getNotificationColor = (type) => {
     if (!type) return 'border-l-gray-500 bg-gray-50';
     
     const colors = {
+      // Booking notifications
       booking_created: 'border-l-blue-500 bg-blue-50',
       booking_approved: 'border-l-green-500 bg-green-50',
       booking_rejected: 'border-l-red-500 bg-red-50',
       booking_cancelled: 'border-l-orange-500 bg-orange-50',
       booking_paid: 'border-l-emerald-500 bg-emerald-50',
+
+      // Payment notifications
       payment_received: 'border-l-green-500 bg-green-50',
       payment_failed: 'border-l-red-500 bg-red-50',
       payment_refunded: 'border-l-yellow-500 bg-yellow-50',
+      payment_request: 'border-l-purple-500 bg-purple-50', 
+
+      // Vacate room notifications
+      vacate_requested: 'border-l-purple-500 bg-purple-50',
+      vacate_approved: 'border-l-green-500 bg-green-50',
+      vacate_rejected: 'border-l-red-500 bg-red-50',
+      vacate_refund_initiated: 'border-l-blue-500 bg-blue-50',
+      vacate_refund_completed: 'border-l-emerald-500 bg-emerald-50',
+      vacate_payment_received: 'border-l-green-500 bg-green-50',
+      vacate_deduction_added: 'border-l-orange-500 bg-orange-50',
+
+      // Concern notifications
+      concern_submitted: 'border-l-indigo-500 bg-indigo-50',
+      concern_approved: 'border-l-green-500 bg-green-50',
+      concern_rejected: 'border-l-red-500 bg-red-50',
+      concern_completed: 'border-l-emerald-500 bg-emerald-50',
+      concern_priority_updated: 'border-l-orange-500 bg-orange-50',
+
+      // Chat notifications
+      chat_message_received: 'border-l-cyan-500 bg-cyan-50',
+      chat_urgent_message: 'border-l-red-500 bg-red-50',
+
+      // Food Menu notifications
+      food_item_added: 'border-l-amber-500 bg-amber-50',
+      food_item_updated: 'border-l-orange-500 bg-orange-50',
+      food_item_deleted: 'border-l-rose-500 bg-rose-50',
+      food_price_changed: 'border-l-lime-500 bg-lime-50',
+      food_menu_cleared: 'border-l-gray-500 bg-gray-50',
+      food_bulk_updated: 'border-l-teal-500 bg-teal-50',
+
+      // System notifications
       system_alert: 'border-l-amber-500 bg-amber-50',
       reminder: 'border-l-indigo-500 bg-indigo-50'
     };
     return colors[type] || 'border-l-gray-500 bg-gray-50';
   };
 
-  // Get notification type label
+  // Get notification type label 
   const getNotificationTypeLabel = (type) => {
     if (!type) return 'Notification';
     
     const labels = {
+      // Booking notifications
       booking_created: 'Booking Submitted',
       booking_approved: 'Booking Approved',
       booking_rejected: 'Booking Rejected',
       booking_cancelled: 'Booking Cancelled',
       booking_paid: 'Booking Confirmed',
+
+      // Payment notifications
       payment_received: 'Payment Received',
       payment_failed: 'Payment Failed',
       payment_refunded: 'Payment Refunded',
+      payment_request: 'Payment Request', 
+
+      // Vacate room notifications
+      vacate_requested: 'Vacate Request',
+      vacate_approved: 'Vacate Approved',
+      vacate_rejected: 'Vacate Rejected',
+      vacate_refund_initiated: 'Refund Initiated',
+      vacate_refund_completed: 'Refund Completed',
+      vacate_payment_received: 'Payment Received',
+      vacate_deduction_added: 'Deduction Applied',
+
+      // Concern notifications
+      concern_submitted: 'Concern Submitted',
+      concern_approved: 'Concern Approved',
+      concern_rejected: 'Concern Rejected',
+      concern_completed: 'Concern Completed',
+      concern_priority_updated: 'Priority Updated',
+
+      // Chat notifications
+      chat_message_received: 'New Message',
+      chat_urgent_message: 'Urgent Message',
+
+      // Food Menu notifications
+      food_item_added: 'Food Item Added',
+      food_item_updated: 'Food Item Updated',
+      food_item_deleted: 'Food Item Removed',
+      food_price_changed: 'Price Updated',
+      food_menu_cleared: 'Menu Cleared',
+      food_bulk_updated: 'Menu Updated',
+
+      // System notifications
       system_alert: 'System Alert',
       reminder: 'Reminder'
     };
@@ -771,9 +1517,45 @@ const UserNotifications = ({ onFilterClick }) => {
     window.location.href = `/user/bookings/${bookingId}`;
   };
 
-  // Handle filter change - FIXED: Stop event propagation
+  // Handle vacate action
+  const handleVacateAction = (vacateRequestId) => {
+    console.log('🚪 View vacate request clicked:', vacateRequestId);
+    window.location.href = `/user/vacate-requests/${vacateRequestId}`;
+  };
+
+  // Handle concern action
+  const handleConcernAction = (concernId) => {
+    console.log('📝 View concern clicked:', concernId);
+    window.location.href = `/user/concern/${concernId}`;
+  };
+
+  // Handle chat action
+  const handleChatAction = (propertyId, senderId) => {
+    console.log('💬 Open chat clicked:', { propertyId, senderId });
+    window.location.href = `/user/chat?property=${propertyId}&user=${senderId}`;
+  };
+
+  // Handle food menu action
+  const handleFoodMenuAction = (propertyId, bookingId) => {
+    console.log('🍽️ View food menu clicked:', { propertyId, bookingId });
+    if (bookingId) {
+      window.location.href = `/user/food-menu?booking=${bookingId}`;
+    } else {
+      window.location.href = `/user/food-menu?property=${propertyId}`;
+    }
+  };
+
+  // Handle payment request action 
+  const handlePaymentRequest = (notification) => {
+    console.log('💰 Payment request clicked:', notification);
+    // Navigate to payment page or show payment modal
+    if (notification.metadata?.bookingId) {
+      window.location.href = `/user/bookings/${notification.metadata.bookingId}?payment=true`;
+    }
+  };
+
+  // Handle filter change
   const handleFilterChange = (filterKey, event) => {
-    // Stop the event from bubbling up to parent elements
     if (event) {
       event.stopPropagation();
       event.nativeEvent.stopImmediatePropagation();
@@ -785,7 +1567,7 @@ const UserNotifications = ({ onFilterClick }) => {
     }
   };
 
-  // Handle button clicks inside notifications - FIXED
+  // Handle button clicks inside notifications
   const handleButtonClick = (event) => {
     event.stopPropagation();
     event.nativeEvent.stopImmediatePropagation();
@@ -806,14 +1588,9 @@ const UserNotifications = ({ onFilterClick }) => {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center">
-          {/* <div className="text-red-500 text-6xl mb-4">⚠️</div> */}
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Notifications</h3>
-          {/* <p className="text-gray-600 mb-4">{error}</p> */}
-          <img
-            src={notifyImg}
-            alt="Error Loading Notifications"
-            className="w-32 h-32 mx-auto mb-4 opacity-60"
-          />
+          <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={refreshNotifications}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
@@ -873,7 +1650,7 @@ const UserNotifications = ({ onFilterClick }) => {
           </div>
         </div>
 
-        {/* Filters - FIXED: Added event parameter and stopPropagation */}
+        {/* Filters */}
         {notifications.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm p-3 mb-4">
             <div className="flex flex-wrap gap-1">
@@ -881,7 +1658,12 @@ const UserNotifications = ({ onFilterClick }) => {
                 { key: 'all', label: 'All' },
                 { key: 'unread', label: 'Unread' },
                 { key: 'booking', label: 'Bookings' },
-                { key: 'payment', label: 'Payments' }
+                { key: 'payment', label: 'Payments' },
+                { key: 'payment_request', label: 'Payment Requests' }, 
+                { key: 'vacate', label: 'Vacate' },
+                { key: 'concern', label: 'Concerns' },
+                { key: 'chat', label: 'Chat' },
+                { key: 'food', label: 'Food Menu' }
               ].map((filterType) => (
                 <button
                   key={filterType.key}
@@ -921,7 +1703,7 @@ const UserNotifications = ({ onFilterClick }) => {
             </h3>
             <p className="text-gray-600 text-sm max-w-xs mx-auto">
               {filter === 'all' 
-                ? "You'll see notifications here for booking updates and payment confirmations."
+                ? "You'll see notifications here for booking updates, payments, payment requests, vacate requests, concerns, chat messages, and food menu changes."
                 : `No ${filter} notifications found.`
               }
             </p>
@@ -967,6 +1749,16 @@ const UserNotifications = ({ onFilterClick }) => {
                               ? 'bg-blue-100 text-blue-800 border-blue-200' 
                               : notification.type && notification.type.includes('payment')
                               ? 'bg-green-100 text-green-800 border-green-200'
+                              : notification.type && notification.type.includes('payment_request')
+                              ? 'bg-purple-100 text-purple-800 border-purple-200' 
+                              : notification.type && notification.type.includes('vacate')
+                              ? 'bg-purple-100 text-purple-800 border-purple-200'
+                              : notification.type && notification.type.includes('concern')
+                              ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                              : notification.type && notification.type.includes('chat')
+                              ? 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                              : notification.type && notification.type.includes('food')
+                              ? 'bg-amber-100 text-amber-800 border-amber-200'
                               : 'bg-gray-100 text-gray-800 border-gray-200'
                           }`}>
                             {getNotificationTypeLabel(notification.type)}
@@ -996,20 +1788,184 @@ const UserNotifications = ({ onFilterClick }) => {
                           </div>
                         )}
 
+                        {/* Action buttons for payment requests*/}
+                        {notification.type && notification.type.includes('payment_request') && notification.metadata?.bookingId && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <button
+                              onClick={(e) => {
+                                handleButtonClick(e);
+                                handlePaymentRequest(notification);
+                              }}
+                              className="px-3 py-1.5 bg-purple-500 text-white text-xs font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                            >
+                              Pay Now
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                handleButtonClick(e);
+                                handleBookingAction(notification.metadata.bookingId);
+                              }}
+                              className="px-3 py-1.5 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Action buttons for vacate requests */}
+                        {notification.type && notification.type.includes('vacate') && notification.metadata?.vacateRequestId && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <button
+                              onClick={(e) => {
+                                handleButtonClick(e);
+                                handleVacateAction(notification.metadata.vacateRequestId);
+                              }}
+                              className="px-3 py-1.5 bg-purple-500 text-white text-xs font-medium rounded-lg hover:bg-purple-600 transition-colors"
+                            >
+                              View Vacate Request
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Action buttons for concerns */}
+                        {notification.type && notification.type.includes('concern') && notification.metadata?.concernId && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <button
+                              onClick={(e) => {
+                                handleButtonClick(e);
+                                handleConcernAction(notification.metadata.concernId);
+                              }}
+                              className="px-3 py-1.5 bg-indigo-500 text-white text-xs font-medium rounded-lg hover:bg-indigo-600 transition-colors"
+                            >
+                              View Concern
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Action buttons for chat */}
+                        {notification.type && notification.type.includes('chat') && notification.metadata?.propertyId && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <button
+                              onClick={(e) => {
+                                handleButtonClick(e);
+                                handleChatAction(notification.metadata.propertyId, notification.metadata.senderId);
+                              }}
+                              className="px-3 py-1.5 bg-cyan-500 text-white text-xs font-medium rounded-lg hover:bg-cyan-600 transition-colors"
+                            >
+                              Open Chat
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Action buttons for food menu */}
+                        {notification.type && notification.type.includes('food') && notification.metadata?.propertyId && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <button
+                              onClick={(e) => {
+                                handleButtonClick(e);
+                                handleFoodMenuAction(notification.metadata.propertyId, notification.metadata.bookingId);
+                              }}
+                              className="px-3 py-1.5 bg-amber-500 text-white text-xs font-medium rounded-lg hover:bg-amber-600 transition-colors"
+                            >
+                              View Food Menu
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Chat message preview */}
+                        {notification.type && notification.type.includes('chat') && notification.metadata?.content && (
+                          <div className="bg-cyan-50 rounded p-2 mb-3 border border-cyan-200">
+                            <div className="flex items-start gap-2 text-xs">
+                              <span className="text-cyan-600 mt-0.5">💬</span>
+                              <div>
+                                <p className="text-cyan-800 font-medium mb-1">Message Preview:</p>
+                                <p className="text-cyan-700 italic">"{notification.metadata.content}"</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Food menu change details */}
+                        {notification.type && notification.type.includes('food') && (
+                          <div className="bg-amber-50 rounded p-2 mb-3 border border-amber-200">
+                            <div className="space-y-1.5 text-xs">
+                              {notification.metadata?.foodItemName && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-semibold text-amber-700">Food Item:</span>
+                                  <span className="text-amber-800">{notification.metadata.foodItemName}</span>
+                                </div>
+                              )}
+                              {notification.metadata?.day && notification.metadata?.category && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-semibold text-amber-700">When:</span>
+                                  <span className="text-amber-800">{notification.metadata.day} - {notification.metadata.category}</span>
+                                </div>
+                              )}
+                              {notification.metadata?.oldData?.price && notification.metadata?.newData?.price && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-semibold text-amber-700">Price Change:</span>
+                                  <span className="text-amber-800">
+                                    ₹{notification.metadata.oldData.price} → ₹{notification.metadata.newData.price}
+                                  </span>
+                                </div>
+                              )}
+                              {notification.metadata?.changedByName && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-semibold text-amber-700">Changed By:</span>
+                                  <span className="text-amber-800">{notification.metadata.changedByName}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Payment amount display */}
                         {notification.metadata?.amount && (
-                          <div className="bg-gray-50 rounded p-2 mb-3">
+                          <div className={`rounded p-2 mb-3 ${
+                            notification.type && notification.type.includes('payment_request') 
+                              ? 'bg-purple-50 border border-purple-200' 
+                              : 'bg-gray-50'
+                          }`}>
                             <div className="flex items-center gap-1.5 text-xs">
                               <span className="font-semibold text-gray-700">Amount:</span>
-                              <span className="text-green-600 font-bold">₹{notification.metadata.amount}</span>
+                              <span className={`font-bold ${
+                                notification.type && notification.type.includes('payment_request') 
+                                  ? 'text-purple-600' 
+                                  : 'text-green-600'
+                              }`}>
+                                ₹{notification.metadata.amount}
+                              </span>
                               {notification.metadata.paymentType && (
                                 <span className="text-gray-500">• {notification.metadata.paymentType}</span>
+                              )}
+                              {notification.metadata.requestedBy && (
+                                <span className="text-gray-500">• Requested by: {notification.metadata.requestedBy}</span>
                               )}
                             </div>
                           </div>
                         )}
                         
-                        {/* Metadata information */}
+                        {/* Refund amount display for vacate */}
+                        {notification.metadata?.refundAmount && (
+                          <div className="bg-green-50 rounded p-2 mb-3 border border-green-200">
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <span className="font-semibold text-green-700">Refund Amount:</span>
+                              <span className="text-green-600 font-bold">₹{notification.metadata.refundAmount}</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Rejection reason display */}
+                        {notification.metadata?.rejectionReason && (
+                          <div className="bg-red-50 rounded p-2 mb-3 border border-red-200">
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <span className="font-semibold text-red-700">Reason:</span>
+                              <span className="text-red-600">{notification.metadata.rejectionReason}</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Metadata information  */}
                         {notification.metadata && Object.keys(notification.metadata).length > 0 && (
                           <div className="bg-gray-50 rounded p-2 mb-3">
                             <div className="grid grid-cols-1 gap-1.5 text-xs text-gray-600">
@@ -1022,7 +1978,49 @@ const UserNotifications = ({ onFilterClick }) => {
                               {notification.metadata.bookingId && (
                                 <div className="flex items-center gap-1.5">
                                   <span>📅</span>
-                                  <span>Booking: {notification.metadata.bookingId}</span>
+                                  <span>Booking: {notification.metadata.bookingId.substring(0, 8)}...</span>
+                                </div>
+                              )}
+                              {notification.metadata.vacateRequestId && (
+                                <div className="flex items-center gap-1.5">
+                                  <span>🚪</span>
+                                  <span>Vacate Request: {notification.metadata.vacateRequestId.substring(0, 8)}...</span>
+                                </div>
+                              )}
+                              {notification.metadata.concernId && (
+                                <div className="flex items-center gap-1.5">
+                                  <span>📝</span>
+                                  <span>Concern: {notification.metadata.concernId.substring(0, 8)}...</span>
+                                </div>
+                              )}
+                              {notification.metadata.senderName && (
+                                <div className="flex items-center gap-1.5">
+                                  <span>👤</span>
+                                  <span>From: {notification.metadata.senderName}</span>
+                                </div>
+                              )}
+                              {notification.metadata.foodItemName && (
+                                <div className="flex items-center gap-1.5">
+                                  <span>🍽️</span>
+                                  <span>Food: {notification.metadata.foodItemName}</span>
+                                </div>
+                              )}
+                              {notification.metadata.concernType && (
+                                <div className="flex items-center gap-1.5">
+                                  <span>⚡</span>
+                                  <span>Type: {notification.metadata.concernType.replace('-', ' ')}</span>
+                                </div>
+                              )}
+                              {notification.metadata.action && (
+                                <div className="flex items-center gap-1.5">
+                                  <span>🎯</span>
+                                  <span>Action: {notification.metadata.action}</span>
+                                </div>
+                              )}
+                              {notification.metadata.clientNote && (
+                                <div className="flex items-start gap-1.5">
+                                  <span>💬</span>
+                                  <span>Note: {notification.metadata.clientNote}</span>
                                 </div>
                               )}
                             </div>

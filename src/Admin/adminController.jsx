@@ -157,19 +157,344 @@ export const adminBookingsAPI = {
 };
 
 // adminController.js - Fix the manual transfer API
+// export const adminPaymentsAPI = {
+//   // Manual transfer - CORRECTED
+//   initiateManualTransfer: async (transferData) => {
+//     try {
+//       console.log("🔄 SEND TRANSFER DATA:", {
+//         endpoint: `/transfer/initiate/${transferData.bookingId}`,
+//         data: transferData,
+//         hasPaymentId: !!transferData.paymentId,
+//         hasBankAccountId: !!transferData.bankAccountId
+//       });
+
+//       const response = await api.post(
+//         `/transfer/initiate/${transferData.bookingId}`,
+//         transferData
+//       );
+      
+//       console.log("✅ TRANSFER RESPONSE:", response.data);
+//       return response;
+      
+//     } catch (error) {
+//       console.error("❌ TRANSFER ERROR DETAILS:", {
+//         message: error.message,
+//         status: error.response?.status,
+//         data: error.response?.data,
+//         url: error.config?.url
+//       });
+//       throw error;
+//     }
+//   },
+
+//   // Get transfer details
+//   getTransferDetails: async (bookingId) => {
+//     try {
+//       const response = await api.get(`/transfer/status/${bookingId}`);
+//       return response;
+//     } catch (error) {
+//       console.error('Get transfer details error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Get payment history
+//   getPaymentHistory: async (bookingId) => {
+//     try {
+//       const response = await api.get(`/payments/history/${bookingId}`);
+//       return response;
+//     } catch (error) {
+//       console.error('Get payment history error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Get payments by client
+//   getPaymentsByClient: async (clientId) => {
+//     try {
+//       const response = await api.get(`/payments/by-client/${clientId}`);
+//       return response;
+//     } catch (error) {
+//       console.error('Get payments by client error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Get payment details
+//   getPaymentDetails: async (paymentId) => {
+//     try {
+//       const response = await api.get(`/payments/${paymentId}`);
+//       return response;
+//     } catch (error) {
+//       console.error('Get payment details error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Create payment order
+//   createOrder: async (orderData) => {
+//     try {
+//       const response = await api.post('/payments/create-order', orderData);
+//       return response;
+//     } catch (error) {
+//       console.error('Create order error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Validate payment
+//   validatePayment: async (paymentData) => {
+//     try {
+//       const response = await api.post('/payments/validate-payment', paymentData);
+//       return response;
+//     } catch (error) {
+//       console.error('Validate payment error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Refund payment
+//   refundPayment: async (refundData) => {
+//     try {
+//       const response = await api.post('/payments/refund', refundData);
+//       return response;
+//     } catch (error) {
+//       console.error('Refund payment error:', error);
+//       throw error;
+//     }
+//   }
+// };
+
+
+// export const adminPaymentsAPI = {
+//   // Razorpay transfer - Main function
+//    initiateRazorpayTransfer: async (transferData) => {
+//     try {
+//       console.log("🔄 Calling Razorpay transfer API:", {
+//         endpoint: `/razorpay/transfer/initiate/${transferData.bookingId}`,
+//         data: transferData
+//       });
+      
+//       const response = await api.post(`/razorpay/transfer/initiate/${transferData.bookingId}`, transferData);
+      
+//       console.log("✅ Razorpay transfer API response:", response.data);
+//       return response;
+      
+//     } catch (error) {
+//       console.error("❌ Razorpay transfer API error:", {
+//         status: error.response?.status,
+//         data: error.response?.data,
+//         message: error.message
+//       });
+//       throw error;
+//     }
+//   },
+
+//   // Manual transfer - FIXED: This function exists and calls the right endpoint
+//   initiateManualTransfer: async (transferData) => {
+//     try {
+//       console.log("🔄 Calling Manual transfer API:", {
+//         endpoint: `/manual/transfer/initiate/${transferData.bookingId}`,
+//         data: transferData
+//       });
+      
+//       const response = await api.post(`/manual/transfer/initiate/${transferData.bookingId}`, transferData);
+      
+//       console.log("✅ Manual transfer API response:", response.data);
+//       return response;
+      
+//     } catch (error) {
+//       console.error("❌ Manual transfer API error:", {
+//         status: error.response?.status,
+//         data: error.response?.data,
+//         message: error.message
+//       });
+//       throw error;
+//     }
+//   },
+
+
+//   // Check payout status
+//   checkPayoutStatus: async (payoutId) => {
+//     try {
+//       const response = await api.get(`/razorpay/payout/status/${payoutId}`);
+//       return response;
+//     } catch (error) {
+//       console.error('Check payout status API error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Get Razorpay balance
+//   getRazorpayBalance: async () => {
+//     try {
+//       const response = await api.get(`/razorpay/balance`);
+//       return response;
+//     } catch (error) {
+//       console.error('Get Razorpay balance API error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Verify bank account
+//   verifyBankAccount: async (verificationData) => {
+//     try {
+//       const response = await api.post(`/razorpay/verify-bank-account`, verificationData);
+//       return response;
+//     } catch (error) {
+//       console.error('Verify bank account API error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Get transfer history
+//   getTransferHistory: async (bookingId) => {
+//     try {
+//       const response = await api.get(`/razorpay/transfers/${bookingId}`);
+//       return response;
+//     } catch (error) {
+//       console.error('Get transfer history API error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Test Razorpay connection
+//   testRazorpayConnection: async () => {
+//     try {
+//       const response = await api.get(`/razorpay/test-connection`);
+//       return response;
+//     } catch (error) {
+//       console.error('Test Razorpay connection API error:', error);
+//       throw error;
+//     }
+//   },
+
+//   // Get payment history
+//   getPaymentHistory: async (bookingId) => {
+//     try {
+//       const response = await api.get(`/payments/history/${bookingId}`);
+//       return response;
+//     } catch (error) {
+//       console.error('Get payment history API error:', error);
+//       throw error;
+//     }
+//   }
+// };
+
+// Admin Payments API
 export const adminPaymentsAPI = {
-  // Manual transfer - FIXED
+  // Razorpay transfer - Actual money transfer
+  initiateRazorpayTransfer: async (transferData) => {
+    try {
+      console.log("🔄 Calling Razorpay transfer API:", {
+        endpoint: `/razorpay/transfer/initiate/${transferData.bookingId}`,
+        data: transferData
+      });
+      
+      const response = await api.post(`/razorpay/transfer/initiate/${transferData.bookingId}`, transferData);
+      
+      console.log("✅ Razorpay transfer API response:", response.data);
+      return response;
+      
+    } catch (error) {
+      console.error("❌ Razorpay transfer API error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
+    }
+  },
+
+  // Manual transfer - Recording only
   initiateManualTransfer: async (transferData) => {
-    return api.post(`/payments/transfer/initiate/${transferData.bookingId}`, transferData);
+    try {
+      console.log("🔄 Calling Manual transfer API:", {
+        endpoint: `/manual/transfer/initiate/${transferData.bookingId}`,
+        data: transferData
+      });
+      
+      const response = await api.post(`/manual/transfer/initiate/${transferData.bookingId}`, transferData);
+      
+      console.log("✅ Manual transfer API response:", response.data);
+      return response;
+      
+    } catch (error) {
+      console.error("❌ Manual transfer API error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
+    }
+  },
+
+  // Check payout status
+  checkPayoutStatus: async (payoutId) => {
+    try {
+      const response = await api.get(`/razorpay/payout/status/${payoutId}`);
+      return response;
+    } catch (error) {
+      console.error('Check payout status API error:', error);
+      throw error;
+    }
+  },
+
+  // Get Razorpay balance
+  getRazorpayBalance: async () => {
+    try {
+      const response = await api.get(`/razorpay/balance`);
+      return response;
+    } catch (error) {
+      console.error('Get Razorpay balance API error:', error);
+      throw error;
+    }
   },
 
   // Get transfer details
   getTransferDetails: async (bookingId) => {
-    return api.get(`/transfer/status/${bookingId}`);
+    try {
+      const response = await api.get(`/transfer/details/${bookingId}`);
+      return response;
+    } catch (error) {
+      console.error('Get transfer details API error:', error);
+      throw error;
+    }
+  },
+
+  // Get payment history
+  getPaymentHistory: async (bookingId) => {
+    try {
+      const response = await api.get(`/payments/history/${bookingId}`);
+      return response;
+    } catch (error) {
+      console.error('Get payment history API error:', error);
+      throw error;
+    }
+  },
+
+  // Get payments by client
+  getPaymentsByClient: async (clientId) => {
+    try {
+      const response = await api.get(`/payments/by-client/${clientId}`);
+      return response;
+    } catch (error) {
+      console.error('Get payments by client API error:', error);
+      throw error;
+    }
+  },
+
+  // Health check
+  getPaymentHealth: async () => {
+    try {
+      const response = await api.get(`/payments/health`);
+      return response;
+    } catch (error) {
+      console.error('Get payment health API error:', error);
+      throw error;
+    }
   }
 };
-
-
 export const adminTicketAPI = {
   // Get all tickets (admin only)
   getAllTickets: (params = {}) =>

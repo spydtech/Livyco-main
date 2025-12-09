@@ -638,7 +638,7 @@ export default function VacateRoomFlow() {
             )}
           </div>
 
-          {/* Step Tracker (visible only after Got It) */}
+          {/* Step Tracker (visible only after Got It)  status refund initation*/}
           {showSteps && (
             <div className="w-full md:w-72 pt-4">
               <h3 className="text-sm font-semibold mb-4">Progress</h3>

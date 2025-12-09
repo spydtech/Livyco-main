@@ -276,8 +276,8 @@ export default function Hero() {
               <button
                 key={opt}
                 onClick={() => setGenderOption(opt)}
-                className={`px-3 py-1 rounded-full ${genderOption === opt
-                    ? "bg-[#144FB6] text-white"
+                className={`px-3 py-1 border-2 border-blue-800 rounded-full ${genderOption === opt
+                    ? "bg-[#144FB6] text-white "
                     : "bg-white text-black"
                   }`}
               >
@@ -292,7 +292,7 @@ export default function Hero() {
 
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-sm">
             <select
-              className="bg-white px-3 py-1 rounded-full focus:outline-none"
+              className="bg-white px-3 py-1 rounded-full border-2 border-blue-800 focus:outline-none"
               value={sharing}
               onChange={(e) => setSharing(e.target.value)}
             >
@@ -304,7 +304,7 @@ export default function Hero() {
             </select>
 
             <select
-              className="bg-white px-3 py-1 rounded-full focus:outline-none"
+              className="bg-white px-3 py-1 rounded-full focus:outline-none border-2 border-blue-800"
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
             >
@@ -322,7 +322,7 @@ export default function Hero() {
           <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowCityModal(true)}
-              className="bg-yellow-400 px-3 py-2 sm:py-1 rounded-3xl focus:outline-none flex items-center gap-2 w-full sm:w-auto justify-center"
+              className="bg-yellow-400 px-3 py-2 sm:py-1 border-2 border-blue-800  rounded-3xl focus:outline-none flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <MapPin className="w-4 h-4" />
               {location || "Select City"}
@@ -330,7 +330,7 @@ export default function Hero() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-            <label htmlFor="move-in" className="text-sm whitespace-nowrap">
+            <label htmlFor="move-in" className="text-sm whitespace-nowrap rounded-full border-2 border-blue-800 px-2 py-1">
               Move In
             </label>
             <input
@@ -338,11 +338,11 @@ export default function Hero() {
               id="move-in"
               value={moveInDate}
               onChange={(e) => setMoveInDate(e.target.value)}
-              className="bg-white px-3 py-1 rounded focus:outline-none w-full sm:w-auto"
+              className="bg-white px-3 py-1 rounded-full border-2 border-blue-800 focus:outline-none w-full sm:w-auto"
             />
             <button
               onClick={handleSearch}
-              className="bg-yellow-400 px-6 py-2 rounded-full text-sm font-medium hover:bg-yellow-300 w-full sm:w-auto text-center"
+              className="bg-yellow-400 px-6 py-2 border-2 border-blue-800 rounded-full text-sm font-medium hover:bg-yellow-300 w-full sm:w-auto text-center"
             >
               Search
             </button>

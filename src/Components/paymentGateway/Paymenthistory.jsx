@@ -406,7 +406,7 @@ const PaymentHistory = () => {
                                         <div>
                                             <p className="font-medium">{formatCurrency(payment.amount)}</p>
                                             <p className="text-sm text-gray-500">
-                                                {formatDate(payment.date)} • {payment.method}
+                                                {formatDate(payment.date)} • {payment.method} • {payment.transactionId} 
                                             </p>
                                         </div>
                                         <span className={`px-2 py-1 rounded-full text-xs ${
