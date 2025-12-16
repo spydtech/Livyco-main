@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route, NavLink } from "react-router-dom";
-import { FaSearch, FaBell, FaUserCircle } from "react-icons/fa";
-import { HiOutlineViewGrid, HiUsers, HiChartPie, HiLogout } from "react-icons/hi";
+import { FaSearch, FaBell, FaUserCircle, FaAddressBook } from "react-icons/fa";
+import { HiOutlineViewGrid, HiUsers, HiChartPie, HiLogout  } from "react-icons/hi";
 import { BiMoney, BiSupport } from "react-icons/bi";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ import { adminNotificationAPI } from "../adminController";
 
 import axios from "axios";
 import AdminNotifications from "../adminNotification/AdminNotifications";
+import AdminContactsPage from "../AdminContacts/AdminContactsPage";
 
 const menuItems = [
   { name: "Dashboard", icon: HiOutlineViewGrid, path: "/admin/dashboard" },
@@ -28,6 +29,8 @@ const menuItems = [
   { name: "Custom Reviews", icon: HiUsers, path: "/admin/dashboard/reviews" },
   { name:"Bookings", icon: HiUsers, path: "/admin/dashboard/bookings" },
   { name: "Financial Reports", icon: BiMoney, path: "/admin/dashboard/finacialReport" },
+  { name: "Contact List", icon: FaAddressBook, path: "/admin/dashboard/contacts" },
+ 
   { name: "Support Tickets", icon: BiSupport, path: "/admin/dashboard/support" },
   { name: "Settings", icon: HiChartPie, path: "/admin/dashboard/settings" },
   { name: "Sign Out", icon: HiLogout, path: "/admin/admin-login" },
@@ -187,6 +190,9 @@ const Dashboard = () => {
           <Route path="/settings" element={<Tabs />} />
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/support" element={<SupportDashboard/>} />
+          <Route path="/contacts" element={<AdminContactsPage />} />
+ 
+          
         </Routes>
       </main>
     </div>

@@ -740,7 +740,7 @@ import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import Header from "../Header";
 import FreeMapComponent from "../usermaps/FreeMapComponent";
-import { mapAPI, reviewAPI } from "../../Clients-components/PropertyController";
+import { mapAPI, reviewAPI, contactAPI } from "../../Clients-components/PropertyController";
 
 export default function BookPG() {
   const sliderRef = useRef(null);
@@ -1000,29 +1000,63 @@ export default function BookPG() {
     setIsDragging(false);
   };
 
-  // Function to handle phone call
-  const handlePhoneClick = () => {
+  // Function to handle phone call WITH CONTACT RECORDING (CHANGED - no actual call)
+  const handlePhoneClick = async () => {
     const phoneNumber = pg?.owner?.phone || "1234567890";
-    window.location.href = `tel:${phoneNumber}`;
+    
+    // ADDED: Record contact in database
+    try {
+      if (user) {
+        await contactAPI.createContact({
+          propertyId: getPropertyId(),
+          propertyName: pg.name,
+          clientId: pg.ownerId || pg.owner._id,
+          clientName: pg.owner?.name || "PG Owner",
+          clientPhone: phoneNumber,
+          contactMethod: 'call',
+          contactType: 'inquiry',
+          message: `Interested in ${pg.name} property`
+        });
+        
+        // Show success message instead of making the call
+        alert("Contact information has been saved to your contacted list!");
+      } else {
+        navigate("/user/login", {
+          state: { from: `/pg/${id}`, message: "Please login to contact property owners" }
+        });
+      }
+    } catch (error) {
+      console.error("Error recording contact:", error);
+      alert("Failed to save contact. Please try again.");
+    }
   };
 
-  // Function to handle message click
-  const handleMessageClick = () => {
+  // Function to handle message click WITH CONTACT RECORDING (CHANGED - no actual chat)
+  const handleMessageClick = async () => {
     if (!user) {
       navigate("/user/login");
       return;
     }
 
-    navigate("/user/chats", {
-      state: {
-        recipientId: pg.ownerId || pg.owner._id,
-        recipientName: pg.owner?.name || "PG Owner",
+    // ADDED: Record contact in database
+    try {
+      await contactAPI.createContact({
         propertyId: getPropertyId(),
         propertyName: pg.name,
-        clientId: pg.owner?.clientId || "client ID",
-        role: "client"
-      }
-    });
+        clientId: pg.ownerId || pg.owner._id,
+        clientName: pg.owner?.name || "PG Owner",
+        clientPhone: pg.owner?.phone || "1234567890",
+        contactMethod: 'chat',
+        contactType: 'inquiry',
+        message: `Interested in ${pg.name} property`
+      });
+      
+      // Show success message instead of navigating to chat
+      alert("Contact information has been saved to your contacted list!");
+    } catch (error) {
+      console.error("Error recording contact:", error);
+      alert("Failed to save contact. Please try again.");
+    }
   };
 
   const handleview = () => {
@@ -1246,7 +1280,7 @@ export default function BookPG() {
                       image.url ||
                       pg.image ||
                       "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw"
-                    }
+                  }
                     alt={`Thumbnail ${i + 1}`}
                     className="flex-1 min-w-0 h-24 object-cover rounded-xl shadow-sm"
                     onError={(e) => {
@@ -1624,37 +1658,6 @@ export default function BookPG() {
             )}
           </div>
 
-          {/* Neighborhood */}
-          {/* <div className="mt-5 px-4 bg-white p-4 rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Neighborhood</h2>
-            <div className="grid text-xs grid-cols-1 gap-4">
-              {displayedData.map((item, index) => (
-                <div key={index} className="px-4 rounded-lg text-blue-600">
-                  <div className="flex gap-2 items-center">
-                    <span className="w-5 h-5 [&>*]:w-full [&>*]:h-full inline-block">
-                      {item.icon}
-                    </span>
-                    {item.title}
-                  </div>
-                  <hr className="my-2" />
-                  <div className="text-sm text-gray-600">
-                    <div className="flex justify-between text-gray-400">
-                      <p>{item.name}</p>
-                      <p>{item.walk}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              className="mt-6 text-blue-600 hover:underline"
-              onClick={() => setShowAll((prev) => !prev)}
-            >
-              {showAll ? "Show Less" : "View All"}
-            </button>
-          </div> */}
-
           {/* Nearby Properties */}
           <div className="flex bg-white mt-5 p-4 rounded-lg shadow-sm">
             <p className="text-xl font-semibold">Nearby Properties</p>
@@ -1695,7 +1698,10 @@ export default function BookPG() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-center items-center bg-white gap-4 md:gap-10 p-6 rounded-lg shadow-sm mb-8">
-            <button className="bg-blue-700 px-10 md:px-20 lg:px-32 rounded-md py-3 text-white w-full sm:w-auto hover:bg-blue-800 transition-colors font-semibold">
+            <button 
+              onClick={handlePhoneClick}
+              className="bg-blue-700 px-10 md:px-20 lg:px-32 rounded-md py-3 text-white w-full sm:w-auto hover:bg-blue-800 transition-colors font-semibold"
+            >
               Contact
             </button>
 

@@ -722,3 +722,17 @@ export const mediaAPI = {
 export const mapAPI = {
   getMapByProperty: (propertyId) => api.get(`/map/${propertyId}`),
 };
+
+export const adminContactsAPI = {
+  // Get ALL contacts for admin
+  getAllContacts: () =>
+    api.get('/contacts/admin/all')
+      .then(response => {
+        console.log(' Admin Contacts API Response:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error(' Admin Contacts API Error:', error.response?.data || error.message);
+        throw error;
+      })
+};

@@ -854,6 +854,22 @@ export const chatAPI = {
 export const userAPI = {
 updateUser: (data) => api.put('/api/auth/user/profile', data),
   getUser: () => api.get('/api/auth/user'),
+  //  deleteUserAccount function
+  deleteUserAccount: () => {
+    console.log("Calling delete account API...");
+    return api.delete('/api/auth/profile')
+      .then(response => {
+        console.log("Delete account response:", response.data);
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to delete account');
+        }
+        return response;
+      })
+      .catch(error => {
+        console.error("Delete account error:", error);
+        throw error;
+      });
+  },
  
   // ✅ Profile image upload API
   uploadProfileImage: (formData) => {
@@ -1350,6 +1366,7 @@ export const roomAPI = {
   getRoomRentData: (propertyId) => 
     api.get(`/api/auth/${propertyId}/rooms/rent`),
   
+  
   // Save room rent data
   saveRoomRentData: (propertyId, data) => 
     api.post(`/api/auth/${propertyId}/rooms/rent`, data),
@@ -1361,6 +1378,50 @@ export const roomAPI = {
   // Update room type
   updateRoomType: (propertyId, roomTypeId, data) =>
     api.put(`/api/auth/${propertyId}/rooms/${roomTypeId}`, data),
+};
+
+export const contactAPI = {
+  createContact: (contactData) =>
+    api.post('/api/contacts/contact', contactData)
+      .then(response => {
+        console.log('Contact recorded:', response.data);
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to record contact');
+        }
+        return response;
+      })
+      .catch(error => {
+        console.error('Create contact error:', error);
+        throw error;
+      }),
+ 
+  getUserContacts: () =>
+    api.get('/api/contacts/user/contacts')
+      .then(response => {
+        console.log('Contacts fetched:', response.data.count);
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch contacts');
+        }
+        return response;
+      })
+      .catch(error => {
+        console.error('Get contacts error:', error);
+        throw error;
+      }),
+ 
+  deleteContact: (contactId) =>
+    api.delete(`/api/contacts/contact/${contactId}`)
+      .then(response => {
+        console.log('Contact deleted:', contactId);
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to delete contact');
+        }
+        return response;
+      })
+      .catch(error => {
+        console.error('Delete contact error:', error);
+        throw error;
+      })
 };
 
 

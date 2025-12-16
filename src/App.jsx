@@ -61,7 +61,9 @@ import Paymenthistory from "./Components/paymentGateway/Paymenthistory"; // Impo
 import PayRent from "./Components/paymentGateway/PayRent";
 import { Cancel } from "./Components/paymentGateway/Cancel";
 import RiseConcern from "./Components/raiseConcern/RiseConcern";
-import UserRegister from "./Components/userLogin/UserRegister"
+import UserRegister from "./Components/userLogin/UserRegister";
+import ContactedList from "./Components/profile/ContactedList";
+ 
 
 
 
@@ -85,6 +87,7 @@ function App() {
           <Route path="/user/wishlist" element={<MyWishList />} />
           {/* user profile */}
           <Route path="/user/profile" element={<UserProfile />} />
+          <Route path="/user/contacted-list" element={<ContactedList />} />
           {/* bookingng confirmation */}
           <Route path="/user/booking" element={<FigmaDeluxeHostel />} />
 
