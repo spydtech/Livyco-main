@@ -63,6 +63,7 @@ import { Cancel } from "./Components/paymentGateway/Cancel";
 import RiseConcern from "./Components/raiseConcern/RiseConcern";
 import UserRegister from "./Components/userLogin/UserRegister";
 import ContactedList from "./Components/profile/ContactedList";
+import UserSupportPage from "./Components/profile/UserSupportPage";
  
 
 
@@ -98,6 +99,9 @@ function App() {
           <Route path="/user/payment-history" element={<Paymenthistory />} />
           <Route path="/user/booking/conformation" element={<Cancel />} />
           <Route path="/user/pay-rent" element={<PayRent />} />
+
+          { /* ticket Rise */}
+          <Route path="/user/support" element={<UserSupportPage />} />
 
          
           

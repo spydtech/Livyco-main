@@ -25,7 +25,7 @@ const UserProfile = () => {
     { label: "Payment history", hasArrow: true, link: "/user/payment-history", icon: <FaHistory className="w-4 h-4" /> },
     { label: "My Concerns", hasArrow: true, link: "/user/raise-concern", icon: <FaComments className="w-4 h-4" /> },
     { label: "Contacted List", hasArrow: true, link: "/user/contacted-list", icon: <FaPhone className="w-4 h-4" /> },
-    { label: "Help & support", hasArrow: true, icon: <FaQuestionCircle className="w-4 h-4" /> },
+    { label: "Help & support", hasArrow: true, link: "/user/support", icon: <FaQuestionCircle className="w-4 h-4" /> },
     { label: "Term & policy", hasArrow: true, icon: <FaFileContract className="w-4 h-4" /> },
     { label: "Delete Account", hasArrow: true, icon: <FaTrash className="w-4 h-4" />, isDelete: true },
     { label: "Logout", hasArrow: false, icon: <FaSignOutAlt className="w-4 h-4" />, isLogout: true }

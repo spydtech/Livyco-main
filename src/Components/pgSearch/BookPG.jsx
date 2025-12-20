@@ -727,8 +727,7 @@
 
 
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Phone, MessageCircle } from "lucide-react";
+import { Phone, MessageCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { MapPin } from 'lucide-react';
 import { Plane, TrainFront, Bus, Hospital, ShoppingCart } from "lucide-react";
@@ -740,7 +739,7 @@ import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import Header from "../Header";
 import FreeMapComponent from "../usermaps/FreeMapComponent";
-import { mapAPI, reviewAPI, contactAPI } from "../../Clients-components/PropertyController";
+import { mapAPI, reviewAPI, contactAPI, propertyAPI } from "../../Clients-components/PropertyController";
 
 export default function BookPG() {
   const sliderRef = useRef(null);
@@ -756,7 +755,11 @@ export default function BookPG() {
   const [mapLoading, setMapLoading] = useState(true);
   const [mapApiError, setMapApiError] = useState(null);
   const [showMapView, setShowMapView] = useState(false);
-
+  
+  // Image gallery popup state
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   // Reviews state
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
@@ -767,6 +770,11 @@ export default function BookPG() {
     ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
   });
   const [showAllReviews, setShowAllReviews] = useState(false);
+  
+  // Nearby properties state
+  const [nearbyProperties, setNearbyProperties] = useState([]);
+  const [nearbyLoading, setNearbyLoading] = useState(true);
+  const [nearbyError, setNearbyError] = useState(null);
 
   const { id } = useParams();
   const location = useLocation();
@@ -835,6 +843,73 @@ export default function BookPG() {
       }
     } finally {
       setReviewsLoading(false);
+    }
+  };
+  
+
+  // NEW: Fetch nearby properties
+  const fetchNearbyProperties = async () => {
+    const propertyId = getPropertyId();
+    const city = pg?.city || pg?.property?.city;
+    
+    if (!propertyId || !city) {
+      console.log('Missing property ID or city for nearby properties');
+      setNearbyLoading(false);
+      setNearbyError("City information not available");
+      return;
+    }
+
+    try {
+      setNearbyLoading(true);
+      setNearbyError(null);
+
+      console.log('Fetching nearby properties for city:', city, 'excluding:', propertyId);
+
+      // Use the propertyAPI to fetch nearby properties
+      const response = await propertyAPI.getNearbyProperties(city, propertyId);
+      
+      console.log('Nearby properties response:', response);
+
+      if (response.success && response.data) {
+        // Handle both array response and object with data property
+        const propertiesData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.data || []);
+        
+        console.log(`Successfully fetched ${propertiesData.length} nearby properties`);
+        
+        // Transform the data to match your component's needs
+        const formattedProperties = propertiesData.map(item => {
+          const property = item.property || item;
+          const media = item.media || { images: [] };
+          
+          return {
+            _id: property._id,
+            name: property.name || 'PG Property',
+            city: property.city,
+            locality: property.locality,
+            street: property.street,
+            images: media.images || [],
+            owner: item.owner || {},
+            rooms: item.rooms || {},
+            price: property.roomPrice || 0,
+            rating: 4.5, // Default rating or calculate from reviews
+            distance: "Within in Km", // You might want to calculate actual distance
+            status: property.status
+          };
+        });
+
+        setNearbyProperties(formattedProperties);
+      } else {
+        setNearbyProperties([]);
+        setNearbyError(response.message || "No nearby properties found");
+      }
+    } catch (error) {
+      console.error("Error fetching nearby properties:", error);
+      setNearbyError(error.message || "Failed to load nearby properties");
+      setNearbyProperties([]);
+    } finally {
+      setNearbyLoading(false);
     }
   };
 
@@ -957,13 +1032,75 @@ export default function BookPG() {
     if (pg || id) {
       fetchLocationData();
       fetchPropertyReviews();
+      fetchNearbyProperties(); // NEW: Fetch nearby properties
     } else {
       setMapLoading(false);
       setMapApiError("Property information not available");
       setReviewsLoading(false);
       setReviewsError("Property information not available");
+      setNearbyLoading(false);
+      setNearbyError("Property information not available");
     }
   }, [pg, id]);
+
+  // Handle click on nearby property
+  const handleNearbyPropertyClick = (property) => {
+    navigate(`/pg/${property._id}`, {
+      state: { pg: property }
+    });
+  };
+
+  // Image gallery functions
+  const openImageGallery = (index = 0) => {
+    setCurrentImageIndex(index);
+    setShowImageGallery(true);
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+  };
+
+  const closeImageGallery = () => {
+    setShowImageGallery(false);
+    document.body.style.overflow = 'auto'; // Restore scrolling
+  };
+
+  const goToNextImage = () => {
+    const images = pg?.images || [];
+    if (images.length > 0) {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === images.length - 1 ? 0 : prevIndex + 1
+      );
+    }
+  };
+
+  const goToPrevImage = () => {
+    const images = pg?.images || [];
+    if (images.length > 0) {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === 0 ? images.length - 1 : prevIndex - 1
+      );
+    }
+  };
+
+  const selectImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!showImageGallery) return;
+      
+      if (e.key === 'Escape') {
+        closeImageGallery();
+      } else if (e.key === 'ArrowRight') {
+        goToNextImage();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showImageGallery]);
 
   // Handle undefined pg gracefully
   if (!pg) {
@@ -1147,94 +1284,22 @@ export default function BookPG() {
     return reviews.slice(0, 3);
   };
 
-  const Images = [
-    {
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0e2OTHsRbRXRY-NYRFZir7YdqURRk1dDD6g&s",
-      name: "Fitness Arena",
-      price: "00.0000",
-      rating: 4.5,
-      distance: "Within in Km",
-    },
-    {
-      img: "https://thumbs.dreamstime.com/b/barbel-dumbbell-gym-icon-logo-template-barbel-dumbbell-gym-icon-logo-template-gym-badge-fitness-logo-design-barbell-vector-weight-144308752.jpg",
-      name: "Barbell Gym",
-      price: "00.0000",
-      rating: 4.7,
-      distance: "Within in Km",
-    },
-    {
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0e2OTHsRbRXRY-NYRFZir7YdqURRk1dDD6g&s",
-      name: "Flex Fit Center",
-      price: "00.0000",
-      rating: 4.3,
-      distance: "Within in Km",
-    },
-    {
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0e2OTHsRbRXRY-NYRFZir7YdqURRk1dDD6g&s",
-      name: "Body Zone",
-      price: "00.0000",
-      rating: 4.4,
-      distance: "Within in Km",
-    },
-    {
-      img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0e2OTHsRbRXRY-NYRFZir7YdqURRk1dDD6g&s",
-      name: "Muscle Garage",
-      price: "00.0000",
-      rating: 4.6,
-      distance: "Within in Km",
-    },
-    {
-      img: "https://thumbs.dreamstime.com/b/barbel-dumbbell-gym-icon-logo-template-barbel-dumbbell-gym-icon-logo-template-gym-badge-fitness-logo-design-barbell-vector-weight-144308752.jpg",
-      name: "Iron Temple",
-      price: "00.0000",
-      rating: 4.8,
-      distance: "Within in Km",
-    },
-  ];
-
-  // const neighborhoodData = [
-  //   {
-  //     icon: <Plane className="w-5 h-5 text-blue-600" />,
-  //     title: "Airport",
-  //     name: "Rajiv Gandhi Intl. Airport",
-  //     walk: "km | hrs",
-  //   },
-  //   {
-  //     icon: <TrainFront />,
-  //     title: "Metro Station",
-  //     name: "Kukatpally Metro Station",
-  //     walk: "km | hrs",
-  //   },
-  //   {
-  //     icon: <Bus />,
-  //     title: "Bus Stop",
-  //     name: "KPHB Bus Stop",
-  //     walk: "km | hrs",
-  //   },
-  //   {
-  //     icon: <TrainFront />,
-  //     title: "Railway Station",
-  //     name: "Hafeezpet Station",
-  //     walk: "km | hrs",
-  //   },
-  //   {
-  //     icon: <Hospital />,
-  //     title: "Hospital",
-  //     name: "Rainbow Hospital",
-  //     walk: "km | hrs",
-  //   },
-  //   {
-  //     icon: <ShoppingCart />,
-  //     title: "Market",
-  //     name: "Forum Mall Kukatpally",
-  //     walk: "km | hrs",
-  //   },
-  // ];
-
-  // const displayedData = showAll ? neighborhoodData : neighborhoodData.slice(0, 4);
+  // Get default image for properties
+  const getPropertyImage = (property) => {
+    if (property.images && property.images.length > 0) {
+      const firstImage = property.images[0];
+      return firstImage.url || firstImage;
+    }
+    return "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+  };
+  
   const pins = locationData?.pins || [];
   const hasPins = pins.length > 0;
   const property = getPropertyId();
+
+  // Get all images from the property
+  const propertyImages = pg?.images || [];
+  const hasImages = propertyImages.length > 0;
 
   return (
     <>
@@ -1254,8 +1319,8 @@ export default function BookPG() {
           <div className="flex flex-col md:flex-row p-2 mt-10 md:gap-6 gap-6">
             {/* Image + Thumbnails */}
             <div className="w-full md:w-2/5 flex flex-col gap-3">
-              {/* Main Image */}
-              <div>
+              {/* Main Image - Clickable to open gallery */}
+              <div className="cursor-pointer" onClick={() => openImageGallery(0)}>
                 <img
                   src={
                     pg.images?.[0]?.url ||
@@ -1263,7 +1328,7 @@ export default function BookPG() {
                     "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw"
                   }
                   alt="Main PG"
-                  className="w-full h-48 object-cover rounded-2xl shadow"
+                  className="w-full h-48 object-cover rounded-2xl shadow hover:opacity-90 transition-opacity"
                   onError={(e) => {
                     e.target.src =
                       "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
@@ -1274,19 +1339,24 @@ export default function BookPG() {
               {/* Thumbnails */}
               <div className="flex gap-2">
                 {pg.images?.slice(0, 3).map((image, i) => (
-                  <img
-                    key={i}
-                    src={
-                      image.url ||
-                      pg.image ||
-                      "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw"
-                  }
-                    alt={`Thumbnail ${i + 1}`}
-                    className="flex-1 min-w-0 h-24 object-cover rounded-xl shadow-sm"
-                    onError={(e) => {
-                      e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LumpwZw";
-                    }}
-                  />
+                  <div 
+                    key={i} 
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => openImageGallery(i)}
+                  >
+                    <img
+                      src={
+                        image.url ||
+                        pg.image ||
+                        "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw"
+                      }
+                      alt={`Thumbnail ${i + 1}`}
+                      className="h-24 object-cover rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+                      onError={(e) => {
+                        e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LumpwZw";
+                      }}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -1659,41 +1729,99 @@ export default function BookPG() {
           </div>
 
           {/* Nearby Properties */}
-          <div className="flex bg-white mt-5 p-4 rounded-lg shadow-sm">
-            <p className="text-xl font-semibold">Nearby Properties</p>
-          </div>
-
-          {/* Slideshow */}
-          <div className="relative w-full max-w-6xl bg-white mx-auto p-3 mb-5 rounded-lg shadow-sm">
-            <div
-              className="flex gap-3 overflow-x-auto cursor-grab scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
-              ref={sliderRef}
-              onMouseDown={onMouseDown}
-              onMouseMove={onMouseMove}
-              onMouseLeave={onMouseUp}
-              onMouseUp={onMouseUp}
-            >
-              {Images.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex-shrink-0 w-[70%] sm:w-[45%] md:w-[30%] lg:w-[23%] px-2"
-                >
-                  <div className="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:scale-105 border border-gray-200">
-                    <img
-                      src={item.img}
-                      alt={item.name}
-                      className="w-full h-40 sm:h-44 md:h-48 object-cover"
-                    />
-                    <div className="p-3 text-sm sm:text-base text-gray-700 space-y-1">
-                      <p className="font-semibold truncate">{item.name}</p>
-                      <p className="text-blue-600 font-semibold">{item.price}</p>
-                      <p className="text-yellow-600">Rating: ★ {item.rating}</p>
-                      <p className="text-gray-500 text-sm">{item.distance}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <div className="bg-white mt-5 p-4 rounded-lg shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-xl font-semibold">Nearby Properties in {pg.city || pg.property?.city}</p>
+              {nearbyProperties.length > 0 && (
+                <span className="text-sm text-gray-500">
+                  {nearbyProperties.length} properties found
+                </span>
+              )}
             </div>
+
+            {nearbyLoading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto"></div>
+                <p className="text-gray-600 mt-4">Loading nearby properties...</p>
+              </div>
+            ) : nearbyError ? (
+              <div className="p-6 text-center bg-yellow-50 rounded-lg">
+                <p className="text-yellow-600">{nearbyError}</p>
+                <button
+                  onClick={fetchNearbyProperties}
+                  className="mt-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded text-sm hover:bg-yellow-200"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : nearbyProperties.length === 0 ? (
+              <div className="p-8 text-center">
+                <div className="text-gray-400 text-4xl mb-4">
+                  🏘️
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No Nearby Properties Found</h3>
+                <p className="text-gray-600">
+                  No other properties found in {pg.city || pg.property?.city}
+                </p>
+              </div>
+            ) : (
+              <div className="relative w-full max-w-6xl mx-auto">
+                <div
+                  className="flex gap-3 overflow-x-auto cursor-grab scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+                  ref={sliderRef}
+                  onMouseDown={onMouseDown}
+                  onMouseMove={onMouseMove}
+                  onMouseLeave={onMouseUp}
+                  onMouseUp={onMouseUp}
+                >
+                  {nearbyProperties.map((property, i) => (
+                    <div
+                      key={i}
+                      className="flex-shrink-0 w-[70%] sm:w-[45%] md:w-[30%] lg:w-[23%] px-2"
+                      onClick={() => handleNearbyPropertyClick(property)}
+                    >
+                      <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-lg border border-gray-200 cursor-pointer">
+                        <img
+                          src={getPropertyImage(property)}
+                          alt={property.name}
+                          className="w-full h-40 sm:h-44 md:h-48 object-cover"
+                          onError={(e) => {
+                            e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+                          }}
+                        />
+                        <div className="p-3 text-sm sm:text-base text-gray-700 space-y-1">
+                          <p className="font-semibold truncate">{property.name}</p>
+                          <p className="text-gray-500 text-xs truncate">
+                            {property.locality}, {property.street}
+                          </p>
+                          <p className="text-blue-600 font-semibold">
+                            ₹{property.price || "Price not available"}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-yellow-600">
+                              Rating: ★ {property.rating || 4.5}
+                            </p>
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                              {property.status || "approved"}
+                            </span>
+                          </div>
+                          <p className="text-gray-500 text-sm">{property.distance}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Scroll indicator */}
+                {nearbyProperties.length > 1 && (
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-gray-500">
+                      ← Drag or scroll to view more properties →
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -1713,6 +1841,106 @@ export default function BookPG() {
           </div>
         </div>
       </div>
+
+      {/* Image Gallery Modal */}
+      {showImageGallery && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
+          <div className="relative w-full max-w-6xl max-h-[90vh] flex flex-col">
+            {/* Close Button */}
+            <button
+              onClick={closeImageGallery}
+              className="absolute top-2 right-2 z-10 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Main Image Display */}
+            <div className="flex-1 relative flex items-center justify-center">
+              {/* Previous Button */}
+              {hasImages && propertyImages.length > 1 && (
+                <button
+                  onClick={goToPrevImage}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all z-10"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Main Image */}
+              <div className="w-full h-[70vh] flex items-center justify-center">
+                {hasImages ? (
+                  <img
+                    src={
+                      propertyImages[currentImageIndex]?.url ||
+                      propertyImages[currentImageIndex] ||
+                      "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYzkuY29tL3dw/LWNvbnRlbnQvdXBs/b2Fkcy9ldF90ZW1w/L0RKSV8wNjk4LTQ0/NzAwMzRfNTAwWnhN/MzUuanBn"
+                    }
+                    alt={`Property image ${currentImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                    onError={(e) => {
+                      e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+                    }}
+                  />
+                ) : (
+                  <div className="text-white text-center">
+                    <p className="text-xl">No images available</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Next Button */}
+              {hasImages && propertyImages.length > 1 && (
+                <button
+                  onClick={goToNextImage}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all z-10"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Image Counter */}
+              {hasImages && propertyImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-full text-sm">
+                  {currentImageIndex + 1} / {propertyImages.length}
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnail Strip */}
+            {hasImages && propertyImages.length > 1 && (
+              <div className="mt-4 px-8">
+                <div className="flex gap-2 overflow-x-auto py-2">
+                  {propertyImages.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectImage(index)}
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                        index === currentImageIndex
+                          ? "border-yellow-400"
+                          : "border-transparent"
+                      }`}
+                    >
+                      <img
+                        src={image.url || image}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Instructions */}
+            <div className="text-center text-white text-sm mt-4 opacity-70">
+              <p>Use arrow keys or click thumbnails to navigate • Press ESC to close</p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

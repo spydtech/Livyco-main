@@ -587,7 +587,7 @@ const Header = () => {
   return (
     <>
       <header className="w-full backdrop-blur-lg bg-[#0019A5]/90 text-white shadow-md fixed z-50">
-        <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-0 py-0 flex items-center justify-between">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-0 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
             <img src={logo} alt="Logo" className="h-16 w-14 mt-4 p-0 rounded-lg justify-start" />

@@ -1081,6 +1081,7 @@ import { ArrowLeft } from 'lucide-react';
 import bgimage from '../../assets/user/pgsearch/image (5).png';
 import Header from "../Header";
 import { useNavigate, useLocation } from "react-router-dom";
+import { propertyAPI } from "../../Clients-components/PropertyController";
 
 export default function AddProof() {
     const [select, setSelect] = useState("self");
@@ -1098,16 +1099,176 @@ export default function AddProof() {
     const [purpose, setPurpose] = useState("");
     const [agree, setAgree] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [propertyMedia, setPropertyMedia] = useState([]);
+    const [propertyName, setPropertyName] = useState("");
+    const [propertyDetails, setPropertyDetails] = useState(null);
     
     const navigate = useNavigate();
     const location = useLocation();
     const bookingData = location.state;
 
     useEffect(() => {
-        if (!bookingData || !bookingData.propertyId) {
-            alert("Booking data is incomplete. Please go back and try again.");
-            navigate(-1);
-        }
+        const fetchPropertyDetails = async () => {
+            if (!bookingData || !bookingData.propertyId) {
+                alert("Booking data is incomplete. Please go back and try again.");
+                navigate(-1);
+                return;
+            }
+            
+            try {
+                const propertyResponse = await propertyAPI.getAllClientProperties();
+                console.log("All properties fetched:", propertyResponse.data);
+                
+                // Find the specific property by ID
+                const allProperties = propertyResponse.data.data;
+                const currentProperty = allProperties.find(
+                    property => property.property._id === bookingData.propertyId
+                );
+                
+                if (currentProperty) {
+                    console.log("Found property:", currentProperty);
+                    setPropertyName(currentProperty.property.name);
+                    setPropertyDetails(currentProperty);
+                    
+                    // Collect all images from different sources
+                    const allMedia = [];
+                    
+                    // Debug log to see what's in the media object
+                    console.log("Media object structure:", currentProperty.media);
+                    console.log("Media images:", currentProperty.media?.images);
+                    console.log("Room types:", currentProperty.rooms?.roomTypes);
+                    
+                    // 1. Media model images - FIXED: Check if images is an array
+                    if (currentProperty.media && currentProperty.media.images && Array.isArray(currentProperty.media.images)) {
+                        console.log("Processing media images:", currentProperty.media.images.length);
+                        currentProperty.media.images.forEach((img, index) => {
+                            // Handle both string URLs and object formats
+                            let url, thumbnailUrl;
+                            
+                            if (typeof img === 'string') {
+                                url = img;
+                                thumbnailUrl = img;
+                            } else if (img && img.url) {
+                                url = img.url;
+                                thumbnailUrl = img.thumbnailUrl || img.url;
+                            } else {
+                                return; // Skip invalid entries
+                            }
+                            
+                            allMedia.push({
+                                type: 'image',
+                                url: url,
+                                thumbnailUrl: thumbnailUrl,
+                                fileName: `property_image_${index}`,
+                                caption: 'Property Image',
+                                source: 'propertyMedia',
+                                isPrimary: index === 0
+                            });
+                        });
+                    }
+                    
+                    // 2. Room type images
+                    if (currentProperty.rooms && currentProperty.rooms.roomTypes && Array.isArray(currentProperty.rooms.roomTypes)) {
+                        currentProperty.rooms.roomTypes.forEach(roomType => {
+                            if (roomType.images && Array.isArray(roomType.images)) {
+                                roomType.images.forEach((img, index) => {
+                                    let url, thumbnailUrl;
+                                    
+                                    if (typeof img === 'string') {
+                                        url = img;
+                                        thumbnailUrl = img;
+                                    } else if (img && img.url) {
+                                        url = img.url;
+                                        thumbnailUrl = img.thumbnailUrl || img.url;
+                                    } else {
+                                        return;
+                                    }
+                                    
+                                    allMedia.push({
+                                        type: 'image',
+                                        url: url,
+                                        thumbnailUrl: thumbnailUrl,
+                                        fileName: `room_${roomType.type}_${index}`,
+                                        caption: `${roomType.label || roomType.type} Room`,
+                                        source: 'roomType'
+                                    });
+                                });
+                            }
+                        });
+                    }
+                    
+                    // 3. PG Property images (if available)
+                    if (currentProperty.pgProperty && currentProperty.pgProperty.images && Array.isArray(currentProperty.pgProperty.images)) {
+                        currentProperty.pgProperty.images.forEach((img, index) => {
+                            let url, thumbnailUrl;
+                            
+                            if (typeof img === 'string') {
+                                url = img;
+                                thumbnailUrl = img;
+                            } else if (img && img.url) {
+                                url = img.url;
+                                thumbnailUrl = img.thumbnailUrl || img.url;
+                            } else {
+                                return;
+                            }
+                            
+                            allMedia.push({
+                                type: 'image',
+                                url: url,
+                                thumbnailUrl: thumbnailUrl,
+                                fileName: `pg_image_${index}`,
+                                caption: 'PG Property Image',
+                                source: 'pgProperty'
+                            });
+                        });
+                    }
+                    
+                    // 4. Owner profile image (optional)
+                    if (currentProperty.owner && currentProperty.owner.profileImage) {
+                        allMedia.push({
+                            type: 'image',
+                            url: currentProperty.owner.profileImage,
+                            thumbnailUrl: currentProperty.owner.profileImage,
+                            fileName: 'owner_profile',
+                            caption: 'Owner Profile',
+                            source: 'owner',
+                            isPrimary: allMedia.length === 0
+                        });
+                    }
+                    
+                    // Mark first image as primary if not already marked
+                    if (allMedia.length > 0 && !allMedia.some(m => m.isPrimary)) {
+                        allMedia[0].isPrimary = true;
+                    }
+                    
+                    console.log("Collected media for booking:", allMedia);
+                    setPropertyMedia(allMedia);
+                    
+                    // If no media found, add a placeholder
+                    if (allMedia.length === 0) {
+                        console.warn("No media found for property. Using placeholder.");
+                        setPropertyMedia([{
+                            type: 'image',
+                            url: 'https://via.placeholder.com/600x400?text=No+Image+Available',
+                            thumbnailUrl: 'https://via.placeholder.com/150x150?text=No+Image',
+                            fileName: 'placeholder.jpg',
+                            caption: 'No images available',
+                            source: 'placeholder',
+                            isPrimary: true
+                        }]);
+                    }
+                } else {
+                    console.warn("Property not found with ID:", bookingData.propertyId);
+                    alert("Property not found. Please try again.");
+                    navigate(-1);
+                }
+            } catch (error) {
+                console.error("Error fetching property details:", error);
+                alert("Failed to load property details. Please try again.");
+            }
+        };
+        
+        fetchPropertyDetails();
     }, [bookingData, navigate]);
 
     const handlePersonChange = (newCount) => {
@@ -1187,60 +1348,102 @@ export default function AddProof() {
         setLoading(true);
         
         try {
-            // Prepare complete booking data WITHOUT creating it in database yet
-            const completeBookingData = {
-                propertyId: bookingData.propertyId,
-                roomType: bookingData.selectedRoomType || bookingData.roomType,
-                selectedRooms: bookingData.selectedRooms || [],
-                moveInDate: bookingData.selectedDate || bookingData.moveInDate,
-                endDate: bookingData.endDate || bookingData.moveOutDate,
-                durationType: bookingData.durationType || 'monthly',
-                durationDays: bookingData.durationDays || 0,
-                durationMonths: bookingData.durationMonths || 1,
-                personCount: bookingData.personCount || personCount,
-                customerDetails: {
-                    primary: {
-                        name: customers[0]?.name || "",
-                        age: customers[0]?.age || "",
-                        gender: customers[0]?.gender || "",
-                        mobile: mobile,
-                        email: email,
-                        idProofType: customers[0]?.idProofType || "",
-                        idProofNumber: customers[0]?.idProofNumber || "",
-                        purpose: purpose
-                    },
-                    additional: customers.slice(1),
-                    saveForFuture: agree
+        // Prepare media array for the booking
+        const bookingMedia = propertyMedia.map((media, index) => {
+            // Ensure we have valid URLs
+            const url = media.url || `https://via.placeholder.com/600x400?text=Property+Image+${index}`;
+            const thumbnailUrl = media.thumbnailUrl || url;
+            
+            return {
+                type: media.type || 'image',
+                url: url,
+                thumbnailUrl: thumbnailUrl,
+                fileName: media.fileName || `property_image_${Date.now()}_${index}`,
+                fileSize: media.fileSize || 0,
+                mimeType: media.mimeType || 'image/jpeg',
+                uploadedBy: null, // This will be set by backend with actual user ID
+                isPrimary: media.isPrimary || (index === 0),
+                caption: media.caption || `Property Image ${index + 1}`,
+                tags: [media.source || 'property'],
+                metadata: {
+                    width: 0,
+                    height: 0,
+                    source: media.source || 'unknown'
                 },
-                pricing: {
-                    monthlyRent: bookingData.monthlyRent || bookingData.price || 0,
-                    advanceAmount: bookingData.advanceAmount || 0,
-                    securityDeposit: bookingData.depositAmount || 0,
-                    totalAmount: bookingData.totalAmount || bookingData.price || 0,
-                    maintenanceFee: bookingData.maintenanceFee || 0
+                storage: {
+                    provider: 's3',
+                    bucket: 'your-bucket-name',
+                    key: media.url ? media.url.split('/').pop() : `image_${index}.jpg`,
+                    region: 'us-east-1'
                 }
             };
-            
-            console.log('📤 Prepared booking data for payment:', completeBookingData);
-            
-            // Navigate to payment page with ALL booking data
-            // The booking will be created in database ONLY after successful payment
-            navigate("/user/pay-to-cart", { 
-                state: { 
-                    ...bookingData,
-                    bookingData: completeBookingData, // Store complete booking data
-                    propertyId: bookingData.propertyId,
-                    customerDetails: completeBookingData.customerDetails
-                } 
-            });
-            
-        } catch (error) {
-            console.error("❌ Error preparing booking data:", error);
-            alert("An error occurred while preparing your booking: " + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+        });
+        
+        // Prepare complete booking data
+        const completeBookingData = {
+            propertyId: bookingData.propertyId,
+            roomType: bookingData.selectedRoomType || bookingData.roomType,
+            media: bookingMedia, // ✅ Include all property images
+            selectedRooms: bookingData.selectedRooms || [],
+            moveInDate: bookingData.selectedDate || bookingData.moveInDate,
+            endDate: bookingData.endDate || bookingData.moveOutDate,
+            durationType: bookingData.durationType || 'monthly',
+            durationDays: bookingData.durationDays || 0,
+            durationMonths: bookingData.durationMonths || 1,
+            personCount: bookingData.personCount || personCount,
+            customerDetails: {
+                primary: {
+                    name: customers[0]?.name || "",
+                    age: customers[0]?.age || "",
+                    gender: customers[0]?.gender || "",
+                    mobile: mobile,
+                    email: email,
+                    idProofType: customers[0]?.idProofType || "",
+                    idProofNumber: customers[0]?.idProofNumber || "",
+                    purpose: purpose
+                },
+                additional: customers.slice(1),
+                saveForFuture: agree
+            },
+            pricing: {
+                monthlyRent: bookingData.monthlyRent || bookingData.price || 0,
+                advanceAmount: bookingData.advanceAmount || 0,
+                securityDeposit: bookingData.depositAmount || 0,
+                totalAmount: bookingData.totalAmount || bookingData.price || 0,
+                maintenanceFee: bookingData.maintenanceFee || 0
+            }
+        };
+        
+        console.log('📤 Prepared booking data with media:', {
+            propertyId: completeBookingData.propertyId,
+            mediaCount: completeBookingData.media.length,
+            mediaSample: completeBookingData.media[0] || 'No media',
+            moveInDate: completeBookingData.moveInDate,
+            totalAmount: completeBookingData.pricing.totalAmount
+        });
+        
+        // Navigate to payment page with ALL booking data INCLUDING MEDIA
+        navigate("/user/pay-to-cart", { 
+            state: { 
+                ...bookingData,
+                bookingData: completeBookingData, // ✅ This contains the media array
+                propertyId: bookingData.propertyId,
+                customerDetails: completeBookingData.customerDetails,
+                propertyName: propertyName,
+                propertyMedia: propertyMedia, // Also pass raw media for display
+                // Ensure we pass ALL media-related data
+                hasMedia: true,
+                mediaCount: bookingMedia.length
+            } 
+        });
+        
+    } catch (error) {
+        console.error("❌ Error preparing booking data:", error);
+        alert("An error occurred while preparing your booking: " + error.message);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const isMobileValid = mobile.length === 10;
 
@@ -1262,6 +1465,10 @@ export default function AddProof() {
                     </button>
                 </div>
 
+                
+                
+
+                
                 {/* Centered Form */}
                 <div className="flex justify-center items-start py-10 px-4">
                     <form onSubmit={handleSubmit} className="w-full md:w-2/3 lg:w-1/2 bg-white px-5 rounded-lg shadow-md flex flex-col gap-4 py-4">
@@ -1476,6 +1683,8 @@ export default function AddProof() {
                                 I agree to save these details for future bookings and confirm that all information provided is accurate.
                             </label>
                         </div>
+
+                        
 
                         {/* Submit Button */}
                         <div className="mt-4">

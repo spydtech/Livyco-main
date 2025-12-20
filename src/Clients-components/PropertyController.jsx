@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 
-// export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
 
 // Create a separate axios instance without interceptors for token refresh
 const refreshApi = axios.create({
@@ -213,6 +213,56 @@ export const propertyAPI = {
         }
         return response;
       }),
+    //   getNearbyProperties: (lat, lon, radiusKm = 5) =>
+    // api.get('/api/auth/properties/nearby', {  
+    //   params: { lat, lon, radiusKm }
+    // })
+   getNearbyProperties: async (city, excludePropertyId) => {
+    try {
+      // First get all properties using getAllClientProperties
+      const response = await propertyAPI.getAllClientProperties({ requireAuth: false });
+     
+      if (response.data?.success && response.data?.data) {
+        const properties = Array.isArray(response.data.data)
+          ? response.data.data
+          : (response.data.data.data || []);
+       
+        // Filter properties in same city, exclude current property, and limit to 3
+        const nearbyProperties = properties
+          .filter(item => {
+            const property = item.property || item;
+            return (
+              property?.city === city &&
+              property?._id !== excludePropertyId &&
+              property?.status === 'approved'
+            );
+          })
+          .slice(0, 3);
+       
+        return {
+          success: true,
+          data: nearbyProperties,
+          message: '',
+        };
+      }
+     
+      return {
+        success: false,
+        data: [],
+        message: response.data?.message || '',
+      };
+    } catch (error) {
+      console.error('Get nearby properties error:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Failed to fetch nearby properties',
+      };
+    }
+  }
+
+
+ 
 };
 
 

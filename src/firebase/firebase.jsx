@@ -99,7 +99,7 @@
 
 // firebase/firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, connectAuthEmulator } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, signOut, connectAuthEmulator } from "firebase/auth";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -128,11 +128,18 @@ const auth = getAuth(app);
 // }
 
 //Emulator only in development
-if (window.location.hostname === 'localhost') {
-  connectAuthEmulator(auth, 'http://localhost:9099');
-}
+// if (window.location.hostname === 'localhost') {
+//   connectAuthEmulator(auth, 'http://localhost:9099');
+// }
+// Configure Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('profile');
+googleProvider.addScope('email');
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
-export { auth, RecaptchaVerifier, signInWithPhoneNumber };
+export { auth, RecaptchaVerifier, googleProvider,signOut, signInWithPhoneNumber };
 
 //export { auth, RecaptchaVerifier, signInWithPhoneNumber };
 

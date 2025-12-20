@@ -1486,11 +1486,10 @@
 
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Info, CheckCircle, XCircle, Clock } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from '../Header';
 import { API_BASE_URL } from '../../Clients-components/PropertyController';
-
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -1529,6 +1528,59 @@ export default function Cart() {
 
       console.log('✅ Property ID found:', propertyId);
 
+      // ✅ Process media data to match backend's NEW structure
+      console.log('📸 Processing media data to match backend structure:');
+      
+      let media = { images: [], videos: [] };
+      let mediaId = state.bookingData?.mediaId || state.mediaId || null;
+      
+      // Check if media exists in state
+      if (state.media || state.bookingData?.media) {
+        const rawMedia = state.bookingData?.media || state.media;
+        
+        if (Array.isArray(rawMedia)) {
+          // Convert old array format to new structure
+          console.log('📸 Converting old array format to new structure');
+          
+          rawMedia.forEach((item, index) => {
+            const url = item.url || item;
+            const public_id = item.public_id || item.key || `media_${Date.now()}_${index}`;
+            
+            // Determine if it's an image or video
+            const isImage = item.type === 'image' || 
+                           item.mimeType?.startsWith('image/') ||
+                           url.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
+            
+            if (isImage) {
+              media.images.push({
+                url: url,
+                public_id: public_id,
+                resource_type: 'image',
+                isPrimary: item.isPrimary || (index === 0)
+              });
+            } else {
+              media.videos.push({
+                url: url,
+                public_id: public_id,
+                resource_type: item.type || 'video'
+              });
+            }
+          });
+        } else if (rawMedia.images || rawMedia.videos) {
+          // Already in new structure
+          console.log('📸 Media already in new structure');
+          media = rawMedia;
+        }
+      }
+      
+      console.log('📸 Processed media structure:', {
+        imagesCount: media.images.length,
+        videosCount: media.videos.length,
+        sampleImage: media.images[0] || 'No images',
+        sampleVideo: media.videos[0] || 'No videos',
+        mediaId: mediaId
+      });
+
       const enhancedBookingData = {
         ...state,
         propertyId: propertyId,
@@ -1536,12 +1588,27 @@ export default function Cart() {
           ...state.booking,
           propertyId: propertyId
         },
-        isRentPayment: rentPayment
+        isRentPayment: rentPayment,
+        // ✅ Use processed media structure
+        media: media,
+        mediaId: mediaId,
+        bookingData: {
+          ...state.bookingData,
+          propertyId: propertyId,
+          media: media,
+          mediaId: mediaId
+        }
       };
 
       setBookingData(enhancedBookingData);
       
-      console.log("📦 Enhanced booking data:", enhancedBookingData);
+      console.log("📦 Enhanced booking data with NEW media structure:", {
+        ...enhancedBookingData,
+        mediaImagesCount: enhancedBookingData.media?.images?.length || 0,
+        mediaVideosCount: enhancedBookingData.media?.videos?.length || 0,
+        hasMedia: (enhancedBookingData.media?.images?.length > 0 || 
+                  enhancedBookingData.media?.videos?.length > 0)
+      });
 
       // If there's an existing booking ID, store it
       if (state.booking?.id || state.bookingId || state.bookingData?.bookingId) {
@@ -1554,7 +1621,6 @@ export default function Cart() {
     }
   }, [location.state, navigate]);
 
-  // ✅ Function to create notifications using test endpoint as fallback
   const createPaymentNotifications = async (paymentData, validationResult) => {
     try {
       const token = localStorage.getItem("token");
@@ -1564,14 +1630,12 @@ export default function Cart() {
         return false;
       }
 
-      // Get user data from localStorage
       const currentUser = JSON.parse(localStorage.getItem("user"));
       if (!currentUser) {
         console.error("No user data found for notifications");
         return false;
       }
 
-      // ✅ FIXED: Get clientId correctly from multiple sources
       const clientId = bookingData?.clientId || 
                       paymentData.clientId || 
                       validationResult.booking?.clientId;
@@ -1583,7 +1647,6 @@ export default function Cart() {
         finalClientId: clientId
       });
 
-      // Prepare notification data for USER (tenant)
       const userNotificationData = {
         userId: currentUser.id,
         type: isRentPayment ? 'rent_payment_success' : 'booking_payment_success',
@@ -1606,9 +1669,8 @@ export default function Cart() {
         isRead: false
       };
 
-      // Prepare notification data for CLIENT (property owner)
       const clientNotificationData = {
-        clientId: clientId, // ✅ Use the correctly fetched clientId
+        clientId: clientId,
         type: isRentPayment ? 'rent_payment_received' : 'booking_payment_received',
         title: isRentPayment ? 'Rent Payment Received 💰' : 'New Booking Payment Received 💰',
         message: isRentPayment 
@@ -1634,7 +1696,6 @@ export default function Cart() {
 
       console.log('📧 Creating notifications...');
 
-      // Try main endpoint first for user notification
       let userNotificationSent = false;
       try {
         const userResponse = await fetch(`${API_BASE_URL}/api/notifications`, {
@@ -1650,7 +1711,6 @@ export default function Cart() {
         console.log('✅ User notification via main endpoint:', userNotificationSent);
       } catch (userError) {
         console.log('⚠️ Main endpoint failed for user, trying test endpoint...');
-        // Fallback to test endpoint for user
         try {
           const testUserResponse = await fetch(`${API_BASE_URL}/api/notifications/test/user`, {
             method: "POST",
@@ -1668,7 +1728,6 @@ export default function Cart() {
         }
       }
 
-      // Try main endpoint first for client notification
       let clientNotificationSent = false;
       try {
         const clientResponse = await fetch(`${API_BASE_URL}/api/notifications`, {
@@ -1684,7 +1743,6 @@ export default function Cart() {
         console.log('✅ Client notification via main endpoint:', clientNotificationSent);
       } catch (clientError) {
         console.log('⚠️ Main endpoint failed for client, trying test endpoint...');
-        // Fallback to test endpoint for client
         try {
           const testClientResponse = await fetch(`${API_BASE_URL}/api/notifications/test/user`, {
             method: "POST",
@@ -1725,14 +1783,12 @@ export default function Cart() {
     });
   };
 
-  // Enhanced calculation for both booking and rent payments
   const calculateTransferBreakdown = (totalAmount, isRentPayment = false) => {
     if (isRentPayment) {
-      // For rent payments: Total amount is rent + GST
-      const gstRate = 0.18; // 18% GST
+      const gstRate = 0.18;
       const baseRent = totalAmount / (1 + gstRate);
       const gstAmount = baseRent * gstRate;
-      const platformCommission = baseRent * 0.05; // 5% platform fee on base rent
+      const platformCommission = baseRent * 0.05;
       const gstOnCommission = platformCommission * 0.18;
       const totalPlatformEarnings = platformCommission + gstOnCommission;
       const clientAmount = baseRent - platformCommission;
@@ -1747,7 +1803,6 @@ export default function Cart() {
         isRentPayment: true
       };
     } else {
-      // For booking payments (original logic)
       const platformCommission = totalAmount * 0.05;
       const gstOnCommission = platformCommission * 0.18;
       const totalPlatformEarnings = platformCommission + gstOnCommission;
@@ -1763,12 +1818,10 @@ export default function Cart() {
     }
   };
 
-  // Function to store payment message after successful payment
   const storePaymentMessage = async (paymentData) => {
     try {
       console.log('💾 Storing payment message:', paymentData);
       
-      // Use the correct API endpoint from your routes
       const response = await fetch(`${API_BASE_URL}/api/payment-messages`, {
         method: "POST",
         headers: {
@@ -1785,7 +1838,6 @@ export default function Cart() {
         })
       });
 
-      // Check if response is OK and content type is JSON
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Server error response:', errorText);
@@ -1803,12 +1855,10 @@ export default function Cart() {
       return result.data;
     } catch (error) {
       console.error('❌ Error storing payment message:', error);
-      // Don't throw the error - just log it and return null
       return null;
     }
   };
 
-  // Function to add payment to existing payment message (UPDATED)
   const addPaymentToMessage = async (messageId, paymentDetails) => {
     try {
       console.log('💾 Adding payment to message:', { messageId, paymentDetails });
@@ -1828,7 +1878,6 @@ export default function Cart() {
           razorpayOrderId: paymentDetails.razorpayOrderId,
           razorpayPaymentId: paymentDetails.razorpayPaymentId,
           razorpaySignature: paymentDetails.razorpaySignature,
-          // FIXED: Pass reviewData directly without shouldSaveReview check
           reviewData: paymentDetails.reviewData
         })
       });
@@ -1850,19 +1899,15 @@ export default function Cart() {
       return result.data;
     } catch (error) {
       console.error('❌ Error adding payment to message:', error);
-      // Don't throw the error - just log it and return null
       return null;
     }
   };
 
-  // Function to create or update payment message with payment
   const handlePaymentMessageStorage = async (paymentData, paymentDetails) => {
     try {
-      // First, try to create a new payment message
       let paymentMessage = await storePaymentMessage(paymentData);
       
       if (paymentMessage && paymentMessage._id) {
-        // Then add the payment details to the payments array
         await addPaymentToMessage(paymentMessage._id, paymentDetails);
         console.log('✅ Payment message stored successfully');
         return paymentMessage;
@@ -1876,331 +1921,367 @@ export default function Cart() {
     }
   };
 
- const paymentHandler = async (e) => {
-  e.preventDefault();
-  
-  if (!bookingData) {
-    alert("No booking data available");
-    return;
-  }
-
-  setProcessing(true);
-
-  try {
-    // Load Razorpay script
-    const isRazorpayLoaded = await loadRazorpayScript();
-    if (!isRazorpayLoaded) {
-      throw new Error("Razorpay SDK failed to load");
-    }
-
-    // Prepare complete booking data - INCLUDING REVIEW DATA
-    const completeBookingData = {
-      propertyId: bookingData.propertyId,
-      roomType: bookingData.booking?.roomType || bookingData.selectedRoomType || bookingData.roomType || bookingData.sharing,
-      selectedRooms: bookingData.selectedRooms || bookingData.booking?.selectedRooms || [],
-      moveInDate: bookingData.selectedDate || bookingData.booking?.moveInDate || bookingData.moveInDate,
-      endDate: bookingData.endDate || bookingData.booking?.endDate || bookingData.moveOutDate,
-      durationType: bookingData.durationType || 'monthly',
-      durationDays: bookingData.durationDays || 30,
-      durationMonths: bookingData.durationMonths || 1,
-      personCount: bookingData.personCount || 1,
-      customerDetails: bookingData.customerDetails || {
-        primary: {
-          name: "Customer",
-          email: "customer@example.com",
-          mobile: "9999999999"
-        }
-      },
-      pricing: {
-        totalAmount: bookingData.totalAmount || bookingData.price || bookingData.amount || 0,
-        advanceAmount: bookingData.advanceAmount || 0,
-        securityDeposit: bookingData.securityDeposit || 0,
-        maintenanceFee: bookingData.maintenanceFee || 0,
-        monthlyRent: bookingData.amount || bookingData.pricing?.monthlyRent || 0
-      },
-      bookingStatus: "pending_payment",
-      isRentPayment: isRentPayment,
-      paymentDescription: bookingData.description || "Monthly Rent Payment",
-      // Include review data from PayRent
-      reviewData: bookingData.reviewData || {}
-    };
-
-    console.log('✅ Final booking data for payment:', completeBookingData);
-
-    let bookingId = existingBookingId;
-
-    // Validate amount
-    const amount = bookingData.totalAmount || bookingData.price || bookingData.amount || 0;
-    if (!amount || amount <= 0) {
-      throw new Error("Invalid amount for payment");
-    }
-
-    // Convert to paise for Razorpay
-    const amountInPaise = Math.round(parseFloat(amount) * 100);
-
-    // Get current month and year for rent payments
-    const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
-    const currentYear = currentDate.getFullYear();
-
-    // Prepare rent data for payment - INCLUDING REVIEW DATA
-    const rentData = {
-      bookingId: bookingId,
-      propertyId: completeBookingData.propertyId,
-      amount: amount,
-      description: completeBookingData.paymentDescription,
-      month: currentMonth,
-      year: currentYear,
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      moveInDate: completeBookingData.moveInDate,
-      roomType: completeBookingData.roomType,
-      // Include review data to be saved with payment
-      reviewData: completeBookingData.reviewData
-    };
-
-    console.log('💰 Creating rent order with review data:', rentData.reviewData);
+  const paymentHandler = async (e) => {
+    e.preventDefault();
     
-    // Use rent-specific endpoints for rent payments
-    const orderEndpoint = isRentPayment 
-      ? `${API_BASE_URL}/api/payments/create-rent-order`
-      : `${API_BASE_URL}/api/payments/create-order`;
-
-    console.log('📤 Creating order at:', orderEndpoint);
-
-    const orderResponse = await fetch(orderEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify({
-        amount: amountInPaise,
-        currency: "INR",
-        receipt: isRentPayment ? `rent_${Date.now()}` : `booking_${Date.now()}`,
-        rentData: isRentPayment ? rentData : undefined,
-        bookingData: !isRentPayment ? completeBookingData : undefined
-      })
-    });
-
-    const orderResult = await orderResponse.json();
-
-    if (!orderResponse.ok || !orderResult.success) {
-      console.error('❌ Order creation failed:', orderResult);
-      throw new Error(orderResult.message || "Failed to create payment order");
+    if (!bookingData) {
+      alert("No booking data available");
+      return;
     }
 
-    console.log('✅ Order created:', orderResult.order.id);
+    setProcessing(true);
 
-    const options = {
-      key: RAZORPAY_KEY_ID,
-      amount: orderResult.order.amount,
-      currency: orderResult.order.currency,
-      name: "LivCo Properties",
-      description: isRentPayment 
-        ? `Rent Payment for ${bookingData.name || 'Property'}`
-        : `Booking Payment for ${bookingData.propertyName || 'Property'}`,
-      image: window.location.origin + "/logo.png",
-      order_id: orderResult.order.id,
-      handler: async function (response) {
-        try {
-          console.log('✅ Payment successful, validating...', response);
-          
-          // Use rent-specific validation endpoint for rent payments
-          const validationEndpoint = isRentPayment
-            ? `${API_BASE_URL}/api/payments/validate-rent-payment`
-            : `${API_BASE_URL}/api/payments/validate-payment`;
+    try {
+      const isRazorpayLoaded = await loadRazorpayScript();
+      if (!isRazorpayLoaded) {
+        throw new Error("Razorpay SDK failed to load");
+      }
 
-          console.log('📤 Sending validation request to:', validationEndpoint);
-          
-          const validationResponse = await fetch(validationEndpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${localStorage.getItem("token")}`
-            },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              rentData: isRentPayment ? rentData : undefined,
-              bookingData: !isRentPayment ? completeBookingData : undefined
-            })
-          });
+      // ✅ Extract media in NEW structure
+      const media = bookingData.bookingData?.media || bookingData.media || { images: [], videos: [] };
+      const mediaId = bookingData.bookingData?.mediaId || bookingData.mediaId || null;
+      
+      console.log('📸 Media data extracted for backend (NEW structure):', {
+        imagesCount: media.images?.length || 0,
+        videosCount: media.videos?.length || 0,
+        mediaId: mediaId,
+        mediaStructure: media
+      });
 
-          console.log('📥 Validation response status:', validationResponse.status);
-          
-          const validationResult = await validationResponse.json();
-          console.log('✅ Payment validation result:', validationResult);
-
-          if (!validationResponse.ok) {
-            throw new Error(validationResult.message || `HTTP error! status: ${validationResponse.status}`);
+      // Prepare complete booking data with NEW media structure
+      const completeBookingData = {
+        propertyId: bookingData.propertyId,
+        roomType: bookingData.booking?.roomType || bookingData.selectedRoomType || bookingData.roomType || bookingData.sharing,
+        selectedRooms: bookingData.selectedRooms || bookingData.booking?.selectedRooms || [],
+        moveInDate: bookingData.selectedDate || bookingData.booking?.moveInDate || bookingData.moveInDate,
+        endDate: bookingData.endDate || bookingData.booking?.endDate || bookingData.moveOutDate,
+        durationType: bookingData.durationType || 'monthly',
+        durationDays: bookingData.durationDays || 30,
+        durationMonths: bookingData.durationMonths || 1,
+        personCount: bookingData.personCount || 1,
+        customerDetails: bookingData.customerDetails || {
+          primary: {
+            name: "Customer",
+            email: "customer@example.com",
+            mobile: "9999999999"
           }
+        },
+        pricing: {
+          totalAmount: bookingData.totalAmount || bookingData.price || bookingData.amount || 0,
+          advanceAmount: bookingData.advanceAmount || 0,
+          securityDeposit: bookingData.securityDeposit || 0,
+          maintenanceFee: bookingData.maintenanceFee || 0,
+          monthlyRent: bookingData.amount || bookingData.pricing?.monthlyRent || 0
+        },
+        bookingStatus: "pending_payment",
+        isRentPayment: isRentPayment,
+        paymentDescription: bookingData.description || "Monthly Rent Payment",
+        // ✅ Use NEW media structure
+        media: media, // This is now { images: [], videos: [] }
+        mediaId: mediaId,
+        reviewData: bookingData.reviewData || {}
+      };
 
-          if (validationResult.success) {
-            // ✅ ADD PAYMENT DATA CONSOLE LOG
-            console.log('💰 PAYMENT DATA DETAILS:');
-            console.log('📊 Payment Amount:', amount);
-            console.log('🔗 Transaction ID:', response.razorpay_payment_id);
-            console.log('📋 Order ID:', response.razorpay_order_id);
-            console.log('🏠 Property ID:', completeBookingData.propertyId);
-            console.log('📅 Month/Year:', currentMonth, currentYear);
-            console.log('🎫 Booking ID:', bookingId);
-            console.log('💳 Payment Type:', isRentPayment ? 'Rent Payment' : 'Booking Payment');
-            console.log('👤 User Data:', JSON.parse(localStorage.getItem("user")));
-            console.log('📝 Validation Result:', validationResult);
+      console.log('✅ Final booking data for payment with NEW media structure:', {
+        propertyId: completeBookingData.propertyId,
+        imagesCount: completeBookingData.media?.images?.length || 0,
+        videosCount: completeBookingData.media?.videos?.length || 0,
+        moveInDate: completeBookingData.moveInDate,
+        totalAmount: completeBookingData.pricing.totalAmount
+      });
+
+      let bookingId = existingBookingId;
+
+      const amount = bookingData.totalAmount || bookingData.price || bookingData.amount || 0;
+      if (!amount || amount <= 0) {
+        throw new Error("Invalid amount for payment");
+      }
+
+      const amountInPaise = Math.round(parseFloat(amount) * 100);
+
+      const currentDate = new Date();
+      const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+      const currentYear = currentDate.getFullYear();
+
+      // Prepare rent data with NEW media structure
+      const rentData = {
+        bookingId: bookingId,
+        propertyId: completeBookingData.propertyId,
+        amount: amount,
+        description: completeBookingData.paymentDescription,
+        month: currentMonth,
+        year: currentYear,
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        moveInDate: completeBookingData.moveInDate,
+        roomType: completeBookingData.roomType,
+        reviewData: completeBookingData.reviewData,
+        // ✅ Use NEW media structure
+        media: completeBookingData.media, // This is now { images: [], videos: [] }
+        mediaId: completeBookingData.mediaId
+      };
+
+      console.log('💰 Creating order with NEW media structure:', {
+        isRentPayment: isRentPayment,
+        imagesCount: completeBookingData.media?.images?.length || 0,
+        videosCount: completeBookingData.media?.videos?.length || 0,
+        amount: amount
+      });
+      
+      const orderEndpoint = isRentPayment 
+        ? `${API_BASE_URL}/api/payments/create-rent-order`
+        : `${API_BASE_URL}/api/payments/create-order`;
+
+      console.log('📤 Creating order at:', orderEndpoint);
+
+      const orderResponse = await fetch(orderEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          currency: "INR",
+          receipt: isRentPayment ? `rent_${Date.now()}` : `booking_${Date.now()}`,
+          rentData: isRentPayment ? rentData : undefined,
+          bookingData: !isRentPayment ? completeBookingData : undefined
+        })
+      });
+
+      const orderResult = await orderResponse.json();
+
+      if (!orderResponse.ok || !orderResult.success) {
+        console.error('❌ Order creation failed:', orderResult);
+        throw new Error(orderResult.message || "Failed to create payment order");
+      }
+
+      console.log('✅ Order created:', orderResult.order.id);
+
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: orderResult.order.amount,
+        currency: orderResult.order.currency,
+        name: "LivCo Properties",
+        description: isRentPayment 
+          ? `Rent Payment for ${bookingData.name || 'Property'}`
+          : `Booking Payment for ${bookingData.propertyName || 'Property'}`,
+        image: window.location.origin + "/logo.png",
+        order_id: orderResult.order.id,
+        handler: async function (response) {
+          try {
+            console.log('✅ Payment successful, validating...', response);
             
-            let storedPaymentMessage = null;
+            console.log('📦 Sending booking data to validation:', {
+              isRentPayment: isRentPayment,
+              imagesCount: completeBookingData.media?.images?.length || 0,
+              videosCount: completeBookingData.media?.videos?.length || 0,
+              mediaId: completeBookingData.mediaId,
+              propertyId: completeBookingData.propertyId
+            });
+            
+            const validationEndpoint = isRentPayment
+              ? `${API_BASE_URL}/api/payments/validate-rent-payment`
+              : `${API_BASE_URL}/api/payments/validate-payment`;
 
-            // Store payment message for rent payments - NOW INCLUDES REVIEW DATA IN PAYMENT
-            if (isRentPayment && bookingId) {
-              try {
-                const paymentMessageData = {
-                  bookingId: bookingId,
-                  month: currentMonth,
-                  year: currentYear,
-                  paymentInfo: {
-                    paymentStatus: "paid",
-                    paymentMethod: "razorpay",
+            console.log('📤 Sending validation request to:', validationEndpoint);
+            
+            const validationResponse = await fetch(validationEndpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("token")}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                rentData: isRentPayment ? rentData : undefined,
+                bookingData: !isRentPayment ? completeBookingData : undefined
+              })
+            });
+
+            console.log('📥 Validation response status:', validationResponse.status);
+            
+            const validationResult = await validationResponse.json();
+            console.log('✅ Payment validation result:', validationResult);
+
+            if (!validationResponse.ok) {
+              throw new Error(validationResult.message || `HTTP error! status: ${validationResponse.status}`);
+            }
+
+            if (validationResult.success) {
+              // ✅ Check if media was saved
+              console.log('📸 Media saved in booking:', {
+                bookingMedia: validationResult.booking?.media,
+                imagesCount: validationResult.booking?.media?.images?.length || 0,
+                videosCount: validationResult.booking?.media?.videos?.length || 0,
+                validationResultKeys: Object.keys(validationResult)
+              });
+              
+              console.log('💰 PAYMENT DATA DETAILS:');
+              console.log('📊 Payment Amount:', amount);
+              console.log('🔗 Transaction ID:', response.razorpay_payment_id);
+              console.log('📋 Order ID:', response.razorpay_order_id);
+              console.log('🏠 Property ID:', completeBookingData.propertyId);
+              console.log('📅 Month/Year:', currentMonth, currentYear);
+              console.log('🎫 Booking ID:', bookingId);
+              console.log('💳 Payment Type:', isRentPayment ? 'Rent Payment' : 'Booking Payment');
+              console.log('👤 User Data:', JSON.parse(localStorage.getItem("user")));
+              
+              let storedPaymentMessage = null;
+
+              if (isRentPayment && bookingId) {
+                try {
+                  const paymentMessageData = {
+                    bookingId: bookingId,
+                    month: currentMonth,
+                    year: currentYear,
+                    paymentInfo: {
+                      paymentStatus: "paid",
+                      paymentMethod: "razorpay",
+                      transactionId: response.razorpay_payment_id,
+                      razorpayOrderId: response.razorpay_order_id,
+                      razorpayPaymentId: response.razorpay_payment_id,
+                      razorpaySignature: response.razorpay_signature,
+                      paidAmount: amount,
+                      paymentDate: new Date()
+                    },
+                    pricing: completeBookingData.pricing,
+                    transferDetails: validationResult.transferDetails || calculateTransferBreakdown(amount, true)
+                  };
+
+                  const paymentDetails = {
+                    amount: amount,
+                    method: "razorpay",
                     transactionId: response.razorpay_payment_id,
+                    status: "completed",
+                    description: completeBookingData.paymentDescription || `Rent payment for ${currentMonth} ${currentYear}`,
                     razorpayOrderId: response.razorpay_order_id,
                     razorpayPaymentId: response.razorpay_payment_id,
                     razorpaySignature: response.razorpay_signature,
-                    paidAmount: amount,
-                    paymentDate: new Date()
-                  },
-                  pricing: completeBookingData.pricing,
-                  transferDetails: validationResult.transferDetails || calculateTransferBreakdown(amount, true)
-                };
+                    reviewData: rentData.reviewData
+                  };
 
-                const paymentDetails = {
-                  amount: amount,
-                  method: "razorpay",
-                  transactionId: response.razorpay_payment_id,
-                  status: "completed",
-                  description: completeBookingData.paymentDescription || `Rent payment for ${currentMonth} ${currentYear}`,
-                  razorpayOrderId: response.razorpay_order_id,
-                  razorpayPaymentId: response.razorpay_payment_id,
-                  razorpaySignature: response.razorpay_signature,
-                  // FIXED: Pass reviewData directly (the backend will handle the logic)
-                  reviewData: rentData.reviewData
-                };
-
-                storedPaymentMessage = await handlePaymentMessageStorage(paymentMessageData, paymentDetails);
-                
-              } catch (storageError) {
-                console.error('❌ Error storing payment message:', storageError);
-                // Don't throw error here - payment was successful, just logging failed
+                  storedPaymentMessage = await handlePaymentMessageStorage(paymentMessageData, paymentDetails);
+                  
+                } catch (storageError) {
+                  console.error('❌ Error storing payment message:', storageError);
+                }
               }
-            }
 
-            // ✅ CREATE NOTIFICATIONS FOR BOTH USER AND CLIENT
-            console.log('📧 Payment validation successful, creating notifications...');
-            
-            const notificationData = {
-              bookingId: bookingId,
-              propertyId: completeBookingData.propertyId,
-              amount: amount,
-              month: currentMonth,
-              year: currentYear,
-              transactionId: response.razorpay_payment_id,
-              transferDetails: validationResult.transferDetails || calculateTransferBreakdown(amount, isRentPayment),
-              clientId: bookingData.clientId // ✅ Use clientId from bookingData
-            };
-
-            // Create notifications for both user and client
-            const notificationsSent = await createPaymentNotifications(notificationData, validationResult);
-            
-            console.log('✅ Notifications sent status:', notificationsSent);
-
-            let successMessage = isRentPayment 
-              ? "Rent payment successful!" 
-              : "Payment successful! Your booking is confirmed.";
-            
-            // Check if review was saved
-            const reviewSaved = rentData.reviewData && rentData.reviewData.rating && rentData.reviewData.comment;
-            if (reviewSaved) {
-              successMessage += " Your review has been saved.";
-            }
-
-            // Add notification status to success message
-            if (notificationsSent) {
-              successMessage += " Notifications have been sent to both parties.";
-            } else {
-              successMessage += " (Notifications may not have been delivered)";
-            }
-            
-            // Show success message
-            alert(successMessage);
-            
-            // Navigate to confirmation page
-            navigate("/user/booking/conformation", { 
-              state: { 
-                booking: validationResult.booking,
+              console.log('📧 Payment validation successful, creating notifications...');
+              
+              const notificationData = {
+                bookingId: bookingId,
+                propertyId: completeBookingData.propertyId,
+                amount: amount,
+                month: currentMonth,
+                year: currentYear,
                 transactionId: response.razorpay_payment_id,
-                paymentDetails: validationResult,
-                totalAmount: amount,
-                transferDetails: validationResult.transferDetails,
-                isRentPayment: isRentPayment,
-                paymentId: response.razorpay_payment_id,
-                orderId: response.razorpay_order_id,
-                paymentMessage: storedPaymentMessage,
-                // Include review data in navigation state
-                reviewData: rentData.reviewData,
-                notificationsSent: notificationsSent
-              } 
-            });
-            
-          } else {
-            console.error('❌ Payment validation failed:', validationResult);
-            alert("Payment validation failed: " + validationResult.message);
+                transferDetails: validationResult.transferDetails || calculateTransferBreakdown(amount, isRentPayment),
+                clientId: bookingData.clientId
+              };
+
+              const notificationsSent = await createPaymentNotifications(notificationData, validationResult);
+              
+              console.log('✅ Notifications sent status:', notificationsSent);
+
+              let successMessage = isRentPayment 
+                ? "Rent payment successful!" 
+                : "Payment successful! Your booking is confirmed.";
+              
+              const reviewSaved = rentData.reviewData && rentData.reviewData.rating && rentData.reviewData.comment;
+              if (reviewSaved) {
+                successMessage += " Your review has been saved.";
+              }
+              
+              const mediaSaved = validationResult.booking?.media && 
+                (validationResult.booking.media.images?.length > 0 || 
+                 validationResult.booking.media.videos?.length > 0);
+              if (mediaSaved) {
+                successMessage += ` ${validationResult.booking.media.images?.length || 0} images saved with booking.`;
+              } else {
+                successMessage += " (No media was saved with booking)";
+              }
+              
+              if (notificationsSent) {
+                successMessage += " Notifications have been sent to both parties.";
+              } else {
+                successMessage += " (Notifications may not have been delivered)";
+              }
+              
+              alert(successMessage);
+              
+              navigate("/user/booking/conformation", { 
+                state: { 
+                  booking: validationResult.booking,
+                  transactionId: response.razorpay_payment_id,
+                  paymentDetails: validationResult,
+                  totalAmount: amount,
+                  transferDetails: validationResult.transferDetails,
+                  isRentPayment: isRentPayment,
+                  paymentId: response.razorpay_payment_id,
+                  orderId: response.razorpay_order_id,
+                  paymentMessage: storedPaymentMessage,
+                  reviewData: rentData.reviewData,
+                  media: validationResult.booking?.media || { images: [], videos: [] },
+                  mediaSaved: mediaSaved,
+                  notificationsSent: notificationsSent
+                } 
+              });
+              
+            } else {
+              console.error('❌ Payment validation failed:', validationResult);
+              alert("Payment validation failed: " + validationResult.message);
+            }
+          } catch (error) {
+            console.error("❌ Payment validation error:", error);
+            alert("Payment validation error: " + error.message);
+          } finally {
+            setProcessing(false);
           }
-        } catch (error) {
-          console.error("❌ Payment validation error:", error);
-          alert("Payment validation error: " + error.message);
-        } finally {
-          setProcessing(false);
-        }
-      },
-      prefill: {
-        name: completeBookingData.customerDetails?.primary?.name || "Customer",
-        email: completeBookingData.customerDetails?.primary?.email || "customer@example.com",
-        contact: completeBookingData.customerDetails?.primary?.mobile || "9999999999",
-      },
-      notes: {
-        bookingId: bookingId,
-        propertyId: completeBookingData.propertyId,
-        isRentPayment: isRentPayment,
-        payment_type: isRentPayment ? 'rent_payment' : 'booking_payment',
-        rent_data: isRentPayment ? JSON.stringify(rentData) : undefined,
-        // Include review data in Razorpay notes
-        review_data: rentData.reviewData ? JSON.stringify(rentData.reviewData) : undefined
-      },
-      theme: {
-        color: "#0033A1",
-      },
-    };
+        },
+        prefill: {
+          name: completeBookingData.customerDetails?.primary?.name || "Customer",
+          email: completeBookingData.customerDetails?.primary?.email || "customer@example.com",
+          contact: completeBookingData.customerDetails?.primary?.mobile || "9999999999",
+        },
+        notes: {
+          bookingId: bookingId,
+          propertyId: completeBookingData.propertyId,
+          isRentPayment: isRentPayment,
+          payment_type: isRentPayment ? 'rent_payment' : 'booking_payment',
+          rent_data: isRentPayment ? JSON.stringify(rentData) : undefined,
+          media_images_count: completeBookingData.media?.images?.length || 0,
+          media_videos_count: completeBookingData.media?.videos?.length || 0,
+          review_data: rentData.reviewData ? JSON.stringify(rentData.reviewData) : undefined
+        },
+        theme: {
+          color: "#0033A1",
+        },
+      };
 
-    const rzp1 = new window.Razorpay(options);
-    
-    rzp1.on("payment.failed", function (response) {
-      console.error("❌ Payment failed:", response.error);
-      alert(`Payment Failed: ${response.error.description}`);
-      setProcessing(false);
-    });
+      const rzp1 = new window.Razorpay(options);
+      
+      rzp1.on("payment.failed", function (response) {
+        console.error("❌ Payment failed:", response.error);
+        alert(`Payment Failed: ${response.error.description}`);
+        setProcessing(false);
+      });
 
-    rzp1.on("modal.close", function () {
-      console.log("Modal closed by user");
+      rzp1.on("modal.close", function () {
+        console.log("Modal closed by user");
+        setProcessing(false);
+      });
+      
+      rzp1.open();
+      
+    } catch (error) {
+      console.error("❌ Payment initiation error:", error);
+      alert("Payment Error: " + error.message);
       setProcessing(false);
-    });
-    
-    rzp1.open();
-    
-  } catch (error) {
-    console.error("❌ Payment initiation error:", error);
-    alert("Payment Error: " + error.message);
-    setProcessing(false);
-  }
-};
+    }
+  };
 
   if (!bookingData) {
     return (
@@ -2268,7 +2349,8 @@ export default function Cart() {
                 </div>
               )}
               
-              {/* Transfer Information */}
+              
+              
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex gap-2 text-sm text-blue-700 mb-2">
                   <Info className="w-4 h-4 mt-0.5" />

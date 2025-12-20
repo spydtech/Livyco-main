@@ -168,12 +168,18 @@ import { useNavigate } from "react-router-dom";
 import Header from "../Header";
 import notfount from "../../assets/staying not fount/undraw_not-found_6bgl.png";
 import { bookingAPI } from "../../Clients-components/PropertyController";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const MyStay_Main = () => {
   const [activeTab, setActiveTab] = useState("current");
   const [bookings, setBookings] = useState({ current: null, previous: [] });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // Image gallery state
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [propertyImages, setPropertyImages] = useState([]);
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -195,6 +201,7 @@ const MyStay_Main = () => {
           
           console.log("Current booking found:", currentBooking);
           console.log("Previous bookings found:", previousBookings);
+          console.log("response for bookings",response.data);
           
           setBookings({
             current: currentBooking || null,
@@ -211,6 +218,59 @@ const MyStay_Main = () => {
     fetchBookingData();
   }, []);
 
+  // Image gallery functions
+  const openImageGallery = (images, index = 0) => {
+    // Filter out the last image (exclude the last element)
+    const filteredImages = images ? images.slice(0, -1) : [];
+    setPropertyImages(filteredImages);
+    setCurrentImageIndex(index >= filteredImages.length ? 0 : index);
+    setShowImageGallery(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeImageGallery = () => {
+    setShowImageGallery(false);
+    document.body.style.overflow = 'auto';
+  };
+
+  const goToNextImage = () => {
+    if (propertyImages.length > 0) {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === propertyImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }
+  };
+
+  const goToPrevImage = () => {
+    if (propertyImages.length > 0) {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === 0 ? propertyImages.length - 1 : prevIndex - 1
+      );
+    }
+  };
+
+  const selectImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!showImageGallery) return;
+      
+      if (e.key === 'Escape') {
+        closeImageGallery();
+      } else if (e.key === 'ArrowRight') {
+        goToNextImage();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showImageGallery]);
+
   // Get active data based on tab
   const getActiveData = () => {
     console.log("Active tab:", activeTab);
@@ -218,6 +278,12 @@ const MyStay_Main = () => {
     
     if (activeTab === "current") {
       if (!bookings.current) return null;
+      
+      // Get the first image URL from the images array (excluding last image)
+      const firstImage = bookings.current.property.images && 
+                         bookings.current.property.images.length > 0 
+        ? bookings.current.property.images[0].url 
+        : null;
       
       return {
         name: bookings.current.property.name,
@@ -229,9 +295,8 @@ const MyStay_Main = () => {
           : "NA",
         room: `Room ${bookings.current.roomNumber} - ${bookings.current.roomDetails[0].bed}`,
         sharing: `${bookings.current.roomType} Sharing`,
-        image: bookings.current.property.images && bookings.current.property.images.length > 0 
-          ? bookings.current.property.images[0] 
-          : "default-image-path.jpg",
+        image: firstImage || "default-image-path.jpg",
+        images: bookings.current.property.images || [],
         bookingId: bookings.current._id
       };
     } else {
@@ -239,6 +304,13 @@ const MyStay_Main = () => {
       
       // Show the first previous booking
       const prevBooking = bookings.previous[0];
+      
+      // Get the first image URL from the images array (excluding last image)
+      const firstImage = prevBooking.property.images && 
+                         prevBooking.property.images.length > 0 
+        ? prevBooking.property.images[0].url 
+        : null;
+      
       return {
         name: prevBooking.property.name,
         city: prevBooking.property.city,
@@ -249,9 +321,8 @@ const MyStay_Main = () => {
           : "NA",
         room: `Room ${prevBooking.roomNumber} - ${prevBooking.roomDetails[0].bed}`,
         sharing: `${prevBooking.roomType} Sharing`,
-        image: prevBooking.property.images && prevBooking.property.images.length > 0 
-          ? prevBooking.property.images[0] 
-          : "default-image-path.jpg",
+        image: firstImage || "default-image-path.jpg",
+        images: prevBooking.property.images || [],
         bookingId: prevBooking._id
       };
     }
@@ -260,6 +331,9 @@ const MyStay_Main = () => {
   const activeData = getActiveData();
   
   console.log("Active data:", activeData);
+
+  // Check if there are images (excluding the last one)
+  const hasGalleryImages = activeData?.images && activeData.images.length > 1;
 
   // Handle loading state
   if (!bookings.current && bookings.previous.length === 0 && !error) {
@@ -341,6 +415,8 @@ const MyStay_Main = () => {
     );
   }
 
+  const hasImages = activeData.image !== "default-image-path.jpg";
+
   return (
     <div>
       <Header />
@@ -364,13 +440,16 @@ const MyStay_Main = () => {
 
         {/* Card */}
         <div className="bg-white shadow rounded-xl flex flex-col md:flex-row gap-6 p-6 items-start md:items-center">
-          {/* Image */}
-          <div className="w-full md:w-[300px] h-[200px] bg-gray-100 rounded-lg flex items-center justify-center">
-            {activeData.image !== "default-image-path.jpg" ? (
+          {/* Image - Clickable to open gallery */}
+          <div 
+            className="w-full md:w-[300px] h-[200px] bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden"
+            onClick={() => hasGalleryImages && openImageGallery(activeData.images, 0)}
+          >
+            {hasImages ? (
               <img
                 src={activeData.image}
                 alt="hostel"
-                className="w-full h-full rounded-lg object-cover"
+                className="w-full h-full rounded-lg object-cover hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="text-gray-400">No image available</div>
@@ -438,6 +517,100 @@ const MyStay_Main = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Gallery Modal */}
+      {showImageGallery && propertyImages.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
+          <div className="relative w-full max-w-6xl max-h-[90vh] flex flex-col">
+            {/* Close Button */}
+            <button
+              onClick={closeImageGallery}
+              className="absolute top-2 right-2 z-10 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Main Image Display */}
+            <div className="flex-1 relative flex items-center justify-center">
+              {/* Previous Button */}
+              {propertyImages.length > 1 && (
+                <button
+                  onClick={goToPrevImage}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all z-10"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Main Image */}
+              <div className="w-full h-[70vh] flex items-center justify-center">
+                <img
+                  src={
+                    propertyImages[currentImageIndex]?.url ||
+                    propertyImages[currentImageIndex] ||
+                    "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYzkuY29tL3dw/LWNvbnRlbnQvdXBs/b2Fkcy9ldF90ZW1w/L0RKSV8wNjk4LTQ0/NzAwMzRfNTAwWnhN/MzUuanBn"
+                  }
+                  alt={`Property image ${currentImageIndex + 1}`}
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                  onError={(e) => {
+                    e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+                  }}
+                />
+              </div>
+
+              {/* Next Button */}
+              {propertyImages.length > 1 && (
+                <button
+                  onClick={goToNextImage}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all z-10"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Image Counter */}
+              {propertyImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-full text-sm">
+                  {currentImageIndex + 1} / {propertyImages.length}
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnail Strip */}
+            {propertyImages.length > 1 && (
+              <div className="mt-4 px-8">
+                <div className="flex gap-2 overflow-x-auto py-2">
+                  {propertyImages.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => selectImage(index)}
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                        index === currentImageIndex
+                          ? "border-yellow-400"
+                          : "border-transparent"
+                      }`}
+                    >
+                      <img
+                        src={image.url || image}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "https://imgs.search.brave.com/Ros5URNJPBXX5Is7LuoyadPdy4fcQVXtbtPqjf4QOoQ/rs:fit:860:0:0:0/g:ce/aHR0cDovL3d3dy5w/Z2hjYy5jb20vd3At/Y29udGVudC91cGxv/YWRzL2V0X3RlbXAv/REpJXzA2OTgtNDQ3/MDAzNF81MDBaeMzM1/LmpwZw";
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Instructions */}
+            <div className="text-center text-white text-sm mt-4 opacity-70">
+              <p>Use arrow keys or click thumbnails to navigate • Press ESC to close</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
