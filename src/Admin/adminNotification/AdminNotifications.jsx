@@ -1506,8 +1506,8 @@ const AdminNotifications = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white p-6  " >
+      <div className="max-w-7xl mx-auto overflow-y-auto" style={{ maxHeight: '90vh' }}>
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

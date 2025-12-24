@@ -241,7 +241,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="bg-[#f6f7fb] px-4 sm:px-6 py-8 md:py-10 w-full">
+    <section className="bg-[#f6f7fb] px-4 sm:px-6 py-8 md:py-10 w-full ">
       {/* Main Hero Section */}
       <div className="flex flex-col-reverse md:flex-row justify-between items-center max-w-6xl mx-auto">
         <div className="max-w-lg space-y-4 md:space-y-6 mt-6 md:mt-0">
@@ -268,15 +268,17 @@ export default function Hero() {
       </div>
 
       {/* Search Filter Box */}
-      <div className="md:relative mt-4 md:-mt-36 bg-[#FFDC82] rounded-2xl shadow-lg p-4 sm:p-6 max-w-4xl mx-auto flex flex-col gap-4 md:gap-6">
+      {/* <div className="md:relative mt-4 md:-mt-36 bg-[#FFDC82] glass-badge backdrop-blur-xl rounded-2xl shadow-lg p-4 sm:p-6 max-w-4xl mx-auto flex flex-col gap-4 md:gap-6">
+        */}
+       
         {/* Gender Options & Filters */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+        {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
           <div className="flex flex-wrap justify-center gap-2 text-sm">
             {["Male", "Female", "Co living"].map((opt) => (
               <button
                 key={opt}
                 onClick={() => setGenderOption(opt)}
-                className={`px-3 py-1 border-2 border-blue-800 rounded-full ${genderOption === opt
+                className={`px-3 py-1 border-2 border/30 rounded-full ${genderOption === opt
                     ? "bg-[#144FB6] text-white "
                     : "bg-white text-black"
                   }`}
@@ -292,7 +294,7 @@ export default function Hero() {
 
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-sm">
             <select
-              className="bg-white px-3 py-1 rounded-full border-2 border-blue-800 focus:outline-none"
+              className="bg-white px-3 py-1 rounded-full border-2 border/30 focus:outline-none"
               value={sharing}
               onChange={(e) => setSharing(e.target.value)}
             >
@@ -304,7 +306,7 @@ export default function Hero() {
             </select>
 
             <select
-              className="bg-white px-3 py-1 rounded-full focus:outline-none border-2 border-blue-800"
+              className="bg-white px-3 py-1 rounded-full focus:outline-none border-2 border/30"
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
             >
@@ -315,14 +317,108 @@ export default function Hero() {
               <option value="12001-15000">₹12001 - ₹15000</option>
             </select>
           </div>
+        </div> 
+        */}
+        <div className="md:relative mt-4 md:-mt-36 max-w-4xl mx-auto">
+  {/* Main glass container */}
+  <div className="glass-badge backdrop-blur-xl rounded-2xl shadow-2xl p-4 sm:p-6 flex flex-col gap-4 md:gap-6 relative overflow-hidden">
+    {/* Background gradient overlay for glass effect */}
+    <div className="absolute inset-0 bg-[#ffdc82] rounded-2xl"></div>
+    <div className="absolute inset-0 bg-white/20 rounded-2xl"></div>
+    
+    {/* Content container */}
+    <div className="relative z-10">
+      {/* Gender Options & Filters */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+        <div className="flex flex-wrap justify-center gap-2 text-sm">
+          {["Male", "Female", "Co living"].map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setGenderOption(opt)}
+              className={`glass-button px-4 py-2 border border-white/30 rounded-full font-medium transition-all duration-300 ${genderOption === opt
+                  ? "bg-gradient-to-r from-blue-600/90 to-blue-700/90 text-white shadow-lg shadow-blue-500/30 border-blue-400/40"
+                  : "bg-white/40 text-gray-800 hover:bg-white/60 hover:shadow-md hover:shadow-white/20"
+                }`}
+            >
+              {opt === "Male"
+                ? "For Him"
+                : opt === "Female"
+                  ? "For Her"
+                  : "Co Living"}
+            </button>
+          ))}
         </div>
 
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-sm">
+          <select
+            className="glass-select bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/60 transition-all duration-300 text-gray-800"
+            value={sharing}
+            onChange={(e) => setSharing(e.target.value)}
+          >
+            <option value="" className="bg-white/90">Sharing Type</option>
+            <option value="single" className="bg-white/90">Single Sharing</option>
+            <option value="double" className="bg-white/90">Double Sharing</option>
+            <option value="triple" className="bg-white/90">Triple Sharing</option>
+            <option value="quint" className="bg-white/90">Four Sharing</option>
+          </select>
+
+          <select
+            className="glass-select bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/60 transition-all duration-300 text-gray-800"
+            value={budget}
+            onChange={(e) => setBudget(e.target.value)}
+          >
+            <option value="" className="bg-white/90">Budget</option>
+            <option value="0-5000" className="bg-white/90">₹0 - ₹5000</option>
+            <option value="5001-8000" className="bg-white/90">₹5001 - ₹8000</option>
+            <option value="8001-12000" className="bg-white/90">₹8001 - ₹12000</option>
+            <option value="12001-15000" className="bg-white/90">₹12001 - ₹15000</option>
+          </select>
+        </div>
+      </div>
+
+      {/* City, Locality & Move-in */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm w-full mt-2">
+        <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setShowCityModal(true)}
+            className="glass-button bg-gradient-to-r from-yellow-400/80 to-yellow-500/80 hover:from-yellow-400 hover:to-yellow-500 px-4 py-2.5 border border-yellow-300/40 rounded-full focus:outline-none flex items-center gap-2 w-full sm:w-auto justify-center font-medium shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 transition-all duration-300"
+          >
+            <MapPin className="w-4 h-4" />
+            {location || "Select City"}
+          </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
+          <div className="glass-label bg-white/40 backdrop-blur-sm px-4 py-1.5 border border-white/40 rounded-full text-gray-800 font-medium">
+            <label htmlFor="move-in" className="text-sm whitespace-nowrap">
+              Move In
+            </label>
+          </div>
+          <input
+            type="date"
+            id="move-in"
+            value={moveInDate}
+            onChange={(e) => setMoveInDate(e.target.value)}
+            className="glass-input bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/60 transition-all duration-300 w-full sm:w-auto text-gray-800"
+          />
+          <button
+            onClick={handleSearch}
+            className="glass-button bg-gradient-to-r from-yellow-400/80 to-yellow-500/80 hover:from-yellow-400 hover:to-yellow-500 px-6 py-2.5 border border-yellow-300/40 rounded-full text-sm font-medium shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 transition-all duration-300 w-full sm:w-auto text-center"
+          >
+            Search
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
         {/* City, Locality & Move-in */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-14 text-sm w-full">
+        {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-14 text-sm w-full">
           <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowCityModal(true)}
-              className="bg-yellow-400 px-3 py-2 sm:py-1 border-2 border-blue-800  rounded-3xl focus:outline-none flex items-center gap-2 w-full sm:w-auto justify-center"
+              className="bg-yellow-400 px-3 py-2 sm:py-1 border-2 border/30  rounded-3xl focus:outline-none flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <MapPin className="w-4 h-4" />
               {location || "Select City"}
@@ -330,7 +426,7 @@ export default function Hero() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-            <label htmlFor="move-in" className="text-sm whitespace-nowrap rounded-full border-2 border-blue-800 px-2 py-1">
+            <label htmlFor="move-in" className="text-sm whitespace-nowrap rounded-full border-2 border/30 px-2 py-1">
               Move In
             </label>
             <input
@@ -338,17 +434,17 @@ export default function Hero() {
               id="move-in"
               value={moveInDate}
               onChange={(e) => setMoveInDate(e.target.value)}
-              className="bg-white px-3 py-1 rounded-full border-2 border-blue-800 focus:outline-none w-full sm:w-auto"
+              className="bg-white px-3 py-1 rounded-full border-2 border/30 focus:outline-none w-full sm:w-auto"
             />
             <button
               onClick={handleSearch}
-              className="bg-yellow-400 px-6 py-2 border-2 border-blue-800 rounded-full text-sm font-medium hover:bg-yellow-300 w-full sm:w-auto text-center"
+              className="bg-yellow-400 px-6 py-2 border-2 border/30 rounded-full text-sm font-medium hover:bg-yellow-300 w-full sm:w-auto text-center"
             >
               Search
             </button>
           </div>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
 
       {/* City Modal */}
       {showCityModal && (

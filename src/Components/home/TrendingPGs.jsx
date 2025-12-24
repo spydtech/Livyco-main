@@ -155,6 +155,140 @@
 
 
 
+// import React from "react";
+// import { FaShareAlt, FaHeart, FaStar } from "react-icons/fa";
+// import { useEffect } from "react";
+// import { propertyAPI } from "../../Clients-components/PropertyController";
+// import { useNavigate } from "react-router-dom";
+
+// export default function TrendingPGCarousel() {
+//   const [pgList, setPgList] = React.useState([]);
+//   const [originalPgList, setOriginalPgList] = React.useState([]);
+//   const [selectedPg, setSelectedPg] = React.useState(null);
+//   const [isLoading, setIsLoading] = React.useState(false);
+//   const [isError, setIsError] = React.useState(false);
+//   const navigate = useNavigate();
+//   useEffect(() => {
+//     const fetchProperties = async () => {
+//       try {
+//         setIsLoading(true);
+//         const response = await propertyAPI.getAllClientProperties();
+//         if (response.data?.success) {
+//           const transformedData = response.data.data.map(item => ({
+//             id: item.property._id,
+//             name: item.property.name,
+//             city: item.property.city,
+//             locality: item.property.locality,
+//             street: item.property.street,
+//             price: item.rooms?.roomTypes?.[0]?.price || 0,
+//             rating: item.property.rating || 0,
+//             reviews: item.property.reviews || 0,
+//             image: item.media?.images?.[0]?.url || "/assets/room1.jpg",
+//             pgProperty: item.pgProperty || {},
+//             pgPropertyId: item.pgProperty?.description || "",
+//             rooms: item.rooms || {},
+//             amenities: item.pgProperty?.amenities || [],
+//             roomType: item.rooms?.roomTypes?.map(rt => rt.type) || [],
+//             gender: item.pgProperty?.gender || "Not specified",
+//             recommended: false,
+//             images: item.media?.images?.map(img => img.url) || [],
+//           }));
+//           setPgList(transformedData);
+//           setOriginalPgList(transformedData);
+//           console.log("Fetched properties:", transformedData);
+//         }
+//       } catch (err) {
+//         setIsError(err.message);
+//         console.error("Error fetching properties:", err);
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchProperties();
+//   }, []);
+
+//   return (
+//     <div className="bg-[#FFDC82] py-12 px-4">
+//       <div className="max-w-6xl mx-auto">
+//         <h2 className="text-2xl font-semibold text-center mb-10">Trending PGs</h2>
+
+//         <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory space-x-6 pb-4">
+//           {pgList.map((pg) => (
+//             <div
+//               key={pg.id}
+//               onClick={() => {
+//                 navigate(`/user/view-pg/${pg.id}`, { state: { pg } });
+//                 window.scrollTo({ top: 0, behavior: "smooth" });
+//               }}
+//               className="snap-start cursor-pointer shrink-0 w-[280px] bg-white rounded-2xl shadow-md p-4"
+//             >
+//               <div
+//                 className="relative ">
+//                 <img
+//                   src={pg.image}
+//                   alt={pg.name}
+//                   className="rounded-lg h-40 w-full object-cover"
+//                   onError={(e) => {
+//                     e.target.src = "/assets/room1.jpg"; // Fallback if image fails to load
+//                   }}
+//                 />
+//                 {pg.images.length > 1 && (
+//                   <span className="absolute bottom-2 right-2 text-xs bg-black/70 text-white px-2 py-1 rounded">
+//                     +{pg.images.length - 1}
+//                   </span>
+//                 )}
+//                 <div className="absolute top-2 right-2 flex space-x-2 text-gray-600">
+//                   <FaShareAlt />
+//                   <FaHeart />
+//                 </div>
+//               </div>
+
+//               <div className="mt-4 space-y-1">
+//                 <h3 className="text-gray-800 text-sm font-medium">{pg.name}</h3>
+//                 <p className="text-gray-500 text-xs">
+//                   {pg.locality}, {pg.city}
+//                 </p>
+//               </div>
+
+//               <div className="mt-3 text-sm">
+//                 <p className="text-gray-500">
+//                   Starting from <span className="font-bold">₹{pg.price}</span>
+//                 </p>
+//               </div>
+
+//               <div className="flex items-center text-yellow-400 text-xs mt-2">
+//                 {[...Array(5)].map((_, i) => (
+//                   <FaStar key={i} />
+//                 ))}
+//               </div>
+
+//               <div className="mt-4 text-xs">
+//                 <p className="font-medium">Amenities</p>
+//                 <div className="flex space-x-2 mt-2">
+//                   {pg.amenities.slice(0, 4).map((amenity, idx) => (
+//                     <div
+//                       key={idx}
+//                       className="text-xs text-gray-500"
+//                     >
+//                       {amenity}
+//                     </div>
+//                   ))}
+//                   {pg.amenities.length > 4 && (
+//                     <p className="text-gray-500">+{pg.amenities.length - 4} more</p>
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
 import React from "react";
 import { FaShareAlt, FaHeart, FaStar } from "react-icons/fa";
 import { useEffect } from "react";
@@ -168,6 +302,7 @@ export default function TrendingPGCarousel() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
   const navigate = useNavigate();
+  
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -213,7 +348,7 @@ export default function TrendingPGCarousel() {
       <div className="max-w-6xl mx-auto">
         <h2 className="text-2xl font-semibold text-center mb-10">Trending PGs</h2>
 
-        <div className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory space-x-6 pb-4">
+        <div className="flex overflow-x-auto space-x-6 pb-6">
           {pgList.map((pg) => (
             <div
               key={pg.id}
@@ -221,10 +356,9 @@ export default function TrendingPGCarousel() {
                 navigate(`/user/view-pg/${pg.id}`, { state: { pg } });
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="snap-start cursor-pointer shrink-0 w-[280px] bg-white rounded-2xl shadow-md p-4"
+              className="cursor-pointer shrink-0 w-[280px] bg-white rounded-2xl shadow-md p-4"
             >
-              <div
-                className="relative ">
+              <div className="relative">
                 <img
                   src={pg.image}
                   alt={pg.name}
@@ -283,6 +417,37 @@ export default function TrendingPGCarousel() {
           ))}
         </div>
       </div>
+      
+      {/* Add custom scrollbar styles */}
+      <style jsx="true">{`
+        /* Custom scrollbar styling */
+        .overflow-x-auto::-webkit-scrollbar {
+          height: 8px;
+          background-color: #f5f5f5;
+          border-radius: 2px;
+        }
+        
+        .overflow-x-auto::-webkit-scrollbar-track {
+          background-color: #ffdc82;
+          border-radius: 2px;
+        }
+        
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+          background-color: #ffdc82; /* Orange color */
+          border-radius: 2px;
+          transition: background-color 0.3s ease;
+        }
+        
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+          background-color: #FF8C00; /* Darker orange on hover */
+        }
+        
+        /* Firefox scrollbar styling */
+        .overflow-x-auto {
+          scrollbar-width: thin;
+          scrollbar-color: #ffdc82 #f5f5f5;
+        }
+      `}</style>
     </div>
   );
 }
