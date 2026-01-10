@@ -1,1149 +1,32 @@
-// import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { MessageCircle, Phone, MoreVertical } from 'lucide-react';
-// import ClientNav from '../Client-Navbar/ClientNav';
-
-// const dummyContacts = [
-//   { id: 1, name: "Alice Johnson", image: "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg", mode: "UPI", DOP: "2/08/2025", rent: "8000", room: "201", bed: "A" },
-//   { id: 2, name: "Bob Smith", image: "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg", mode: "Paytm", DOP: "31/07/2025", rent: "4000", room: "202", bed: "B" },
-//   { id: 3, name: "Charlie Brown", image: "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg", mode: "VISA", DOP: "4/08/2025", rent: "8000", room: "203", bed: "C" },
-// ];
-
-// const initialMessages = {
-//   1: [
-//     { id: 1, sender: "Alice", text: "Hey there!", time: "10:00 AM", type: 'text' },
-//     { id: 2, sender: "You", text: "Hi Alice!", time: "10:01 AM", type: 'text' },
-//   ],
-//   2: [
-//     { id: 1, sender: "Bob", text: "Hey there!", time: "9:00 AM", type: 'text' },
-//     { id: 2, sender: "You", text: "Hi Bob!", time: "9:02 AM", type: 'text' },
-//   ],
-//   3: [
-//     { id: 1, sender: "Charlie", text: "Hey there!", time: "11:30 AM", type: 'text' },
-//     { id: 2, sender: "You", text: "Hi Charlie!", time: "11:31 AM", type: 'text' },
-//   ],
-// };
-// const getDaysLate = (dopString) => {
-//   const [day, month, year] = dopString.split('/').map(Number);
-//   const dopDate = new Date(year, month - 1, day);
-//   const today = new Date();
-
-//   const diffTime = today - dopDate;
-//   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-//   return diffDays > 0 ? diffDays : 0;
-// };
-
-
-// export default function PaymentChat() {
-//   const navigate = useNavigate();
-//   const [selectedContactId, setSelectedContactId] = useState(1);
-//   const [messageInput, setMessageInput] = useState('');
-//   const [messagesByContact, setMessagesByContact] = useState(initialMessages);
-//   const [requestpay, setrequestpay] = useState(false);
-
-//   const contact = dummyContacts.find(c => c.id === selectedContactId);
-//   const messages = messagesByContact[selectedContactId] || [];
-
-//   const handleSend = () => {
-//     const newMessages = [];
-
-//     if (requestpay) {
-//       newMessages.push({
-//         id: Date.now(),
-//         sender: "You",
-//         type: 'requestpay',
-//         amount: contact?.rent || 0,
-//         requestedTo: contact?.name || '',
-//         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//         date: new Date().toLocaleDateString(),
-//       });
-//     }
-
-//     if (messageInput.trim() !== '') {
-//       newMessages.push({
-//         id: Date.now() + 1,
-//         sender: "You",
-//         text: messageInput,
-//         type: 'text',
-//         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//         date: new Date().toLocaleDateString(),
-//       });
-//     }
-
-//     if (newMessages.length > 0) {
-//       setMessagesByContact(prev => ({
-//         ...prev,
-//         [selectedContactId]: [...(prev[selectedContactId] || []), ...newMessages],
-//       }));
-//     }
-
-//     setMessageInput('');
-//     setrequestpay(false);
-//   };
-
-//   const handlePayRefund = () => {
-//     const newMessage = {
-//       id: Date.now(),
-//       sender: "You",
-//       text: "₹2500 refunded successfully",
-//       type: 'text',
-//       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//       date: new Date().toLocaleDateString(),
-//     };
-//     setMessagesByContact(prev => ({
-//       ...prev,
-//       [selectedContactId]: [...(prev[selectedContactId] || []), newMessage],
-//     }));
-//   };
-
-//   return (
-//     <>
-//     <ClientNav />
-//       <div className="  bg-cover bg-center bg-no-repeat font-sans px-20 py-5" style={{ backgroundImage: "url('./src/assets/images/image.png')" }}>
-//         {/* Top Buttons */}
-//         <div className="flex gap-1 mb-4">
-//           <button onClick={() => navigate(-1)} className="flex items-center px-2 py-2 rounded <button></button>">Home</button>
-//           <div className='flex items-center justify-center'>/</div>
-//           <button className="flex items-center px-2 py-2 rounded <button>">Tenant List</button>
-//         </div>
-
-//         {/* Main Chat Layout */}
-//         <div className="flex gap-16 h-screen">
-//           {/* Contact List */}
-//           <div className="w-1/4 bg-[#ffffff] border-r overflow-y-auto p-2 rounded-md shadow-md">
-//             {dummyContacts.map((contact) => (
-//               <div key={contact.id} onClick={() => setSelectedContactId(contact.id)} className={`p-4 cursor-pointer mb-4 rounded-md shadow-md hover:bg-[#AFD1FF] ${contact.id === selectedContactId ? 'bg-[#AFD1FF] font-semibold' : ''}`}>
-//                 <div className="flex gap-2 items-center">
-//                   <img src={contact.image} alt={contact.name} className="w-10 h-10 rounded-full object-cover" />
-//                   <div className="flex flex-col text-sm w-full">
-//                     <p className="font-bold mb-1">Payment From</p>
-//                     <div className="flex justify-between w-full text-gray-800">
-//                       <p>{contact.name}</p>
-//                       <p className="text-medium text-gray-500 mt-1">₹{parseFloat(contact.rent).toFixed(2)}</p>
-//                     </div>
-//                   </div>
-//                 </div>
-//                 <div className="flex text-gray-500 items-center gap-2 text-xs mt-1">
-//                   <p>Paid via</p>
-//                   <span className="border px-1 py-[1px] rounded text-[10px] font-bold">{contact.mode}</span>
-//                 </div>
-//                 <p className="text-xs text-gray-500 mt-1">{contact.DOP}</p>
-//               </div>
-//             ))}
-//           </div>
-
-//           {/* Chat Area */}
-//           <div className="flex-1 flex flex-col bg-white rounded-md shadow-md">
-//             <div className="border-b bg-[#AFD1FF] p-4 font-semibold flex items-center gap-4 justify-between">
-//               <div className='flex items-center gap-2'>
-//                 <img src={contact?.image} alt="profile" className="w-10 h-10 rounded-full object-cover" />
-//                 <div>
-//                   <p>{contact?.name}</p>
-//                   <p className="text-xs text-gray-500">Room: {contact?.room} {contact?.bed}</p>
-//                 </div>
-//               </div>
-//               <div className="flex items-center gap-3">
-//                 <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MessageCircle className="w-4 h-4 text-white" /></button></div>
-//                 <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><Phone className="w-4 h-4 text-white" /></button></div>
-//                 <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MoreVertical className="w-4 h-4 text-white" /></button></div>
-//               </div>
-//             </div>
-
-//             {!requestpay && (
-//               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-//                 {messages.map((msg) => (
-//                   <div key={msg.id} className={`flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}>
-//                     <>
-//                       {msg.type === 'requestpay' && (
-//                         <div className='flex flex-col'>
-//                           <div className="bg-[#AFD1FF] border border-blue-300 p-4 rounded-xl max-w-xs">
-//                             <p className="text-sm">Request From You</p>
-//                             <p className="text-2xl font-bold text-black">₹{msg.amount}/-</p>
-//                             <p className="text-xs text-gray-500 mt-1">
-//                               almost {getDaysLate(contact.DOP)} day{getDaysLate(contact.DOP) !== 1 ? 's' : ''} are over...
-//                             </p>
-
-//                           </div>
-//                           <div className='flex gap-2'>
-//                             <p className="text-[11px] mt-1">On {msg.date}</p>
-//                             <p className="text-[11px] mt-1">{msg.time}</p>
-//                           </div>
-//                         </div>
-//                       )}
-//                       {msg.type === 'text' && (
-//                         <div className='flex flex-col'>
-//                           <div className={`px-4 py-2 rounded-lg max-w-xs bg-[#AFD1FF]`}>
-//                             <p className="text-sm">{msg.text}</p>
-//                           </div>
-//                           <div className='flex gap-2'>
-//                             <p className="text-[11px] mt-1">{msg.date}</p>
-//                             <p className="text-[11px] mt-1">{msg.time}</p>
-//                           </div>
-//                         </div>
-//                       )}
-//                     </>
-//                   </div>
-//                 ))}
-//               </div>
-//             )}
-
-//             {requestpay && (
-//               <div className="flex-1 p-4">
-//                 <div className="flex flex-col items-center justify-center h-full space-y-4">
-//                   <img src={contact?.image} alt="profile" className="w-24 h-24 rounded-full object-cover mb-2" />
-//                   <p className="text-center font-semibold">Requesting Rent From {contact?.name}</p>
-//                   <div className="border-2 px-4 rounded-lg text-center text-2xl font-semibold">₹{contact?.rent}</div>
-//                 </div>
-//               </div>
-//             )}
-
-//             {!requestpay && (
-//               <div className="border-t p-4 flex items-end gap-4">
-//                 <button onClick={() => setrequestpay(true)} className="flex-1 bg-[#FEE123] py-2 rounded">Request Pay</button>
-//                 <button onClick={handlePayRefund} className="flex-1 border border-[#FEE123] text-[#FEE123] py-2 rounded">Pay Refund</button>
-//               </div>
-//             )}
-
-//             {requestpay && (
-//               <div className="border-t p-4 flex gap-2">
-//                 <input type="text" placeholder="Type a message..." className="flex-1 border p-2 rounded" value={messageInput} onChange={(e) => setMessageInput(e.target.value)} />
-//                 <button onClick={handleSend} className="bg-blue-600 text-white px-4 rounded">Send</button>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-
-
 // import React, { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
-// import { MessageCircle, Phone, MoreVertical } from 'lucide-react';
-// import ClientNav from '../Client-Navbar/ClientNav';
-// import { bookingAPI, paymentAPI } from '../PropertyController';
-
-// const getDaysLate = (dopString) => {
-//   if (!dopString) return 0;
-//   const [day, month, year] = dopString.split('/').map(Number);
-//   const dopDate = new Date(year, month - 1, day);
-//   const today = new Date();
-
-//   const diffTime = today - dopDate;
-//   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-//   return diffDays > 0 ? diffDays : 0;
-// };
-
-// export default function PaymentChat() {
-//   const navigate = useNavigate();
-//   const [selectedContactId, setSelectedContactId] = useState(null);
-//   const [messageInput, setMessageInput] = useState('');
-//   const [messagesByContact, setMessagesByContact] = useState({});
-//   const [requestpay, setRequestpay] = useState(false);
-//   const [bookingUsers, setBookingUsers] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     fetchBookingUsers();
-//   }, []);
-
-//   const fetchBookingUsers = async () => {
-//     try {
-//       setLoading(true);
-//       // Get property ID from your state or context
-//       const propertyId = localStorage.getItem('currentPropertyId') || 'default-property-id';
-      
-//       const response = await bookingAPI.getAllBookings(propertyId);
-      
-//       if (response.data.success) {
-//         setBookingUsers(response.data.users);
-//         if (response.data.users.length > 0) {
-//           setSelectedContactId(response.data.users[0]._id);
-//         }
-//       }
-//     } catch (error) {
-//       console.error('Error fetching booking users:', error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const contact = bookingUsers.find(c => c._id === selectedContactId);
-
-//   const handleSendPaymentRequest = async () => {
-//     if (!contact) return;
-
-//     try {
-//       const response = await paymentAPI.sendPaymentRequest({
-//         userId: contact._id,
-//         amount: contact.outstandingAmount || contact.rent,
-//         description: 'Rent payment request',
-//         dueDate: new Date().toISOString()
-//       });
-
-//       if (response.data.success) {
-//         const newMessage = {
-//           id: Date.now(),
-//           sender: "You",
-//           type: 'requestpay',
-//           amount: contact.outstandingAmount || contact.rent,
-//           requestedTo: contact.name,
-//           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//           date: new Date().toLocaleDateString(),
-//         };
-
-//         setMessagesByContact(prev => ({
-//           ...prev,
-//           [selectedContactId]: [...(prev[selectedContactId] || []), newMessage],
-//         }));
-
-//         setRequestpay(false);
-//         setMessageInput('');
-//       }
-//     } catch (error) {
-//       console.error('Error sending payment request:', error);
-//       alert('Failed to send payment request');
-//     }
-//   };
-
-//   const handleSendMessage = () => {
-//     if (messageInput.trim() === '') return;
-
-//     const newMessage = {
-//       id: Date.now(),
-//       sender: "You",
-//       text: messageInput,
-//       type: 'text',
-//       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//       date: new Date().toLocaleDateString(),
-//     };
-
-//     setMessagesByContact(prev => ({
-//       ...prev,
-//       [selectedContactId]: [...(prev[selectedContactId] || []), newMessage],
-//     }));
-
-//     setMessageInput('');
-//   };
-
-//   const handlePayRefund = async () => {
-//     if (!contact) return;
-
-//     try {
-//       // Navigate to refund page for this user
-//       navigate(`/client/vacate-request/${contact.bookingId}`, {
-//         state: {
-//           user: contact,
-//           booking: contact.bookingDetails
-//         }
-//       });
-//     } catch (error) {
-//       console.error('Error processing refund:', error);
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <>
-//         <ClientNav />
-//         <div className="p-6 bg-[#F8F8FF] min-h-screen flex justify-center items-center">
-//           <div className="text-gray-600">Loading users...</div>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   return (
-//     <>
-//       <ClientNav />
-//       <div className="bg-cover bg-center bg-no-repeat font-sans px-20 py-5" style={{ backgroundImage: "url('./src/assets/images/image.png')" }}>
-//         {/* Top Buttons */}
-//         <div className="flex gap-1 mb-4">
-//           <button onClick={() => navigate(-1)} className="flex items-center px-2 py-2 rounded">Home</button>
-//           <div className='flex items-center justify-center'>/</div>
-//           <button className="flex items-center px-2 py-2 rounded">Tenant List</button>
-//         </div>
-
-//         {/* Main Chat Layout */}
-//         <div className="flex gap-16 h-screen">
-//           {/* Contact List */}
-//           <div className="w-1/4 bg-[#ffffff] border-r overflow-y-auto p-2 rounded-md shadow-md">
-//             {bookingUsers.map((contact) => (
-//               <div key={contact._id} onClick={() => setSelectedContactId(contact._id)} className={`p-4 cursor-pointer mb-4 rounded-md shadow-md hover:bg-[#AFD1FF] ${contact._id === selectedContactId ? 'bg-[#AFD1FF] font-semibold' : ''}`}>
-//                 <div className="flex gap-2 items-center">
-//                   <img src={contact.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg"} alt={contact.name} className="w-10 h-10 rounded-full object-cover" />
-//                   <div className="flex flex-col text-sm w-full">
-//                     <p className="font-bold mb-1">Payment From</p>
-//                     <div className="flex justify-between w-full text-gray-800">
-//                       <p>{contact.name}</p>
-//                       <p className="text-medium text-gray-500 mt-1">₹{contact.outstandingAmount || contact.rent}</p>
-//                     </div>
-//                   </div>
-//                 </div>
-//                 <div className="flex text-gray-500 items-center gap-2 text-xs mt-1">
-//                   <p>Room: {contact.roomNumber}</p>
-//                   <span className="border px-1 py-[1px] rounded text-[10px] font-bold">{contact.bed}</span>
-//                 </div>
-//                 {contact.lastPaymentDate && (
-//                   <p className="text-xs text-gray-500 mt-1">Last paid: {new Date(contact.lastPaymentDate).toLocaleDateString()}</p>
-//                 )}
-//               </div>
-//             ))}
-//           </div>
-
-//           {/* Chat Area */}
-//           {contact && (
-//             <div className="flex-1 flex flex-col bg-white rounded-md shadow-md">
-//               <div className="border-b bg-[#AFD1FF] p-4 font-semibold flex items-center gap-4 justify-between">
-//                 <div className='flex items-center gap-2'>
-//                   <img src={contact.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg"} alt="profile" className="w-10 h-10 rounded-full object-cover" />
-//                   <div>
-//                     <p>{contact.name}</p>
-//                     <p className="text-xs text-gray-500">Room: {contact.roomNumber} {contact.bed}</p>
-//                     <p className="text-xs text-gray-500">Outstanding: ₹{contact.outstandingAmount || 0}</p>
-//                   </div>
-//                 </div>
-//                 <div className="flex items-center gap-3">
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MessageCircle className="w-4 h-4 text-white" /></button></div>
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><Phone className="w-4 h-4 text-white" /></button></div>
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MoreVertical className="w-4 h-4 text-white" /></button></div>
-//                 </div>
-//               </div>
-
-//               {!requestpay && (
-//                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-//                   {(messagesByContact[selectedContactId] || []).map((msg) => (
-//                     <div key={msg.id} className={`flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}>
-//                       <>
-//                         {msg.type === 'requestpay' && (
-//                           <div className='flex flex-col'>
-//                             <div className="bg-[#AFD1FF] border border-blue-300 p-4 rounded-xl max-w-xs">
-//                               <p className="text-sm">Request From You</p>
-//                               <p className="text-2xl font-bold text-black">₹{msg.amount}/-</p>
-//                               <p className="text-xs text-gray-500 mt-1">
-//                                 almost {getDaysLate(contact.lastPaymentDate)} day{getDaysLate(contact.lastPaymentDate) !== 1 ? 's' : ''} are over...
-//                               </p>
-//                             </div>
-//                             <div className='flex gap-2'>
-//                               <p className="text-[11px] mt-1">On {msg.date}</p>
-//                               <p className="text-[11px] mt-1">{msg.time}</p>
-//                             </div>
-//                           </div>
-//                         )}
-//                         {msg.type === 'text' && (
-//                           <div className='flex flex-col'>
-//                             <div className={`px-4 py-2 rounded-lg max-w-xs bg-[#AFD1FF]`}>
-//                               <p className="text-sm">{msg.text}</p>
-//                             </div>
-//                             <div className='flex gap-2'>
-//                               <p className="text-[11px] mt-1">{msg.date}</p>
-//                               <p className="text-[11px] mt-1">{msg.time}</p>
-//                             </div>
-//                           </div>
-//                         )}
-//                       </>
-//                     </div>
-//                   ))}
-//                 </div>
-//               )}
-
-//               {requestpay && (
-//                 <div className="flex-1 p-4">
-//                   <div className="flex flex-col items-center justify-center h-full space-y-4">
-//                     <img src={contact.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg"} alt="profile" className="w-24 h-24 rounded-full object-cover mb-2" />
-//                     <p className="text-center font-semibold">Requesting Rent From {contact.name}</p>
-//                     <div className="border-2 px-4 rounded-lg text-center text-2xl font-semibold">₹{contact.outstandingAmount || contact.rent}</div>
-//                   </div>
-//                 </div>
-//               )}
-
-//               {!requestpay && (
-//                 <div className="border-t p-4 flex items-end gap-4">
-//                   <button onClick={() => setRequestpay(true)} className="flex-1 bg-[#FEE123] py-2 rounded">Request Pay</button>
-//                   <button onClick={handlePayRefund} className="flex-1 border border-[#FEE123] text-[#FEE123] py-2 rounded">Process Refund</button>
-//                 </div>
-//               )}
-
-//               {requestpay && (
-//                 <div className="border-t p-4 flex gap-2">
-//                   <input type="text" placeholder="Add a message (optional)..." className="flex-1 border p-2 rounded" value={messageInput} onChange={(e) => setMessageInput(e.target.value)} />
-//                   <button onClick={handleSendPaymentRequest} className="bg-blue-600 text-white px-4 rounded">Send Request</button>
-//                   <button onClick={() => setRequestpay(false)} className="bg-gray-500 text-white px-4 rounded">Cancel</button>
-//                 </div>
-//               )}
-//             </div>
-//           )}
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { MessageCircle, Phone, MoreVertical } from 'lucide-react';
-// import ClientNav from '../Client-Navbar/ClientNav';
-// import { bookingAPI, paymentAPI } from '../PropertyController';
-
-// const getDaysLate = (dopString) => {
-//   if (!dopString) return 0;
-//   const [day, month, year] = dopString.split('/').map(Number);
-//   const dopDate = new Date(year, month - 1, day);
-//   const today = new Date();
-
-//   const diffTime = today - dopDate;
-//   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-//   return diffDays > 0 ? diffDays : 0;
-// };
-
-// export default function PaymentChat() {
-//   const navigate = useNavigate();
-//   const [selectedContactId, setSelectedContactId] = useState(null);
-//   const [messageInput, setMessageInput] = useState('');
-//   const [messagesByContact, setMessagesByContact] = useState({});
-//   const [requestpay, setRequestpay] = useState(false);
-//   const [bookingUsers, setBookingUsers] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   useEffect(() => {
-//     fetchBookingUsers();
-//   }, []);
-
-//   const fetchBookingUsers = async () => {
-//     try {
-//       setLoading(true);
-//       setError(null);
-      
-//       // Get property ID from your state or context
-//       const propertyId = localStorage.getItem('currentPropertyId') || 'default-property-id';
-      
-//       const response = await bookingAPI.getAllBookings();
-      
-//       if (response.data?.success) {
-//         // The response structure might be different - adjust based on actual API response
-//         const users = response.data.bookings || response.data.data || response.data.users || [];
-        
-//         // Transform the bookings data into the format needed for the UI
-//         const transformedUsers = users.map(booking => ({
-//           _id: booking.userId?._id || booking._id,
-//           name: booking.userId?.name || booking.customerDetails?.name || 'Unknown User',
-//           email: booking.userId?.email || booking.customerDetails?.email || '',
-//           phone: booking.userId?.phone || booking.customerDetails?.mobile || '',
-//           profileImage: booking.userId?.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg",
-//           roomNumber: booking.roomDetails?.[0]?.roomNumber || 'N/A',
-//           bed: booking.roomDetails?.[0]?.bed || 'N/A',
-//           rent: booking.pricing?.monthlyRent || 0,
-//           outstandingAmount: booking.outstandingAmount || 0,
-//           lastPaymentDate: booking.payments?.find(p => p.status === 'completed')?.date,
-//           bookingId: booking._id
-//         }));
-        
-//         setBookingUsers(transformedUsers);
-//         if (transformedUsers.length > 0) {
-//           setSelectedContactId(transformedUsers[0]._id);
-//         }
-//       } else {
-//         setError('Failed to fetch booking users');
-//       }
-//     } catch (error) {
-//       console.error('Error fetching booking users:', error);
-//       setError(error.response?.data?.message || 'Failed to load users');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const contact = bookingUsers.find(c => c._id === selectedContactId);
-
-//   const handleSendPaymentRequest = async () => {
-//     if (!contact) return;
-
-//     try {
-//       const response = await paymentAPI.sendPaymentRequest({
-//         userId: contact._id,
-//         amount: contact.outstandingAmount || contact.rent,
-//         description: 'Rent payment request',
-//         dueDate: new Date().toISOString(),
-//         bookingId: contact.bookingId
-//       });
-
-//       if (response.data.success) {
-//         const newMessage = {
-//           id: Date.now(),
-//           sender: "You",
-//           type: 'requestpay',
-//           amount: contact.outstandingAmount || contact.rent,
-//           requestedTo: contact.name,
-//           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//           date: new Date().toLocaleDateString(),
-//         };
-
-//         setMessagesByContact(prev => ({
-//           ...prev,
-//           [selectedContactId]: [...(prev[selectedContactId] || []), newMessage],
-//         }));
-
-//         setRequestpay(false);
-//         setMessageInput('');
-        
-//         alert('Payment request sent successfully!');
-//       }
-//     } catch (error) {
-//       console.error('Error sending payment request:', error);
-//       alert('Failed to send payment request: ' + (error.response?.data?.message || error.message));
-//     }
-//   };
-
-//   const handleSendMessage = () => {
-//     if (messageInput.trim() === '') return;
-
-//     const newMessage = {
-//       id: Date.now(),
-//       sender: "You",
-//       text: messageInput,
-//       type: 'text',
-//       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//       date: new Date().toLocaleDateString(),
-//     };
-
-//     setMessagesByContact(prev => ({
-//       ...prev,
-//       [selectedContactId]: [...(prev[selectedContactId] || []), newMessage],
-//     }));
-
-//     setMessageInput('');
-//   };
-
-//   const handlePayRefund = async () => {
-//     if (!contact) return;
-
-//     try {
-//       // Navigate to refund page for this user
-//       navigate(`/client/vacate-request/${contact.bookingId}`, {
-//         state: {
-//           user: contact,
-//           booking: contact
-//         }
-//       });
-//     } catch (error) {
-//       console.error('Error processing refund:', error);
-//       alert('Error navigating to refund page: ' + error.message);
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <>
-//         <ClientNav />
-//         <div className="p-6 bg-[#F8F8FF] min-h-screen flex justify-center items-center">
-//           <div className="text-gray-600">Loading users...</div>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <>
-//         <ClientNav />
-//         <div className="p-6 bg-[#F8F8FF] min-h-screen flex flex-col items-center justify-center">
-//           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-//             {error}
-//           </div>
-//           <button 
-//             onClick={fetchBookingUsers}
-//             className="bg-blue-600 text-white px-4 py-2 rounded"
-//           >
-//             Retry
-//           </button>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   return (
-//     <>
-//       <ClientNav />
-//       <div className="bg-cover bg-center bg-no-repeat font-sans px-20 py-5" style={{ backgroundImage: "url('./src/assets/images/image.png')" }}>
-//         {/* Top Buttons */}
-//         <div className="flex gap-1 mb-4">
-//           <button onClick={() => navigate(-1)} className="flex items-center px-2 py-2 rounded">Home</button>
-//           <div className='flex items-center justify-center'>/</div>
-//           <button className="flex items-center px-2 py-2 rounded">Tenant List</button>
-//         </div>
-
-//         {/* Main Chat Layout */}
-//         <div className="flex gap-16 h-screen">
-//           {/* Contact List */}
-//           <div className="w-1/4 bg-[#ffffff] border-r overflow-y-auto p-2 rounded-md shadow-md">
-//             {bookingUsers.length === 0 ? (
-//               <div className="p-4 text-center text-gray-500">
-//                 No tenants found
-//               </div>
-//             ) : (
-//               bookingUsers.map((contact) => (
-//                 <div key={contact._id} onClick={() => setSelectedContactId(contact._id)} className={`p-4 cursor-pointer mb-4 rounded-md shadow-md hover:bg-[#AFD1FF] ${contact._id === selectedContactId ? 'bg-[#AFD1FF] font-semibold' : ''}`}>
-//                   <div className="flex gap-2 items-center">
-//                     <img src={contact.profileImage} alt={contact.name} className="w-10 h-10 rounded-full object-cover" />
-//                     <div className="flex flex-col text-sm w-full">
-//                       <p className="font-bold mb-1">Payment From</p>
-//                       <div className="flex justify-between w-full text-gray-800">
-//                         <p>{contact.name}</p>
-//                         <p className="text-medium text-gray-500 mt-1">₹{contact.outstandingAmount || contact.rent}</p>
-//                       </div>
-//                     </div>
-//                   </div>
-//                   <div className="flex text-gray-500 items-center gap-2 text-xs mt-1">
-//                     <p>Room: {contact.roomNumber}</p>
-//                     <span className="border px-1 py-[1px] rounded text-[10px] font-bold">{contact.bed}</span>
-//                   </div>
-//                   {contact.lastPaymentDate && (
-//                     <p className="text-xs text-gray-500 mt-1">Last paid: {new Date(contact.lastPaymentDate).toLocaleDateString()}</p>
-//                   )}
-//                 </div>
-//               ))
-//             )}
-//           </div>
-
-//           {/* Chat Area */}
-//           {contact ? (
-//             <div className="flex-1 flex flex-col bg-white rounded-md shadow-md">
-//               <div className="border-b bg-[#AFD1FF] p-4 font-semibold flex items-center gap-4 justify-between">
-//                 <div className='flex items-center gap-2'>
-//                   <img src={contact.profileImage} alt="profile" className="w-10 h-10 rounded-full object-cover" />
-//                   <div>
-//                     <p>{contact.name}</p>
-//                     <p className="text-xs text-gray-500">Room: {contact.roomNumber} {contact.bed}</p>
-//                     <p className="text-xs text-gray-500">Outstanding: ₹{contact.outstandingAmount || 0}</p>
-//                   </div>
-//                 </div>
-//                 <div className="flex items-center gap-3">
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MessageCircle className="w-4 h-4 text-white" /></button></div>
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><Phone className="w-4 h-4 text-white" /></button></div>
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MoreVertical className="w-4 h-4 text-white" /></button></div>
-//                 </div>
-//               </div>
-
-//               {!requestpay && (
-//                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-//                   {(messagesByContact[selectedContactId] || []).map((msg) => (
-//                     <div key={msg.id} className={`flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}>
-//                       <>
-//                         {msg.type === 'requestpay' && (
-//                           <div className='flex flex-col'>
-//                             <div className="bg-[#AFD1FF] border border-blue-300 p-4 rounded-xl max-w-xs">
-//                               <p className="text-sm">Request From You</p>
-//                               <p className="text-2xl font-bold text-black">₹{msg.amount}/-</p>
-//                               <p className="text-xs text-gray-500 mt-1">
-//                                 almost {getDaysLate(contact.lastPaymentDate)} day{getDaysLate(contact.lastPaymentDate) !== 1 ? 's' : ''} are over...
-//                               </p>
-//                             </div>
-//                             <div className='flex gap-2'>
-//                               <p className="text-[11px] mt-1">On {msg.date}</p>
-//                               <p className="text-[11px] mt-1">{msg.time}</p>
-//                             </div>
-//                           </div>
-//                         )}
-//                         {msg.type === 'text' && (
-//                           <div className='flex flex-col'>
-//                             <div className={`px-4 py-2 rounded-lg max-w-xs bg-[#AFD1FF]`}>
-//                               <p className="text-sm">{msg.text}</p>
-//                             </div>
-//                             <div className='flex gap-2'>
-//                               <p className="text-[11px] mt-1">{msg.date}</p>
-//                               <p className="text-[11px] mt-1">{msg.time}</p>
-//                             </div>
-//                           </div>
-//                         )}
-//                       </>
-//                     </div>
-//                   ))}
-//                 </div>
-//               )}
-
-//               {requestpay && (
-//                 <div className="flex-1 p-4">
-//                   <div className="flex flex-col items-center justify-center h-full space-y-4">
-//                     <img src={contact.profileImage} alt="profile" className="w-24 h-24 rounded-full object-cover mb-2" />
-//                     <p className="text-center font-semibold">Requesting Rent From {contact.name}</p>
-//                     <div className="border-2 px-4 rounded-lg text-center text-2xl font-semibold">₹{contact.outstandingAmount || contact.rent}</div>
-//                   </div>
-//                 </div>
-//               )}
-
-//               {!requestpay && (
-//                 <div className="border-t p-4 flex items-end gap-4">
-//                   <button onClick={() => setRequestpay(true)} className="flex-1 bg-[#FEE123] py-2 rounded">Request Pay</button>
-//                   <button onClick={handlePayRefund} className="flex-1 border border-[#FEE123] text-[#FEE123] py-2 rounded">Process Refund</button>
-//                 </div>
-//               )}
-
-//               {requestpay && (
-//                 <div className="border-t p-4 flex gap-2">
-//                   <input type="text" placeholder="Add a message (optional)..." className="flex-1 border p-2 rounded" value={messageInput} onChange={(e) => setMessageInput(e.target.value)} />
-//                   <button onClick={handleSendPaymentRequest} className="bg-blue-600 text-white px-4 rounded">Send Request</button>
-//                   <button onClick={() => setRequestpay(false)} className="bg-gray-500 text-white px-4 rounded">Cancel</button>
-//                 </div>
-//               )}
-//             </div>
-//           ) : (
-//             <div className="flex-1 flex items-center justify-center bg-white rounded-md shadow-md">
-//               <div className="text-gray-500 text-center">
-//                 {bookingUsers.length === 0 ? 'No tenants available' : 'Select a tenant to start chatting'}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-
-
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { MessageCircle, Phone, MoreVertical } from 'lucide-react';
-// import ClientNav from '../Client-Navbar/ClientNav';
-// import { bookingAPI, paymentAPI } from '../PropertyController';
-
-// const getDaysLate = (dopString) => {
-//   if (!dopString) return 0;
-//   const [day, month, year] = dopString.split('/').map(Number);
-//   const dopDate = new Date(year, month - 1, day);
-//   const today = new Date();
-
-//   const diffTime = today - dopDate;
-//   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-//   return diffDays > 0 ? diffDays : 0;
-// };
-
-// export default function PaymentChat() {
-//   const navigate = useNavigate();
-//   const [selectedContactId, setSelectedContactId] = useState(null);
-//   const [messageInput, setMessageInput] = useState('');
-//   const [messagesByContact, setMessagesByContact] = useState({});
-//   const [requestpay, setRequestpay] = useState(false);
-//   const [bookingUsers, setBookingUsers] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   useEffect(() => {
-//     fetchBookingUsers();
-//   }, []);
-
-//   const fetchBookingUsers = async () => {
-//     try {
-//       setLoading(true);
-//       setError(null);
-      
-//       // Get property ID from your state or context
-//       const propertyId = localStorage.getItem('currentPropertyId') || 'default-property-id';
-      
-//       const response = await bookingAPI.getAllBookings();
-      
-//       if (response.data?.success) {
-//         // The response structure might be different - adjust based on actual API response
-//         const users = response.data.bookings || response.data.data || response.data.users || [];
-        
-//         // Transform the bookings data into the format needed for the UI
-//         const transformedUsers = users.map(booking => ({
-//           _id: booking.userId?._id || booking._id,
-//           name: booking.userId?.name || booking.customerDetails?.name || 'Unknown User',
-//           email: booking.userId?.email || booking.customerDetails?.email || '',
-//           phone: booking.userId?.phone || booking.customerDetails?.mobile || '',
-//           profileImage: booking.userId?.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg",
-//           roomNumber: booking.roomDetails?.[0]?.roomNumber || 'N/A',
-//           bed: booking.roomDetails?.[0]?.bed || 'N/A',
-//           rent: booking.pricing?.monthlyRent || 0,
-//           outstandingAmount: booking.outstandingAmount || 0,
-//           lastPaymentDate: booking.payments?.find(p => p.status === 'completed')?.date,
-//           bookingId: booking._id
-//         }));
-        
-//         setBookingUsers(transformedUsers);
-//         if (transformedUsers.length > 0) {
-//           setSelectedContactId(transformedUsers[0]._id);
-//         }
-//       } else {
-//         setError('Failed to fetch booking users');
-//       }
-//     } catch (error) {
-//       console.error('Error fetching booking users:', error);
-//       setError(error.response?.data?.message || 'Failed to load users');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const contact = bookingUsers.find(c => c._id === selectedContactId);
-
-//   const handleSendPaymentRequest = async () => {
-//     if (!contact) return;
-
-//     try {
-//       const response = await paymentAPI.sendPaymentRequest({
-//         userId: contact._id,
-//         amount: contact.outstandingAmount || contact.rent,
-//         description: 'Rent payment request',
-//         dueDate: new Date().toISOString(),
-//         bookingId: contact.bookingId
-//       });
-
-//       if (response.data.success) {
-//         const newMessage = {
-//           id: Date.now(),
-//           sender: "You",
-//           type: 'requestpay',
-//           amount: contact.outstandingAmount || contact.rent,
-//           requestedTo: contact.name,
-//           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//           date: new Date().toLocaleDateString(),
-//         };
-
-//         setMessagesByContact(prev => ({
-//           ...prev,
-//           [selectedContactId]: [...(prev[selectedContactId] || []), newMessage],
-//         }));
-
-//         setRequestpay(false);
-//         setMessageInput('');
-        
-//         alert('Payment request sent successfully!');
-//       }
-//     } catch (error) {
-//       console.error('Error sending payment request:', error);
-//       alert('Failed to send payment request: ' + (error.response?.data?.message || error.message));
-//     }
-//   };
-
-//   const handleSendMessage = () => {
-//     if (messageInput.trim() === '') return;
-
-//     const newMessage = {
-//       id: Date.now(),
-//       sender: "You",
-//       text: messageInput,
-//       type: 'text',
-//       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//       date: new Date().toLocaleDateString(),
-//     };
-
-//     setMessagesByContact(prev => ({
-//       ...prev,
-//       [selectedContactId]: [...(prev[selectedContactId] || []), newMessage],
-//     }));
-
-//     setMessageInput('');
-//   };
-
-//   const handlePayRefund = async () => {
-//     if (!contact) return;
-
-//     try {
-//       // Navigate to refund page for this user
-//       navigate(`/client/vacate-request/${contact.bookingId}`, {
-//         state: {
-//           user: contact,
-//           booking: contact
-//         }
-//       });
-//     } catch (error) {
-//       console.error('Error processing refund:', error);
-//       alert('Error navigating to refund page: ' + error.message);
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <>
-//         <ClientNav />
-//         <div className="p-6 bg-[#F8F8FF] min-h-screen flex justify-center items-center">
-//           <div className="text-gray-600">Loading users...</div>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <>
-//         <ClientNav />
-//         <div className="p-6 bg-[#F8F8FF] min-h-screen flex flex-col items-center justify-center">
-//           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-//             {error}
-//           </div>
-//           <button 
-//             onClick={fetchBookingUsers}
-//             className="bg-blue-600 text-white px-4 py-2 rounded"
-//           >
-//             Retry
-//           </button>
-//         </div>
-//       </>
-//     );
-//   }
-
-//   return (
-//     <>
-//       <ClientNav />
-//       <div className="bg-cover bg-center bg-no-repeat font-sans px-20 py-5" style={{ backgroundImage: "url('./src/assets/images/image.png')" }}>
-//         {/* Top Buttons */}
-//         <div className="flex gap-1 mb-4">
-//           <button onClick={() => navigate(-1)} className="flex items-center px-2 py-2 rounded">Home</button>
-//           <div className='flex items-center justify-center'>/</div>
-//           <button className="flex items-center px-2 py-2 rounded">Tenant List</button>
-//         </div>
-
-//         {/* Main Chat Layout */}
-//         <div className="flex gap-16 h-screen">
-//           {/* Contact List */}
-//           <div className="w-1/4 bg-[#ffffff] border-r overflow-y-auto p-2 rounded-md shadow-md">
-//             {bookingUsers.length === 0 ? (
-//               <div className="p-4 text-center text-gray-500">
-//                 No tenants found
-//               </div>
-//             ) : (
-//               bookingUsers.map((contact) => (
-//                 <div key={contact._id} onClick={() => setSelectedContactId(contact._id)} className={`p-4 cursor-pointer mb-4 rounded-md shadow-md hover:bg-[#AFD1FF] ${contact._id === selectedContactId ? 'bg-[#AFD1FF] font-semibold' : ''}`}>
-//                   <div className="flex gap-2 items-center">
-//                     <img src={contact.profileImage} alt={contact.name} className="w-10 h-10 rounded-full object-cover" />
-//                     <div className="flex flex-col text-sm w-full">
-//                       <p className="font-bold mb-1">Payment From</p>
-//                       <div className="flex justify-between w-full text-gray-800">
-//                         <p>{contact.user?.name}</p>
-//                         <p className="text-medium text-gray-500 mt-1">₹{contact.outstandingAmount || contact.rent}</p>
-//                       </div>
-//                     </div>
-//                   </div>
-//                   <div className="flex text-gray-500 items-center gap-2 text-xs mt-1">
-//                     <p>Room: {contact.roomNumber}</p>
-//                     <span className="border px-1 py-[1px] rounded text-[10px] font-bold">{contact.bed}</span>
-//                   </div>
-//                   {contact.lastPaymentDate && (
-//                     <p className="text-xs text-gray-500 mt-1">Last paid: {new Date(contact.lastPaymentDate).toLocaleDateString()}</p>
-//                   )}
-//                 </div>
-//               ))
-//             )}
-//           </div>
-
-//           {/* Chat Area */}
-//           {contact ? (
-//             <div className="flex-1 flex flex-col bg-white rounded-md shadow-md">
-//               <div className="border-b bg-[#AFD1FF] p-4 font-semibold flex items-center gap-4 justify-between">
-//                 <div className='flex items-center gap-2'>
-//                   <img src={contact.profileImage} alt="profile" className="w-10 h-10 rounded-full object-cover" />
-//                   <div>
-//                     <p>{contact.name}</p>
-//                     <p className="text-xs text-gray-500">Room: {contact.roomNumber} {contact.bed}</p>
-//                     <p className="text-xs text-gray-500">Outstanding: ₹{contact.outstandingAmount || 0}</p>
-//                   </div>
-//                 </div>
-//                 <div className="flex items-center gap-3">
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MessageCircle className="w-4 h-4 text-white" /></button></div>
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><Phone className="w-4 h-4 text-white" /></button></div>
-//                   <div className='w-7 h-7 bg-[#0827B2] flex justify-center items-center rounded-full'><button className='cursor-pointer'><MoreVertical className="w-4 h-4 text-white" /></button></div>
-//                 </div>
-//               </div>
-
-//               {!requestpay && (
-//                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-//                   {(messagesByContact[selectedContactId] || []).map((msg) => (
-//                     <div key={msg.id} className={`flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}>
-//                       {msg.type === 'requestpay' && (
-//                         <div className='flex flex-col'>
-//                           <div className="bg-[#AFD1FF] border border-blue-300 p-4 rounded-xl max-w-xs">
-//                             <p className="text-sm">Request From You</p>
-//                             <p className="text-2xl font-bold text-black">₹{msg.amount}/-</p>
-//                             <p className="text-xs text-gray-500 mt-1">
-//                               almost {getDaysLate(contact.lastPaymentDate)} day{getDaysLate(contact.lastPaymentDate) !== 1 ? 's' : ''} are over...
-//                             </p>
-//                           </div>
-//                           <div className='flex gap-2'>
-//                             <p className="text-[11px] mt-1">On {msg.date}</p>
-//                             <p className="text-[11px] mt-1">{msg.time}</p>
-//                           </div>
-//                         </div>
-//                       )}
-//                       {msg.type === 'text' && (
-//                         <div className='flex flex-col'>
-//                           <div className={`px-4 py-2 rounded-lg max-w-xs bg-[#AFD1FF]`}>
-//                             <p className="text-sm">{msg.text}</p>
-//                           </div>
-//                           <div className='flex gap-2'>
-//                             <p className="text-[11px] mt-1">{msg.date}</p>
-//                             <p className="text-[11px] mt-1">{msg.time}</p>
-//                           </div>
-//                         </div>
-//                       )}
-//                     </div>
-//                   ))}
-//                 </div>
-//               )}
-
-//               {requestpay && (
-//                 <div className="flex-1 p-4">
-//                   <div className="flex flex-col items-center justify-center h-full space-y-4">
-//                     <img src={contact.profileImage} alt="profile" className="w-24 h-24 rounded-full object-cover mb-2" />
-//                     <p className="text-center font-semibold">Requesting Rent From {contact.name}</p>
-//                     <div className="border-2 px-4 rounded-lg text-center text-2xl font-semibold">₹{contact.outstandingAmount || contact.rent}</div>
-//                   </div>
-//                 </div>
-//               )}
-
-//               {!requestpay && (
-//                 <div className="border-t p-4 flex items-end gap-4">
-//                   <button onClick={() => setRequestpay(true)} className="flex-1 bg-[#FEE123] py-2 rounded">Request Pay</button>
-//                   <button onClick={handlePayRefund} className="flex-1 border border-[#FEE123] text-[#FEE123] py-2 rounded">Process Refund</button>
-//                 </div>
-//               )}
-
-//               {requestpay && (
-//                 <div className="border-t p-4 flex gap-2">
-//                   <input type="text" placeholder="Add a message (optional)..." className="flex-1 border p-2 rounded" value={messageInput} onChange={(e) => setMessageInput(e.target.value)} />
-//                   <button onClick={handleSendPaymentRequest} className="bg-blue-600 text-white px-4 rounded">Send Request</button>
-//                   <button onClick={() => setRequestpay(false)} className="bg-gray-500 text-white px-4 rounded">Cancel</button>
-//                 </div>
-//               )}
-//             </div>
-//           ) : (
-//             <div className="flex-1 flex items-center justify-center bg-white rounded-md shadow-md">
-//               <div className="text-gray-500 text-center">
-//                 {bookingUsers.length === 0 ? 'No tenants available' : 'Select a tenant to start chatting'}
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
-
-
-
-
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { MessageCircle, Phone, MoreVertical } from 'lucide-react';
+// import { 
+//   MessageCircle, 
+//   Phone, 
+//   MoreVertical,
+//   Send,
+//   X,
+//   Search,
+//   Filter,
+//   AlertCircle,
+//   Clock,
+//   Users,
+//   Home,
+//   CreditCard,
+//   FileText,
+//   Bell,
+//   Mail,
+//   Calendar,
+//   ChevronRight,
+//   ArrowLeft,
+//   TrendingUp,
+//   CheckCircle,
+//   Loader2
+// } from 'lucide-react';
 // import ClientNav from '../Client-Navbar/ClientNav';
 // import { bookingAPI } from '../PropertyController';
 // import axios from 'axios';
- 
+
 // const getDaysLate = (dateString) => {
 //   if (!dateString) return 0;
 //   const date = new Date(dateString);
@@ -1152,321 +35,870 @@
 //   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 //   return diffDays > 0 ? diffDays : 0;
 // };
- 
+
 // export default function PaymentChat() {
 //   const navigate = useNavigate();
 //   const [selectedBookingId, setSelectedBookingId] = useState(null);
 //   const [messageInput, setMessageInput] = useState('');
-//   const [messagesByBooking, setMessagesByBooking] = useState({});
 //   const [requestpay, setRequestpay] = useState(false);
+//   const [messagesByBooking, setMessagesByBooking] = useState({});
 //   const [bookingUsers, setBookingUsers] = useState([]);
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
- 
+//   const [sending, setSending] = useState(false);
+//   const [bookingDetails, setBookingDetails] = useState({});
+//   const [searchTerm, setSearchTerm] = useState('');
+//   const [activeFilter, setActiveFilter] = useState('all');
+
+//   const API_BASE_URL = 'http://localhost:5000';
+
+//   // Fetch bookings data
 //   useEffect(() => {
 //     fetchBookingUsers();
 //   }, []);
- 
+
+//   // Fetch booking details when selected
+//   useEffect(() => {
+//     if (selectedBookingId) {
+//       fetchBookingById(selectedBookingId);
+//     }
+//   }, [selectedBookingId]);
+
+//   // Calculate statistics
+//   const calculateStats = () => {
+//     const totalUsers = bookingUsers.length;
+//     const totalOverdue = bookingUsers.reduce((sum, user) => 
+//       sum + (user.overdueDays > 0 ? user.outstandingAmount : 0), 0
+//     );
+//     const totalPending = bookingUsers.reduce((sum, user) => 
+//       sum + (user.outstandingAmount > 0 ? user.outstandingAmount : 0), 0
+//     );
+//     const overdueCount = bookingUsers.filter(user => user.overdueDays > 0).length;
+    
+//     return { totalUsers, totalOverdue, totalPending, overdueCount };
+//   };
+
+//   // Filter users based on search and filter
+//   const filteredUsers = bookingUsers.filter(user => {
+//     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//                          user.propertyName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+//     if (activeFilter === 'overdue') return matchesSearch && user.overdueDays > 0;
+//     if (activeFilter === 'pending') return matchesSearch && user.outstandingAmount > 0;
+//     return matchesSearch;
+//   });
+
+//   const fetchBookingById = async (bookingId) => {
+//     try {
+//       const token = localStorage.getItem("token");
+      
+//       if (!token) {
+//         console.error("No authentication token found");
+//         return;
+//       }
+
+//       const response = await bookingAPI.getBookingById(bookingId);
+      
+//       if (response.data?.success) {
+//         const booking = response.data.booking;
+        
+//         setBookingDetails(prev => ({
+//           ...prev,
+//           [bookingId]: booking
+//         }));
+
+//         // Convert payment requests to chat messages
+//         if (booking.paymentrequest?.length > 0) {
+//           const paymentRequests = booking.paymentrequest.map(payment => ({
+//             id: payment._id,
+//             sender: "You",
+//             type: "requestpay",
+//             amount: payment.amount,
+//             requestedTo: booking.user?.name || "Tenant",
+//             note: payment.message,
+//             time: new Date(payment.date).toLocaleTimeString([], { 
+//               hour: "2-digit", 
+//               minute: "2-digit" 
+//             }),
+//             date: new Date(payment.date).toLocaleDateString(),
+//             status: payment.status || 'pending',
+//             originalData: payment
+//           }));
+
+//           setMessagesByBooking(prev => ({
+//             ...prev,
+//             [bookingId]: paymentRequests
+//           }));
+//         } else {
+//           setMessagesByBooking(prev => ({
+//             ...prev,
+//             [bookingId]: []
+//           }));
+//         }
+//       }
+//     } catch (error) {
+//       console.error('Error fetching booking:', error);
+//     }
+//   };
+
 //   const fetchBookingUsers = async () => {
 //     try {
 //       setLoading(true);
 //       setError(null);
-//       const token = localStorage.getItem("token");
-//       const response = await bookingAPI.getAllBookings({
-//         headers: { Authorization: `Bearer ${token}` },
-//       });
+      
+//       const userData = JSON.parse(localStorage.getItem("user") || "{}");
+//       const clientId = userData.clientId;
+      
+//       if (!clientId) {
+//         throw new Error("Client ID not found. Please login again.");
+//       }
+
+//       const response = await bookingAPI.getBookingsByClientId(clientId);
+      
 //       if (response.data?.success) {
 //         const bookings = response.data.bookings || [];
 //         const transformedUsers = bookings.map((booking) => ({
-//           _id: booking.user?.clientId || booking._id,
-//           name: booking.property?.name || "Unknown Property",
+//           _id: booking.user?._id || booking._id,
+//           name: booking.user?.name || booking.property?.name || "Unknown Property",
 //           email: booking.user?.email || "",
 //           phone: booking.user?.phone || "",
-//           profileImage:
-//             "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg",
+//           profileImage: booking.user?.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg",
 //           roomNumber: booking.roomNumber || "N/A",
 //           bed: booking.bed || "N/A",
-//           rent: booking.pricing?.monthlyRent || 0,
+//           rent: booking.pricing?.monthlyRent || booking.rent || 0,
 //           outstandingAmount: booking.outstandingAmount || 0,
-//           lastPaymentDate: booking.moveInDate,
-//           bookingId: booking.id,
+//           lastPaymentDate: booking.lastPaymentDate || booking.moveInDate,
+//           bookingId: booking._id,
+//           userId: booking.user?._id,
+//           propertyName: booking.property?.name || "Property",
+//           status: booking.status || 'active',
+//           overdueDays: getDaysLate(booking.lastPaymentDate || booking.moveInDate)
 //         }));
+        
 //         setBookingUsers(transformedUsers);
-//         if (transformedUsers.length > 0) {
+        
+//         // Auto-select first user if none selected
+//         if (transformedUsers.length > 0 && !selectedBookingId) {
 //           setSelectedBookingId(transformedUsers[0].bookingId);
 //         }
 //       } else {
-//         setError("Failed to fetch bookings.");
+//         throw new Error(response.data?.message || "Failed to fetch bookings");
 //       }
 //     } catch (error) {
-//       console.error(" Error fetching bookings:", error);
-//       setError(error.response?.data?.message || "Failed to load users");
+//       console.error("Error fetching bookings:", error);
+//       setError(error.message || "Failed to load bookings. Please try again.");
 //     } finally {
 //       setLoading(false);
 //     }
 //   };
- 
-//   const selectedBooking = bookingUsers.find(
-//     (b) => b.bookingId === selectedBookingId
-//   );
- 
-//   // ✅ Send payment request message
+
+//   const selectedBooking = bookingUsers.find(b => b.bookingId === selectedBookingId);
+
+//   const createUserNotification = async (bookingData, amount, message) => {
+//     try {
+//       const token = localStorage.getItem("token");
+      
+//       if (!token) {
+//         console.error("No authentication token found");
+//         return false;
+//       }
+
+//       const completeBooking = bookingDetails[bookingData.bookingId];
+//       if (!completeBooking?.user?._id) {
+//         console.warn("No user ID found for notification");
+//         return false;
+//       }
+
+//       const notificationData = {
+//         userId: completeBooking.user._id,
+//         type: 'payment_request',
+//         title: 'Payment Request Received',
+//         message: `Payment request of ₹${amount} for ${bookingData.propertyName}`,
+//         priority: 'high',
+//         metadata: {
+//           amount: amount,
+//           bookingId: bookingData.bookingId,
+//           propertyName: bookingData.propertyName,
+//           paymentType: 'payment_request',
+//           timestamp: new Date().toISOString(),
+//           clientNote: message || '',
+//           requestedBy: 'Client'
+//         },
+//         isRead: false
+//       };
+
+//       // Try main endpoint first
+//       try {
+//         const response = await axios.post(
+//           `${API_BASE_URL}/api/notifications`,
+//           notificationData,
+//           { 
+//             headers: { 
+//               Authorization: `Bearer ${token}`,
+//               'Content-Type': 'application/json'
+//             }
+//           }
+//         );
+        
+//         if (response.data?.success) {
+//           return true;
+//         }
+//       } catch (error) {
+//         console.log("Main notification endpoint failed, trying fallback...");
+//       }
+
+//       return false;
+//     } catch (error) {
+//       console.error("Error creating notification:", error);
+//       return false;
+//     }
+//   };
+
 //   const handleSendPaymentRequest = async () => {
-//     if (!selectedBooking) return;
+//     if (!selectedBooking || sending) return;
+
+//     const amount = selectedBooking.outstandingAmount || selectedBooking.rent;
+//     if (!amount || amount <= 0) {
+//       alert("Please enter a valid amount");
+//       return;
+//     }
+
 //     try {
+//       setSending(true);
 //       const token = localStorage.getItem("token");
-//       await axios.post(
-//         "http://localhost:5000/api/payments/send-message",
-//         {
-//           bookingId: selectedBooking.bookingId,
-//           userId: selectedBooking._id,
-//           message: `Payment request for ₹${
-//             selectedBooking.outstandingAmount || selectedBooking.rent
-//           }`,
-//         },
-//         { headers: { Authorization: `Bearer ${token}` } }
-//       );
- 
-//       const newMessage = {
-//         id: Date.now(),
-//         sender: "You",
-//         type: "requestpay",
-//         amount: selectedBooking.outstandingAmount || selectedBooking.rent,
-//         requestedTo: selectedBooking.name,
-//         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-//         date: new Date().toLocaleDateString(),
+      
+//       if (!token) {
+//         throw new Error("Authentication required");
+//       }
+
+//       const payload = {
+//         bookingId: selectedBooking.bookingId,
+//         userId: selectedBooking._id,
+//         message: messageInput.trim() || `Payment request for ₹${amount}`,
+//         amount: amount
 //       };
- 
-//       setMessagesByBooking((prev) => ({
-//         ...prev,
-//         [selectedBookingId]: [...(prev[selectedBookingId] || []), newMessage],
-//       }));
-//       setRequestpay(false);
-//       setMessageInput("");
-//       alert("Payment request sent successfully!");
+
+//       const response = await axios.post(
+//         `${API_BASE_URL}/api/payments/request`,
+//         payload,
+//         { 
+//           headers: { 
+//             Authorization: `Bearer ${token}`,
+//             'Content-Type': 'application/json'
+//           },
+//           timeout: 10000
+//         }
+//       );
+
+//       if (response.data?.success) {
+//         // Add message to local state
+//         const newMessage = {
+//           id: response.data.paymentRequest?._id || Date.now(),
+//           sender: "You",
+//           type: "requestpay",
+//           amount: amount,
+//           requestedTo: selectedBooking.name,
+//           note: messageInput.trim() || `Payment request for ₹${amount}`,
+//           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+//           date: new Date().toLocaleDateString(),
+//           status: 'pending'
+//         };
+
+//         setMessagesByBooking(prev => ({
+//           ...prev,
+//           [selectedBookingId]: [...(prev[selectedBookingId] || []), newMessage]
+//         }));
+
+//         // Send notification
+//         await createUserNotification(selectedBooking, amount, messageInput.trim());
+
+//         // Reset form
+//         setRequestpay(false);
+//         setMessageInput("");
+        
+//         // Show success message
+//         alert("Payment request sent successfully!");
+        
+//         // Refresh data
+//         fetchBookingById(selectedBookingId);
+//       } else {
+//         throw new Error(response.data?.message || "Failed to send payment request");
+//       }
 //     } catch (error) {
-//       console.error("❌ Error sending payment request:", error);
-//       alert("Failed to send payment request: " + (error.response?.data?.message || error.message));
+//       console.error("Error sending payment request:", error);
+//       alert(error.message || "Failed to send payment request. Please try again.");
+//     } finally {
+//       setSending(false);
 //     }
 //   };
- 
-//   // ✅ Send  text message
-//   const handleSendMessage = async () => {
-//     if (messageInput.trim() === "" || !selectedBookingId) return;
+
+//   const handleAlternativePaymentRequest = async () => {
+//     if (!selectedBooking || sending) return;
+
 //     try {
+//       setSending(true);
 //       const token = localStorage.getItem("token");
-//       await axios.post(
-//         "http://localhost:5000/api/payments/send-message",
-//         {
-//           bookingId: selectedBooking.bookingId,
-//           userId: selectedBooking._id,
-//           message: messageInput,
-//         },
-//         { headers: { Authorization: `Bearer ${token}` } }
-//       );
- 
-//       const newMessage = {
-//         id: Date.now(),
-//         sender: "You",
-//         text: messageInput,
-//         type: "text",
-//         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-//         date: new Date().toLocaleDateString(),
+//       const amount = selectedBooking.outstandingAmount || selectedBooking.rent;
+
+//       const payload = {
+//         bookingId: selectedBooking.bookingId,
+//         amount: amount,
+//         message: messageInput.trim() || `Payment request for ₹${amount}`
 //       };
-//       setMessagesByBooking((prev) => ({
-//         ...prev,
-//         [selectedBookingId]: [...(prev[selectedBookingId] || []), newMessage],
-//       }));
-//       setMessageInput("");
+
+//       const response = await axios.post(
+//         `${API_BASE_URL}/api/payments/send-payment-request`,
+//         payload,
+//         { 
+//           headers: { 
+//             Authorization: `Bearer ${token}`,
+//             'Content-Type': 'application/json'
+//           },
+//           timeout: 10000
+//         }
+//       );
+
+//       if (response.data?.success) {
+//         // Similar success handling as above
+//         alert("Payment request sent successfully via alternative endpoint!");
+//         setRequestpay(false);
+//         setMessageInput("");
+//         fetchBookingById(selectedBookingId);
+//       }
 //     } catch (error) {
-//       console.error("❌ Error sending message:", error);
-//       alert("Failed to send message: " + (error.response?.data?.message || error.message));
+//       console.error("Alternative endpoint failed:", error);
+//       alert("Failed to send payment request");
+//     } finally {
+//       setSending(false);
 //     }
 //   };
- 
-//   const handlePayRefund = () => {
-//     if (!selectedBooking) return;
+
+//   const handleProcessRefund = () => {
+//     if (!selectedBooking) {
+//       alert("Please select a tenant first");
+//       return;
+//     }
 //     navigate(`/client/vacate-request/${selectedBooking.bookingId}`, {
-//       state: { user: selectedBooking, booking: selectedBooking },
+//       state: { user: selectedBooking, booking: selectedBooking }
 //     });
 //   };
- 
+
 //   const getValidMessages = () => {
+//     if (!selectedBookingId) return [];
 //     const messages = messagesByBooking[selectedBookingId] || [];
-//     return messages.filter((msg) => msg.type === "requestpay" || msg.type === "text");
+//     return messages.filter(msg => msg.type === "requestpay");
 //   };
- 
+
+//   // Get stats for display
+//   const stats = calculateStats();
+
 //   if (loading) {
 //     return (
 //       <>
 //         <ClientNav />
-//         <div className="p-6 bg-[#F8F8FF] min-h-screen flex justify-center items-center">
-//           <div className="text-gray-600">Loading users...</div>
+//         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8 flex items-center justify-center">
+//           <div className="text-center">
+//             <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+//             <p className="text-gray-600">Loading payment dashboard...</p>
+//           </div>
 //         </div>
 //       </>
 //     );
 //   }
- 
+
 //   if (error) {
 //     return (
 //       <>
 //         <ClientNav />
-//         <div className="p-6 bg-[#F8F8FF] min-h-screen flex flex-col items-center justify-center">
-//           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-//             {error}
+//         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8">
+//           <div className="max-w-2xl mx-auto">
+//             <div className="bg-white rounded-2xl shadow-lg p-8">
+//               <div className="text-center">
+//                 <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+//                   <AlertCircle className="w-10 h-10 text-red-600" />
+//                 </div>
+//                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Data</h2>
+//                 <p className="text-gray-600 mb-6">{error}</p>
+//                 <button
+//                   onClick={fetchBookingUsers}
+//                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+//                 >
+//                   Retry
+//                 </button>
+//               </div>
+//             </div>
 //           </div>
-//           <button
-//             onClick={fetchBookingUsers}
-//             className="bg-blue-600 text-white px-4 py-2 rounded"
-//           >
-//             Retry
-//           </button>
 //         </div>
 //       </>
 //     );
 //   }
- 
+
 //   return (
 //     <>
 //       <ClientNav />
-//       <div className="bg-cover bg-center bg-no-repeat font-sans px-4 sm:px-8 md:px-12 lg:px-20 py-5 min-h-screen"
-//         style={{ backgroundImage: "url('./src/assets/images/image.png')" }}>
-       
-//         <div className="flex flex-wrap gap-1 mb-4 text-sm sm:text-base">
-//           <button onClick={() => navigate(-1)} className="flex items-center px-2 py-2 rounded">Home</button>
-//           <div className="flex items-center justify-center">/</div>
-//           <button className="flex items-center px-2 py-2 rounded">Tenant List</button>
-//         </div>
- 
-//         {/* Main */}
-//         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 h-auto">
-//           {/* Sidebar */}
-//           <div className="w-full lg:w-1/4 bg-white border rounded-md shadow-md p-3 overflow-y-auto max-h-[400px] lg:max-h-[80vh]">
-//             {bookingUsers.length === 0 ? (
-//               <div className="p-4 text-center text-gray-500">No tenants found</div>
-//             ) : (
-//               bookingUsers.map((booking) => (
-//                 <div
-//                   key={booking.bookingId}
-//                   onClick={() => setSelectedBookingId(booking.bookingId)}
-//                   className={`p-4 cursor-pointer mb-3 rounded-md shadow-md hover:bg-[#AFD1FF] transition ${
-//                     booking.bookingId === selectedBookingId ? "bg-[#AFD1FF] font-semibold" : ""
-//                   }`}
+      
+//       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6 lg:p-8">
+//         {/* Header */}
+//         <div className="mb-6 md:mb-8">
+//           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+//             <div>
+//               <div className="flex items-center gap-3 mb-2">
+//                 <button
+//                   onClick={() => navigate(-1)}
+//                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
 //                 >
-//                   <div className="flex gap-2 items-center">
-//                     <img
-//                       src={booking.profileImage}
-//                       alt={booking.name}
-//                       className="w-10 h-10 rounded-full object-cover"
-//                     />
-//                     <div className="flex flex-col text-sm w-full">
-//                       <p className="font-bold mb-1">Payment From</p>
-//                       <div className="flex justify-between w-full text-gray-800">
-//                         <p>{booking.name}</p>
-//                         <p className="text-sm text-gray-500 mt-1">
-//                           ₹{booking.outstandingAmount || booking.rent}
-//                         </p>
-//                       </div>
-//                     </div>
-//                   </div>
+//                   <ArrowLeft className="w-5 h-5 text-gray-600" />
+//                 </button>
+//                 <div>
+//                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Payment Management</h1>
+//                   <p className="text-gray-600 mt-1">Manage payments and communicate with tenants</p>
 //                 </div>
-//               ))
-//             )}
+//               </div>
+//             </div>
 //           </div>
- 
-//           {/* Chat Section */}
-//           {selectedBooking ? (
-//             <div className="flex-1 flex flex-col bg-white rounded-md shadow-md h-auto">
-//               <div className="border-b bg-[#AFD1FF] p-3 sm:p-4 font-semibold flex items-center justify-between flex-wrap">
-//                 <div className="flex items-center gap-2">
-//                   <img src={selectedBooking.profileImage} alt="profile"
-//                     className="w-10 h-10 rounded-full object-cover" />
-//                   <div>
-//                     <p className="text-sm sm:text-base">{selectedBooking.name}</p>
-//                     <p className="text-xs text-gray-500">
-//                       Room: {selectedBooking.roomNumber} {selectedBooking.bed}
-//                     </p>
-//                     <p className="text-xs text-gray-500">
-//                       Outstanding: ₹{selectedBooking.outstandingAmount || 0}
-//                     </p>
-//                   </div>
+
+//           {/* Stats Cards */}
+//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+//             <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-500 mb-1">Total Tenants</p>
+//                   <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
 //                 </div>
-//                 <div className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-0">
-//                   {[MessageCircle, Phone, MoreVertical].map((Icon, i) => (
-//                     <div key={i} className="w-8 h-8 bg-[#0827B2] flex justify-center items-center rounded-full">
-//                       <Icon className="w-4 h-4 text-white" />
-//                     </div>
-//                   ))}
+//                 <div className="p-3 bg-blue-50 rounded-lg">
+//                   <Users className="w-6 h-6 text-blue-600" />
 //                 </div>
 //               </div>
- 
-//               {/* Chat Messages */}
-//               <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
-//                 {getValidMessages().map((msg) => (
-//                   <div key={msg.id} className={`flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}>
-//                     <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
-//                       {msg.type === "requestpay" ? (
-//                         <div className="bg-[#AFD1FF] border border-blue-300 p-3 sm:p-4 rounded-xl">
-//                           <p className="text-sm">Request From You</p>
-//                           <p className="text-xl sm:text-2xl font-bold text-black">₹{msg.amount}/-</p>
-//                           <p className="text-xs text-gray-500 mt-1">
-//                             almost {getDaysLate(selectedBooking.lastPaymentDate)} day
-//                             {getDaysLate(selectedBooking.lastPaymentDate) !== 1 ? "s" : ""} are over...
-//                           </p>
+//             </div>
+
+//             <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-500 mb-1">Overdue Amount</p>
+//                   <p className="text-2xl font-bold text-red-600">₹{stats.totalOverdue.toLocaleString()}</p>
+//                 </div>
+//                 <div className="p-3 bg-red-50 rounded-lg">
+//                   <AlertCircle className="w-6 h-6 text-red-600" />
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-500 mb-1">Pending Amount</p>
+//                   <p className="text-2xl font-bold text-amber-600">₹{stats.totalPending.toLocaleString()}</p>
+//                 </div>
+//                 <div className="p-3 bg-amber-50 rounded-lg">
+//                   <Clock className="w-6 h-6 text-amber-600" />
+//                 </div>
+//               </div>
+//             </div>
+
+//             <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-100">
+//               <div className="flex items-center justify-between">
+//                 <div>
+//                   <p className="text-sm text-gray-500 mb-1">Overdue Tenants</p>
+//                   <p className="text-2xl font-bold text-orange-600">{stats.overdueCount}</p>
+//                 </div>
+//                 <div className="p-3 bg-orange-50 rounded-lg">
+//                   <TrendingUp className="w-6 h-6 text-orange-600" />
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Main Content */}
+//         {bookingUsers.length === 0 ? (
+//           <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 text-center">
+//             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+//               <Users className="w-12 h-12 text-gray-400" />
+//             </div>
+//             <h2 className="text-2xl font-bold text-gray-900 mb-3">No Active Bookings</h2>
+//             <p className="text-gray-600 max-w-md mx-auto mb-8">
+//               You don't have any active bookings at the moment. When you have bookings, they will appear here for payment management.
+//             </p>
+//             <button
+//               onClick={() => navigate('/client/dashboard')}
+//               className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+//             >
+//               Go to Dashboard
+//             </button>
+//           </div>
+//         ) : (
+//           <div className="flex flex-col lg:flex-row gap-6">
+//             {/* Tenant List Sidebar */}
+//             <div className="lg:w-1/3">
+//               <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+//                 {/* Sidebar Header */}
+//                 <div className="p-4 md:p-6 border-b border-gray-200">
+//                   <div className="flex items-center justify-between mb-4">
+//                     <h2 className="text-lg md:text-xl font-bold text-gray-900">Tenants</h2>
+//                     <span className="text-sm text-gray-500">
+//                       {filteredUsers.length} of {bookingUsers.length}
+//                     </span>
+//                   </div>
+
+//                   {/* Search */}
+//                   <div className="relative mb-4">
+//                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+//                     <input
+//                       type="text"
+//                       placeholder="Search tenants..."
+//                       className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+//                       value={searchTerm}
+//                       onChange={(e) => setSearchTerm(e.target.value)}
+//                     />
+//                   </div>
+
+//                   {/* Filters */}
+//                   <div className="flex flex-wrap gap-2">
+//                     {['all', 'overdue', 'pending'].map((filter) => (
+//                       <button
+//                         key={filter}
+//                         onClick={() => setActiveFilter(filter)}
+//                         className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+//                           activeFilter === filter
+//                             ? 'bg-blue-600 text-white'
+//                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+//                         }`}
+//                       >
+//                         {filter.charAt(0).toUpperCase() + filter.slice(1)}
+//                       </button>
+//                     ))}
+//                   </div>
+//                 </div>
+
+//                 {/* Tenant List */}
+//                 <div className="overflow-y-auto max-h-[500px]">
+//                   {filteredUsers.length === 0 ? (
+//                     <div className="p-8 text-center text-gray-500">
+//                       <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+//                       <p>No tenants found</p>
+//                     </div>
+//                   ) : (
+//                     filteredUsers.map((booking) => (
+//                       <div
+//                         key={booking.bookingId}
+//                         onClick={() => setSelectedBookingId(booking.bookingId)}
+//                         className={`p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50 ${
+//                           selectedBookingId === booking.bookingId ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+//                         }`}
+//                       >
+//                         <div className="flex items-start gap-3">
+//                           <div className="relative">
+//                             <img
+//                               src={booking.profileImage}
+//                               alt={booking.name}
+//                               className="w-12 h-12 rounded-full object-cover border-2 border-white"
+//                             />
+//                             {booking.overdueDays > 0 && (
+//                               <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+//                                 <span className="text-xs text-white font-bold">{booking.overdueDays}</span>
+//                               </div>
+//                             )}
+//                           </div>
+                          
+//                           <div className="flex-1 min-w-0">
+//                             <div className="flex items-center justify-between mb-1">
+//                               <h3 className="font-semibold text-gray-900 truncate">{booking.name}</h3>
+//                               <span className="text-lg font-bold text-gray-900">
+//                                 ₹{booking.outstandingAmount || booking.rent}
+//                               </span>
+//                             </div>
+                            
+//                             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+//                               <Home className="w-4 h-4" />
+//                               <span className="truncate">{booking.propertyName}</span>
+//                             </div>
+                            
+//                             <div className="flex items-center justify-between">
+//                               <div className="flex items-center gap-2">
+//                                 <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+//                                   Room {booking.roomNumber}
+//                                 </span>
+//                                 {booking.overdueDays > 0 && (
+//                                   <span className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs">
+//                                     {booking.overdueDays}d overdue
+//                                   </span>
+//                                 )}
+//                               </div>
+//                               <ChevronRight className={`w-5 h-5 text-gray-400 ${
+//                                 selectedBookingId === booking.bookingId ? 'rotate-90' : ''
+//                               }`} />
+//                             </div>
+//                           </div>
 //                         </div>
-//                       ) : (
-//                         <div className="px-4 py-2 rounded-lg bg-[#AFD1FF]">
-//                           <p className="text-sm">{msg.text}</p>
+//                       </div>
+//                     ))
+//                   )}
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Chat Panel */}
+//             <div className="lg:flex-1">
+//               {selectedBooking ? (
+//                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden h-full flex flex-col">
+//                   {/* Chat Header */}
+//                   <div className="p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+//                     <div className="flex items-center justify-between">
+//                       <div className="flex items-center gap-4">
+//                         <div className="relative">
+//                           <img
+//                             src={selectedBooking.profileImage}
+//                             alt={selectedBooking.name}
+//                             className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover border-4 border-white shadow"
+//                           />
+//                           {selectedBooking.overdueDays > 0 && (
+//                             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow">
+//                               <span className="text-xs text-white font-bold">{selectedBooking.overdueDays}</span>
+//                             </div>
+//                           )}
 //                         </div>
-//                       )}
-//                       <div className="flex gap-2 text-[11px] mt-1">
-//                         <p>{msg.date}</p>
-//                         <p>{msg.time}</p>
+                        
+//                         <div>
+//                           <h2 className="text-xl md:text-2xl font-bold text-gray-900">{selectedBooking.name}</h2>
+//                           <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2">
+//                             <div className="flex items-center gap-1 text-sm text-gray-600">
+//                               <Home className="w-4 h-4" />
+//                               {selectedBooking.propertyName}
+//                             </div>
+//                             <div className="flex items-center gap-1 text-sm text-gray-600">
+//                               <CreditCard className="w-4 h-4" />
+//                               ₹{selectedBooking.rent}/month
+//                             </div>
+//                           </div>
+//                         </div>
+//                       </div>
+                      
+//                       <div className="flex items-center gap-2">
+//                         <button className="p-2 hover:bg-white rounded-lg transition-colors" title="Call">
+//                           <Phone className="w-5 h-5 text-gray-600" />
+//                         </button>
+//                         <button className="p-2 hover:bg-white rounded-lg transition-colors" title="Message">
+//                           <MessageCircle className="w-5 h-5 text-gray-600" />
+//                         </button>
+//                         <button className="p-2 hover:bg-white rounded-lg transition-colors" title="More">
+//                           <MoreVertical className="w-5 h-5 text-gray-600" />
+//                         </button>
+//                       </div>
+//                     </div>
+                    
+//                     {/* Quick Stats */}
+//                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+//                       <div className="bg-white rounded-lg p-3 shadow-sm">
+//                         <p className="text-sm text-gray-500 mb-1">Outstanding</p>
+//                         <p className="text-lg font-bold text-gray-900">₹{selectedBooking.outstandingAmount || 0}</p>
+//                       </div>
+//                       <div className="bg-white rounded-lg p-3 shadow-sm">
+//                         <p className="text-sm text-gray-500 mb-1">Overdue Days</p>
+//                         <p className="text-lg font-bold text-red-600">{selectedBooking.overdueDays}</p>
+//                       </div>
+//                       <div className="bg-white rounded-lg p-3 shadow-sm">
+//                         <p className="text-sm text-gray-500 mb-1">Monthly Rent</p>
+//                         <p className="text-lg font-bold text-green-600">₹{selectedBooking.rent}</p>
+//                       </div>
+//                       <div className="bg-white rounded-lg p-3 shadow-sm">
+//                         <p className="text-sm text-gray-500 mb-1">Room</p>
+//                         <p className="text-lg font-medium text-gray-900">{selectedBooking.roomNumber}</p>
 //                       </div>
 //                     </div>
 //                   </div>
-//                 ))}
-//               </div>
- 
-//               {/* Input Controls */}
-//               {!requestpay ? (
-//                 <div className="border-t p-3 sm:p-4 flex flex-col sm:flex-row gap-3">
-//                   <button onClick={() => setRequestpay(true)} className="flex-1 bg-[#FEE123] py-2 rounded text-sm sm:text-base">Request Pay</button>
-//                   <button onClick={handlePayRefund} className="flex-1 border border-[#FEE123] text-[#FEE123] py-2 rounded text-sm sm:text-base">Process Refund</button>
+
+//                   {/* Chat Messages */}
+//                   <div className="flex-1 overflow-y-auto p-4 md:p-6">
+//                     {getValidMessages().length === 0 ? (
+//                       <div className="flex flex-col items-center justify-center py-12 text-center">
+//                         <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+//                           <CreditCard className="w-10 h-10 text-gray-400" />
+//                         </div>
+//                         <h3 className="text-xl font-bold text-gray-900 mb-3">No Payment Requests</h3>
+//                         <p className="text-gray-600 max-w-md mb-6">
+//                           Send your first payment request to {selectedBooking.name}
+//                         </p>
+//                         <button
+//                           onClick={() => setRequestpay(true)}
+//                           className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+//                         >
+//                           Send Payment Request
+//                         </button>
+//                       </div>
+//                     ) : (
+//                       <div className="space-y-4">
+//                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Requests</h3>
+//                         {getValidMessages().map((msg) => (
+//                           <div key={msg.id} className="flex justify-end">
+//                             <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl rounded-tr-none p-4 md:p-6 max-w-md shadow-lg">
+//                               <div className="flex items-center justify-between mb-4">
+//                                 <div className="flex items-center gap-2">
+//                                   <CheckCircle className="w-5 h-5" />
+//                                   <span className="font-semibold">Payment Request</span>
+//                                 </div>
+//                                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+//                                   msg.status === 'paid' ? 'bg-green-500/30 text-green-200' :
+//                                   msg.status === 'pending' ? 'bg-amber-500/30 text-amber-200' :
+//                                   'bg-gray-500/30 text-gray-200'
+//                                 }`}>
+//                                   {msg.status?.toUpperCase() || 'PENDING'}
+//                                 </span>
+//                               </div>
+                              
+//                               <div className="mb-4">
+//                                 <p className="text-2xl md:text-3xl font-bold mb-2">₹{msg.amount}</p>
+//                                 {msg.note && (
+//                                   <div className="bg-white/10 rounded-xl p-3 mb-3">
+//                                     <p className="text-sm">{msg.note}</p>
+//                                   </div>
+//                                 )}
+//                               </div>
+                              
+//                               <div className="flex items-center justify-between text-sm text-blue-100">
+//                                 <div className="flex items-center gap-2">
+//                                   <Calendar className="w-4 h-4" />
+//                                   <span>{msg.date}</span>
+//                                 </div>
+//                                 <div className="flex items-center gap-2">
+//                                   <Clock className="w-4 h-4" />
+//                                   <span>{msg.time}</span>
+//                                 </div>
+//                               </div>
+//                             </div>
+//                           </div>
+//                         ))}
+//                       </div>
+//                     )}
+//                   </div>
+
+//                   {/* Action Buttons */}
+//                   <div className="border-t border-gray-200 p-4 md:p-6">
+//                     {!requestpay ? (
+//                       <div className="flex flex-col sm:flex-row gap-4">
+//                         <button 
+//                           onClick={() => setRequestpay(true)} 
+//                           className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-3"
+//                         >
+//                           <CreditCard className="w-5 h-5" />
+//                           Request Payment
+//                         </button>
+//                         <button 
+//                           onClick={handleProcessRefund} 
+//                           className="flex-1 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-3"
+//                         >
+//                           <FileText className="w-5 h-5" />
+//                           Process Refund
+//                         </button>
+//                       </div>
+//                     ) : (
+//                       <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-100">
+//                         <div className="flex items-center justify-between mb-4">
+//                           <h3 className="text-lg font-semibold text-gray-900">New Payment Request</h3>
+//                           <button 
+//                             onClick={() => {
+//                               setRequestpay(false);
+//                               setMessageInput("");
+//                             }}
+//                             className="p-2 hover:bg-white rounded-lg transition-colors"
+//                             disabled={sending}
+//                           >
+//                             <X className="w-5 h-5 text-gray-500" />
+//                           </button>
+//                         </div>
+                        
+//                         <div className="mb-6">
+//                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+//                             <div className="bg-white rounded-lg p-4">
+//                               <p className="text-sm text-gray-500 mb-1">Amount</p>
+//                               <p className="text-2xl font-bold text-gray-900">
+//                                 ₹{selectedBooking.outstandingAmount || selectedBooking.rent}
+//                               </p>
+//                             </div>
+//                             <div className="bg-white rounded-lg p-4">
+//                               <p className="text-sm text-gray-500 mb-1">Tenant</p>
+//                               <p className="text-lg font-semibold text-gray-900">{selectedBooking.name}</p>
+//                             </div>
+//                           </div>
+                          
+//                           <div className="mb-4">
+//                             <label className="block text-sm font-medium text-gray-700 mb-2">
+//                               Add Note (Optional)
+//                             </label>
+//                             <textarea
+//                               placeholder="Enter a note for this payment request..."
+//                               className="w-full h-32 px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+//                               value={messageInput}
+//                               onChange={(e) => setMessageInput(e.target.value)}
+//                               disabled={sending}
+//                             />
+//                           </div>
+//                         </div>
+                        
+//                         <div className="flex flex-col sm:flex-row gap-3">
+//                           <button 
+//                             onClick={handleSendPaymentRequest} 
+//                             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+//                             disabled={sending}
+//                           >
+//                             {sending ? (
+//                               <>
+//                                 <Loader2 className="w-5 h-5 animate-spin" />
+//                                 Sending...
+//                               </>
+//                             ) : (
+//                               <>
+//                                 <Send className="w-5 h-5" />
+//                                 Send Payment Request
+//                               </>
+//                             )}
+//                           </button>
+//                           <button 
+//                             onClick={() => {
+//                               setRequestpay(false);
+//                               setMessageInput("");
+//                             }}
+//                             className="px-6 py-3 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+//                             disabled={sending}
+//                           >
+//                             Cancel
+//                           </button>
+//                         </div>
+                        
+//                         <div className="mt-4 text-sm text-gray-500 text-center">
+//                           <button 
+//                             onClick={handleAlternativePaymentRequest} 
+//                             className="text-blue-600 hover:text-blue-800 underline font-medium"
+//                             disabled={sending}
+//                           >
+//                             Try alternative endpoint
+//                           </button>
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
 //                 </div>
 //               ) : (
-//                 <div className="border-t p-3 sm:p-4 flex flex-col sm:flex-row gap-2">
-//                   <input
-//                     type="text"
-//                     placeholder="Add a message (optional)..."
-//                     className="flex-1 border p-2 rounded text-sm"
-//                     value={messageInput}
-//                     onChange={(e) => setMessageInput(e.target.value)}
-//                   />
-//                   <button onClick={handleSendPaymentRequest} className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded text-sm">
-//                     Send Request
-//                   </button>
-//                   <button onClick={handleSendMessage} className="bg-[#fad914] text-white px-3 sm:px-4 py-2 rounded text-sm">
-//                     Send Message
-//                   </button>
-//                   <button onClick={() => setRequestpay(false)} className="bg-gray-500 text-white px-3 sm:px-4 py-2 rounded text-sm">
-//                     Cancel
-//                   </button>
+//                 <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center h-full flex flex-col items-center justify-center">
+//                   <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+//                     <Users className="w-10 h-10 text-gray-400" />
+//                   </div>
+//                   <h3 className="text-xl font-bold text-gray-900 mb-3">Select a Tenant</h3>
+//                   <p className="text-gray-600 max-w-md mb-6">
+//                     Choose a tenant from the list to view payment details and send requests
+//                   </p>
 //                 </div>
 //               )}
 //             </div>
-//           ) : (
-//             <div className="flex-1 flex items-center justify-center bg-white rounded-md shadow-md p-5">
-//               <div className="text-gray-500 text-center">
-//                 {bookingUsers.length === 0 ? "No tenants available" : "Select a tenant to start chatting"}
-//               </div>
-//             </div>
-//           )}
-//         </div>
+//           </div>
+//         )}
 //       </div>
 //     </>
 //   );
 // }
+
+
+
+
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -1573,56 +1005,56 @@ export default function PaymentChat() {
   };
 
   const fetchBookingUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const token = localStorage.getItem("token");
-      
-      if (!token) {
-        setError("No authentication token found. Please login again.");
-        setLoading(false);
-        return;
-      }
-
-      const response = await bookingAPI.getAllBookings({
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (response.data?.success) {
-        const bookings = response.data.bookings || [];
-        const transformedUsers = bookings.map((booking) => ({
-          _id: booking.user?.clientId || booking._id,
-          name: booking.user?.name || booking.property?.name || "Unknown Property",
-          email: booking.user?.email || "",
-          phone: booking.user?.phone || "",
-          profileImage: booking.user?.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg",
-          roomNumber: booking.roomNumber || "N/A",
-          bed: booking.bed || "N/A",
-          rent: booking.pricing?.monthlyRent || 0,
-          outstandingAmount: booking.outstandingAmount || 0,
-          lastPaymentDate: booking.lastPaymentDate || booking.moveInDate,
-          bookingId: booking._id || booking.id,
-          userId: booking.user?._id, // User ID for notifications
-          propertyName: booking.property?.name || "Property",
-        }));
-        
-        setBookingUsers(transformedUsers);
-        if (transformedUsers.length > 0 && !selectedBookingId) {
-          setSelectedBookingId(transformedUsers[0].bookingId);
-        }
-      } else {
-        setError("Failed to fetch bookings: " + (response.data?.message || "Unknown error"));
-      }
-    } catch (error) {
-      console.error("❌ Error fetching bookings:", error);
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          "Failed to load users. Please check your connection.";
-      setError(errorMessage);
-    } finally {
+  try {
+    setLoading(true);
+    setError(null);
+   
+    // Get client ID from user data
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    const clientId = userData.clientId;
+    console.log("Fetching bookings for client ID:", userData);
+    if (!clientId) {
+      setError("Client ID not found. Please login again.");
       setLoading(false);
+      return;
     }
-  };
+ 
+    // Use the new API method
+    const response = await bookingAPI.getBookingsByClientId(clientId);
+   
+    if (response.data?.success) {
+      const bookings = response.data.bookings || [];
+      const transformedUsers = bookings.map((booking) => ({
+        _id: booking.user?._id || booking._id,
+        name: booking.user?.name || booking.property?.name || "Unknown Property",
+        email: booking.user?.email || "",
+        phone: booking.user?.phone || "",
+        profileImage: booking.user?.profileImage || "https://t4.ftcdn.net/jpg/03/64/21/11/360_F_364211147_1qgLVxv1Tcq0Ohz3FawUfrtONzz8nq3e.jpg",
+        roomNumber: booking.roomNumber || "N/A",
+        bed: booking.bed || "N/A",
+        rent: booking.pricing?.monthlyRent || booking.rent || 0,
+        outstandingAmount: booking.outstandingAmount || 0,
+        lastPaymentDate: booking.lastPaymentDate || booking.moveInDate,
+        bookingId: booking._id,
+        userId: booking.user?._id,
+        propertyName: booking.property?.name || "Property",
+      }));
+     
+      setBookingUsers(transformedUsers);
+      // No auto-selection - let user click first
+    } else {
+      setError("Failed to fetch bookings: " + (response.data?.message || "Unknown error"));
+    }
+  } catch (error) {
+    console.error("❌ Error fetching bookings by client ID:", error);
+    const errorMessage = error.response?.data?.message ||
+                        error.message ||
+                        "Failed to load users. Please check your connection.";
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const selectedBooking = bookingUsers.find(
     (b) => b.bookingId === selectedBookingId
@@ -1806,7 +1238,7 @@ export default function PaymentChat() {
       
     } catch (error) {
       setSending(false);
-      console.error("❌ Error sending payment request:", error);
+      console.error("❌ Error sending payment request:", error); 
       
       let errorMessage = "Failed to send payment request";
       
@@ -1949,7 +1381,7 @@ export default function PaymentChat() {
       <>
         <ClientNav />
         <div className="p-6 bg-[#F8F8FF] min-h-screen flex justify-center items-center">
-          <div className="text-gray-600">Loading users...</div>
+          <div className="text-gray-600">Loading bookings...</div>
         </div>
       </>
     );
@@ -1978,7 +1410,7 @@ export default function PaymentChat() {
     <>
       <ClientNav />
       <div className="bg-cover bg-center bg-no-repeat font-sans px-4 sm:px-8 md:px-12 lg:px-20 py-5 min-h-screen"
-        style={{ backgroundImage: "url('./src/assets/images/image.png')" }}>
+        style={{ backgroundImage: "url('./src/assets/images/image')" }}>
        
         <div className="flex flex-wrap gap-1 mb-4 text-sm sm:text-base">
           <button onClick={() => navigate(-1)} className="flex items-center px-2 py-2 rounded hover:bg-gray-100 transition">Home</button>
@@ -1987,13 +1419,31 @@ export default function PaymentChat() {
         </div>
 
         {/* Main */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 h-auto">
-          {/* Sidebar */}
-          <div className="w-full lg:w-1/4 bg-white border rounded-md shadow-md p-3 overflow-y-auto max-h-[400px] lg:max-h-[80vh]">
-            {bookingUsers.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No tenants found</div>
-            ) : (
-              bookingUsers.map((booking) => (
+        {bookingUsers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center bg-white rounded-lg shadow-md p-8 min-h-[400px]">
+            <div className="text-center mb-6">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-700 mb-2">No Bookings Available</h2>
+              <p className="text-gray-500 max-w-md">
+                You don't have any active bookings or tenants at the moment. When you have bookings, they will appear here where you can manage payments and send payment requests.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/client/dashboard')}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 h-auto">
+            {/* Sidebar */}
+            <div className="w-full lg:w-1/4 bg-white border rounded-md shadow-md p-3 overflow-y-auto max-h-[400px] lg:max-h-[80vh]">
+              {bookingUsers.map((booking) => (
                 <div
                   key={booking.bookingId}
                   onClick={() => setSelectedBookingId(booking.bookingId)}
@@ -2021,164 +1471,164 @@ export default function PaymentChat() {
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
 
-          {/* Chat Section */}
-          {selectedBooking ? (
-            <div className="flex-1 flex flex-col bg-white rounded-md shadow-md h-auto min-h-[500px]">
-              <div className="border-b bg-[#AFD1FF] p-3 sm:p-4 font-semibold flex items-center justify-between flex-wrap">
-                <div className="flex items-center gap-2">
-                  <img src={selectedBooking.profileImage} alt="profile"
-                    className="w-10 h-10 rounded-full object-cover" />
-                  <div>
-                    <p className="text-sm sm:text-base">{selectedBooking.name}</p>
-                    <p className="text-xs text-gray-500">
-                      Room: {selectedBooking.roomNumber} • Bed: {selectedBooking.bed}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Outstanding: ₹{selectedBooking.outstandingAmount || 0}
-                    </p>
-                    <p className="text-xs text-red-500 font-semibold">
-                      {getDaysLate(selectedBooking.lastPaymentDate)} days overdue
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-0">
-                  {[MessageCircle, Phone, MoreVertical].map((Icon, i) => (
-                    <div key={i} className="w-8 h-8 bg-[#0827B2] flex justify-center items-center rounded-full cursor-pointer hover:bg-blue-800 transition">
-                      <Icon className="w-4 h-4 text-white" />
+            {/* Chat Section */}
+            {selectedBooking ? (
+              <div className="flex-1 flex flex-col bg-white rounded-md shadow-md h-auto min-h-[500px]">
+                <div className="border-b bg-[#AFD1FF] p-3 sm:p-4 font-semibold flex items-center justify-between flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <img src={selectedBooking.profileImage} alt="profile"
+                      className="w-10 h-10 rounded-full object-cover" />
+                    <div>
+                      <p className="text-sm sm:text-base">{selectedBooking.name}</p>
+                      <p className="text-xs text-gray-500">
+                        Room: {selectedBooking.roomNumber} • Bed: {selectedBooking.bed}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Outstanding: ₹{selectedBooking.outstandingAmount || 0}
+                      </p>
+                      <p className="text-xs text-red-500 font-semibold">
+                        {getDaysLate(selectedBooking.lastPaymentDate)} days overdue
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Payment Request Messages */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 min-h-[300px] max-h-[400px]">
-                {getValidMessages().length === 0 ? (
-                  <div className="flex justify-center items-center h-32 text-gray-500">
-                    No payment requests sent yet. Send your first request!
                   </div>
-                ) : (
-                  getValidMessages().map((msg) => (
-                    <div key={msg.id} className="flex justify-end">
-                      <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
-                        <div className="bg-[#AFD1FF] border border-blue-300 p-3 sm:p-4 rounded-xl">
-                          <p className="text-sm font-semibold">Payment Request Sent</p>
-                          <p className="text-xl sm:text-2xl font-bold text-black">₹{msg.amount}/-</p>
-                          {msg.note && (
-                            <p className="text-sm mt-2 p-2 bg-blue-50 rounded">
-                              <strong>Note:</strong> {msg.note}
+                  <div className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-0">
+                    {[MessageCircle, Phone, MoreVertical].map((Icon, i) => (
+                      <div key={i} className="w-8 h-8 bg-[#0827B2] flex justify-center items-center rounded-full cursor-pointer hover:bg-blue-800 transition">
+                        <Icon className="w-4 h-4 text-white" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payment Request Messages */}
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 min-h-[300px] max-h-[400px]">
+                  {getValidMessages().length === 0 ? (
+                    <div className="flex justify-center items-center h-32 text-gray-500">
+                      No payment requests sent yet. Send your first request!
+                    </div>
+                  ) : (
+                    getValidMessages().map((msg) => (
+                      <div key={msg.id} className="flex justify-end">
+                        <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
+                          <div className="bg-[#AFD1FF] border border-blue-300 p-3 sm:p-4 rounded-xl">
+                            <p className="text-sm font-semibold">Payment Request Sent</p>
+                            <p className="text-xl sm:text-2xl font-bold text-black">₹{msg.amount}/-</p>
+                            {msg.note && (
+                              <p className="text-sm mt-2 p-2 bg-blue-50 rounded">
+                                <strong>Note:</strong> {msg.note}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-2">
+                              Status: <span className={msg.status === 'pending' ? 'text-orange-500 font-semibold' : 'text-green-500 font-semibold'}>
+                                {msg.status || 'pending'}
+                              </span>
                             </p>
-                          )}
-                          <p className="text-xs text-gray-500 mt-2">
-                            Status: <span className={msg.status === 'pending' ? 'text-orange-500 font-semibold' : 'text-green-500 font-semibold'}>
-                              {msg.status || 'pending'}
-                            </span>
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {getDaysLate(selectedBooking.lastPaymentDate)} day
-                            {getDaysLate(selectedBooking.lastPaymentDate) !== 1 ? "s" : ""} overdue
-                          </p>
-                        </div>
-                        <div className="flex gap-2 text-[11px] mt-1 text-gray-500 justify-end">
-                          <p>{msg.date}</p>
-                          <p>{msg.time}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {getDaysLate(selectedBooking.lastPaymentDate)} day
+                              {getDaysLate(selectedBooking.lastPaymentDate) !== 1 ? "s" : ""} overdue
+                            </p>
+                          </div>
+                          <div className="flex gap-2 text-[11px] mt-1 text-gray-500 justify-end">
+                            <p>{msg.date}</p>
+                            <p>{msg.time}</p>
+                          </div>
                         </div>
                       </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Input Controls */}
+                {!requestpay ? (
+                  <div className="border-t p-3 sm:p-4 flex flex-col sm:flex-row gap-3">
+                    <button 
+                      onClick={() => setRequestpay(true)} 
+                      className="flex-1 bg-[#FEE123] py-2 rounded text-sm sm:text-base hover:bg-yellow-400 transition font-semibold"
+                      disabled={sending}
+                    >
+                      Request Payment
+                    </button>
+                    <button 
+                      onClick={handlePayRefund} 
+                      className="flex-1 border border-[#FEE123] text-[#FEE123] py-2 rounded text-sm sm:text-base hover:bg-yellow-50 transition font-semibold"
+                    >
+                      Process Refund
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-t p-3 sm:p-4 bg-gray-50">
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-lg mb-2">Send Payment Request</h3>
+                      <div className="bg-blue-50 p-3 rounded-lg mb-3">
+                        <p className="text-sm">
+                          <strong>Amount:</strong> ₹{selectedBooking.outstandingAmount || selectedBooking.rent}
+                        </p>
+                        <p className="text-sm">
+                          <strong>Tenant:</strong> {selectedBooking.name}
+                        </p>
+                        <p className="text-sm text-red-500">
+                          <strong>Overdue:</strong> {getDaysLate(selectedBooking.lastPaymentDate)} days
+                        </p>
+                      </div>
                     </div>
-                  ))
+                    
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add a note (optional)..."
+                        className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendPaymentRequest();
+                          }
+                        }}
+                        disabled={sending}
+                      />
+                      <button 
+                        onClick={handleSendPaymentRequest} 
+                        className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition disabled:opacity-50 font-semibold"
+                        disabled={sending}
+                      >
+                        {sending ? 'Sending...' : 'Send Payment Request'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setRequestpay(false);
+                          setMessageInput("");
+                        }} 
+                        className="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600 transition font-semibold"
+                        disabled={sending}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      <p>If the main endpoint fails, <button 
+                        onClick={handleSendPaymentRequestAlternative} 
+                        className="text-blue-600 underline hover:text-blue-800"
+                        disabled={sending}
+                      >
+                        try alternative endpoint
+                      </button></p>
+                    </div>
+                  </div>
                 )}
               </div>
-
-              {/* Input Controls */}
-              {!requestpay ? (
-                <div className="border-t p-3 sm:p-4 flex flex-col sm:flex-row gap-3">
-                  <button 
-                    onClick={() => setRequestpay(true)} 
-                    className="flex-1 bg-[#FEE123] py-2 rounded text-sm sm:text-base hover:bg-yellow-400 transition font-semibold"
-                    disabled={sending}
-                  >
-                    Request Payment
-                  </button>
-                  <button 
-                    onClick={handlePayRefund} 
-                    className="flex-1 border border-[#FEE123] text-[#FEE123] py-2 rounded text-sm sm:text-base hover:bg-yellow-50 transition font-semibold"
-                  >
-                    Process Refund
-                  </button>
+            ) : (
+              <div className="flex-1 flex items-center justify-center bg-white rounded-md shadow-md p-5">
+                <div className="text-gray-500 text-center">
+                  Select a tenant to send payment requests
                 </div>
-              ) : (
-                <div className="border-t p-3 sm:p-4 bg-gray-50">
-                  <div className="mb-3">
-                    <h3 className="font-semibold text-lg mb-2">Send Payment Request</h3>
-                    <div className="bg-blue-50 p-3 rounded-lg mb-3">
-                      <p className="text-sm">
-                        <strong>Amount:</strong> ₹{selectedBooking.outstandingAmount || selectedBooking.rent}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Tenant:</strong> {selectedBooking.name}
-                      </p>
-                      <p className="text-sm text-red-500">
-                        <strong>Overdue:</strong> {getDaysLate(selectedBooking.lastPaymentDate)} days
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add a note (optional)..."
-                      className="flex-1 border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendPaymentRequest();
-                        }
-                      }}
-                      disabled={sending}
-                    />
-                    <button 
-                      onClick={handleSendPaymentRequest} 
-                      className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition disabled:opacity-50 font-semibold"
-                      disabled={sending}
-                    >
-                      {sending ? 'Sending...' : 'Send Payment Request'}
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setRequestpay(false);
-                        setMessageInput("");
-                      }} 
-                      className="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600 transition font-semibold"
-                      disabled={sending}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    <p>If the main endpoint fails, <button 
-                      onClick={handleSendPaymentRequestAlternative} 
-                      className="text-blue-600 underline hover:text-blue-800"
-                      disabled={sending}
-                    >
-                      try alternative endpoint
-                    </button></p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center bg-white rounded-md shadow-md p-5">
-              <div className="text-gray-500 text-center">
-                {bookingUsers.length === 0 ? "No tenants available" : "Select a tenant to send payment requests"}
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

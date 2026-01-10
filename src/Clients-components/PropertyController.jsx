@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken } from '../utils/tokenUtils';
 
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -24,6 +25,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -974,6 +976,29 @@ export const bookingAPI = {
       }
       return response;
     }),
+    getBookingsByClientId: (clientId) => {
+    const token = localStorage.getItem('token');
+    return api
+      .get(`/api/bookings/client/${clientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        if (!response.data?.success) {
+          throw new Error(
+            response.data?.message || 'Invalid response format for fetching bookings by client ID'
+          );
+        }
+        return response;
+      })
+      .catch((error) => {
+        console.error("Error fetching bookings by client ID:", error);
+        throw new Error(
+          error.response?.data?.message || 'Failed to fetch bookings for this client'
+        );
+      });
+  },
 
   getBookingsByUser: () => {
   const token = localStorage.getItem('token');
@@ -1474,6 +1499,198 @@ export const contactAPI = {
       })
 };
 
+export const offlineBookingAPI = {
+  // Get all offline bookings for current client
+  getOfflineBookings: () =>
+    api.get('/api/offline-bookings')
+      .then(response => {
+        console.log('Offline bookings API response:', response.data);
+        if (!Array.isArray(response.data)) {
+          // If response is not an array, check if it's wrapped in success structure
+          if (response.data?.success && Array.isArray(response.data.data)) {
+            return response.data.data;
+          }
+          throw new Error('Invalid response format for offline bookings');
+        }
+        return response.data;
+      })
+      .catch(error => {
+        console.error('Offline booking API error:', error);
+        // Return empty array instead of throwing to prevent component crash
+        return [];
+      }),
+ 
+  // Get offline booking by ID
+  getOfflineBookingById: (bookingId) =>
+    api.get(`/api/offline-bookings/${bookingId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to fetch offline booking');
+        }
+        return response;
+      }),
+ 
+  // Create offline booking
+  createOfflineBooking: (bookingData) =>
+    api.post('/api/offline-bookings', bookingData)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to create offline booking');
+        }
+        return response;
+      }),
+ 
+  // Update offline booking
+  updateOfflineBooking: (bookingId, updates) =>
+    api.put(`/api/offline-bookings/${bookingId}`, updates)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to update offline booking');
+        }
+        return response;
+      }),
+ 
+  // Delete offline booking
+  deleteOfflineBooking: (bookingId) =>
+    api.delete(`/api/offline-bookings/${bookingId}`)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to delete offline booking');
+        }
+        return response;
+      }),
+ 
+  // Update offline booking status
+  updateOfflineBookingStatus: (bookingId, statusData) =>
+    api.patch(`/api/offline-bookings/${bookingId}/status`, statusData)
+      .then(response => {
+        if (!response.data?.success) {
+          throw new Error(response.data?.message || 'Failed to update booking status');
+        }
+        return response;
+      })
+};
+
+// PropertyController.jsx
+// export const manualTransferAPI = {
+//   // Get payments by client
+//   getPaymentsByClient: async (clientId) => {
+//     try {
+//       const token = localStorage.getItem('token') || localStorage.getItem('clientToken');
+//       console.log("🔑 Using token for payments API:", token ? "Token exists" : "No token");
+      
+//       const response = await api.get(`/api/payments/by-client/${clientId}`, {
+//         headers: {
+//           'Authorization': `Bearer ${token}`
+//         }
+//       });
+//       console.log("✅ Payments API response:", response.data);
+//       return response;
+//     } catch (error) {
+//       console.error('❌ Get payments by client API error:', error.response?.data || error.message);
+//       throw error;
+//     }
+//   },
+
+//   // UNCOMMENT AND FIX THIS FUNCTION
+//   getManualTransfersByClient: async (clientId, filters = {}) => {
+//     try {
+//       console.log("🔄 Getting manual transfers for client:", clientId);
+      
+//       const token = localStorage.getItem('token') || localStorage.getItem('clientToken');
+//       if (!token) {
+//         throw new Error("No authentication token found");
+//       }
+     
+//       const params = new URLSearchParams();
+//       params.append('page', filters.page || 1);
+//       params.append('limit', filters.limit || 10);
+     
+//       if (filters.status) params.append('status', filters.status);
+//       if (filters.startDate) params.append('startDate', filters.startDate);
+//       if (filters.endDate) params.append('endDate', filters.endDate);
+     
+//       const response = await api.get(`/api/admin/manual-transfers/client/${clientId}?${params.toString()}`, {
+//         headers: {
+//           'Authorization': `Bearer ${token}`
+//         }
+//       });
+     
+//       console.log("✅ Manual transfers by client response:", {
+//         count: response.data.data?.transfers?.length,
+//         total: response.data.data?.pagination?.totalItems
+//       });
+     
+//       return response;
+     
+//     } catch (error) {
+//       console.error("❌ Get manual transfers by client error:", {
+//         status: error.response?.status,
+//         data: error.response?.data,
+//         message: error.message
+//       });
+//       throw error;
+//     }
+//   },
+// };
+
+// Add these to your PropertyController.js
+export const manualTransferAPI = {
+  // NEW: Get manual transfers by client ID
+  getManualTransfersByClient: async (clientId, filters = {}) => {
+    try {
+      console.log("🔄 Getting manual transfers for client:", clientId);
+     
+      const params = new URLSearchParams();
+      params.append('page', filters.page || 1);
+      params.append('limit', filters.limit || 10);
+     
+      if (filters.status) params.append('status', filters.status);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+     
+      const response = await api.get(`/api/manual-transfers/client/${clientId}?${params.toString()}`);
+     
+      console.log("✅ Manual transfers by client response:", {
+        count: response.data.data?.transfers?.length,
+        total: response.data.data?.pagination?.totalItems
+      });
+     
+      return response;
+     
+    } catch (error) {
+      console.error("❌ Get manual transfers by client error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
+    }
+  },
+ 
+  // NEW: Get manual transfers by booking ID
+  // getManualTransfersByBooking: async (bookingId) => {
+  //   try {
+  //     console.log("🔄 Getting manual transfers for booking:", bookingId);
+     
+  //     const response = await api.get(`/api/manual-transfers/booking/${bookingId}`);
+     
+  //     console.log("✅ Manual transfers by booking response:", {
+  //       count: response.data.data?.length
+  //     });
+     
+  //     return response;
+     
+  //   } catch (error) {
+  //     console.error("❌ Get manual transfers by booking error:", {
+  //       status: error.response?.status,
+  //       data: error.response?.data,
+  //       message: error.message
+  //     });
+  //     throw error;
+  //   }
+  // },
+};
 
 
 

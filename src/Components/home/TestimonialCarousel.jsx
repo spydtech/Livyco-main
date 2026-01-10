@@ -4,13 +4,16 @@ import { FaStar } from "react-icons/fa";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import reviewImage from "../../assets/user/review.png";
+import image1 from "../../assets/user/home page/curosel/8c261193ec6c45e5aa1db3f1734ca2c85b5706b8.png";
+import image2 from "../../assets/user/home page/curosel/e915f88238ac6007aa5be950081f8f386a727a10.jpg";
+import image3 from "../../assets/user/home page/curosel/man-portrait-young-happy.jpg";
 
 const testimonials = [
   {
     name: "Priyanka Das",
     profession: "Software Engineer",
     rating: 4.7,
-    image: "/user-priyanka.jpg",
+    image: image1,
     review: (
       <>
         I'm new to this city and using this app to{" "}
@@ -31,7 +34,7 @@ const testimonials = [
     name: "Rahul Sharma",
     profession: "Data Scientist",
     rating: 4.8,
-    image: "/user-rahul.jpg",
+    image: image2,
     review: (
       <>
         I had a great experience using this app to find my new paying guest
@@ -46,7 +49,7 @@ const testimonials = [
     name: "Anjali Verma",
     profession: "Graphic Designer",
     rating: 4.9,
-    image: "/user-anjali.jpg",
+    image: image3,
     review: (
       <>
         This app made my search for a hostel so easy! The{" "}

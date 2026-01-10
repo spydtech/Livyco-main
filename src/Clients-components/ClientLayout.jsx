@@ -37,6 +37,7 @@ import ClientWalletHistory from "./payment/WalletHistory";
 // import AddBankAccount from "./Account/AddBankAccount";
 import BankAccountsList from "./Account/BankAccountsList ";
 import ListedProperties from "./ListedProperties";
+import Calendar from "./Client-Home/Calender";
 
 
 const ClientLayout = () => {
@@ -76,6 +77,8 @@ const ClientLayout = () => {
 
         <Route path="/supportdashboard" element={<SupportDashboard />} />
         <Route path="/chat" element={<ClientChat />} />
+        {/* calender */}
+        <Route path="/calendar" element={<Calendar />} />
 
 
         

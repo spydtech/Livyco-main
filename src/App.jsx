@@ -64,22 +64,24 @@
   import UserRegister from "./Components/userLogin/UserRegister";
   import ContactedList from "./Components/profile/ContactedList";
   import UserSupportPage from "./Components/profile/UserSupportPage";
-import Chatbot from "./Components/chatbot/Chatbot";
+  //import Chatbot from "./Components/chatbot/Chatbot";
+  import Tab from "./Components/userLogin/Tab";
   
 
 
 
   function App() {
     return (
-      <AuthProvider> {/* Wrap with AuthProvider */}
+      <AuthProvider> 
         <ChatProvider>
         <Router>
-          <Chatbot />
+          {/* <Chatbot /> */}
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/user/register" element={<UserRegister />} />
-            <Route path="/user/login" element={<UserLogin />} />
+            {/* <Route path="/user/login" element={<UserLogin />} /> */}
+            <Route path="/user/login" element={<Tab />} />
             <Route path="/user/otp-verification" element={<UserOtpVerfication />} />
             <Route path="/user/pgsearch" element={<PgSearch />} />
             <Route path="/user/view-pg/:id" element={<BookPG />} />
@@ -175,7 +177,7 @@ import Chatbot from "./Components/chatbot/Chatbot";
         </Router>
         </ChatProvider>
 
-      </AuthProvider>
+       </AuthProvider>
     );
   }
 
