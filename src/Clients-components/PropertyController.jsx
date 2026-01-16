@@ -2,8 +2,8 @@ import axios from 'axios';
 import { getAuthToken } from '../utils/tokenUtils';
 
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
 
 // Create a separate axios instance without interceptors for token refresh
 const refreshApi = axios.create({
