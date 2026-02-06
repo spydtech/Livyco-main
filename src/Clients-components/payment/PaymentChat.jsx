@@ -1468,12 +1468,15 @@
 //   );
 // }
 
+
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Phone, MoreVertical } from 'lucide-react';
 import ClientNav from '../Client-Navbar/ClientNav';
 import { bookingAPI } from '../PropertyController';
 import axios from 'axios';
+import { API_BASE_URL } from '../PropertyController';
 
 const getDaysLate = (dateString) => {
   if (!dateString) return 0;
@@ -1484,7 +1487,7 @@ const getDaysLate = (dateString) => {
   return diffDays > 0 ? diffDays : 0;
 };
 
-export default function PaymentChat() {
+const PaymentChat = () => {
   const navigate = useNavigate();
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [messageInput, setMessageInput] = useState('');
@@ -1496,7 +1499,7 @@ export default function PaymentChat() {
   const [sending, setSending] = useState(false);
   const [bookingDetails, setBookingDetails] = useState({});
 
-  const API_BASE_URL = 'http://localhost:5000';
+  //const API_BASE_URL = 'http://localhost:5000';
 
   useEffect(() => {
     fetchBookingUsers();
@@ -1521,7 +1524,7 @@ export default function PaymentChat() {
       }
 
       // Using the bookingAPI method to get booking by ID
-      const response = await bookingAPI.getBookingById(bookingId);
+      const response = await bookingAPI.getAllBookings(bookingId);
       
       if (response.data?.success) {
         console.log('✅ Booking details fetched successfully:', response.data);
@@ -2182,4 +2185,5 @@ export default function PaymentChat() {
       </div>
     </>
   );
-}
+};
+export default PaymentChat;
