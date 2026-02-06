@@ -8,6 +8,7 @@ import AboutUs from './AboutUs'
 import TestimonialCarousel from './TestimonialCarousel';
 import Footer from '../../Clients-components/Footer'
 import DownloadAppSection from './DownloadAppSection'
+import Chatbot from '../chatbot/Chatbot';
 
 
 const HomePage = props => {
@@ -21,6 +22,7 @@ const HomePage = props => {
             <AboutUs />
             <TestimonialCarousel />
             <DownloadAppSection />
+            <Chatbot />
             <Footer />
 
         </>

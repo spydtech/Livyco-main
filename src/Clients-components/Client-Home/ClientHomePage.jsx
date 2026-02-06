@@ -5,12 +5,13 @@ import PropertyListing from "../PropertyListing";
 import Footer from "../Footer";
 import FaqSection from "../FaqSection";
 import TestimonialsCarousel from "../TestimonialsCarousel";
+import LivycoHostelContentUI from "./LivycoHostelContentUI";
 
 const ClientHomePage = () => {
   return (
     <div>
         <ClientNav />
-    <div className="bg-blue-900 h-screen flex flex-col md:flex-row items-center justify-between px-8 md:px-20">
+    <div className="bg-[#0827B2] h-screen flex flex-col md:flex-row items-center justify-between px-8 md:px-20">
         
       {/* Left Section - Text Content */}
       <div className="text-white md:w-1/2">
@@ -65,8 +66,11 @@ const ClientHomePage = () => {
 
       </div>
     </div>
+    <LivycoHostelContentUI />
     {/* <PropertyListing /> */}
     <RecentlyListedProperties />
+    
+    
     <TestimonialsCarousel />
     <FaqSection />
     <Footer />

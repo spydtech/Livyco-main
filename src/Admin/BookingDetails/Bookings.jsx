@@ -187,6 +187,7 @@ const EmptyBookings = ({ bookingType, onRefresh }) => (
 );
 
 // Transfer Popup Component
+// Transfer Popup Component
 const TransferPopup = ({
   booking,
   payment,
@@ -200,23 +201,34 @@ const TransferPopup = ({
   const [transferLoading, setTransferLoading] = useState(false);
   const [transferStatus, setTransferStatus] = useState(null);
   const [transferNotes, setTransferNotes] = useState('');
-  const [useRazorpay, setUseRazorpay] = useState(true);
+  const [useRazorpay, setUseRazorpay] = useState(false); // Default to manual transfer
   const [isLiveMode, setIsLiveMode] = useState(false);
+  const [manualTransferForm, setManualTransferForm] = useState({
+    bookingId: '',
+    originalAmount: 0,
+    transactionReference: '',
+    utrNumber: '',
+    paymentMode: 'Bank Transfer',
+    screenshotUrl: ''
+  });
 
-  // Check if we're in live mode
+  // Initialize form data when booking or payment changes
   useEffect(() => {
-    const checkLiveMode = async () => {
-      try {
-        const response = await adminPaymentsAPI.getPaymentHealth();
-        if (response.data?.services?.mode === 'LIVE') {
-          setIsLiveMode(true);
-        }
-      } catch (error) {
-        console.log('Could not determine mode, assuming test mode');
-      }
-    };
-    checkLiveMode();
-  }, []);
+    if (booking) {
+      const bookingId = booking._id || booking.id || '';
+      const originalAmount = getTotalPaidAmount();
+      const transactionReference = `MANUAL-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      
+      setManualTransferForm({
+        bookingId,
+        originalAmount,
+        transactionReference,
+        utrNumber: '',
+        paymentMode: 'Bank Transfer',
+        screenshotUrl: ''
+      });
+    }
+  }, [booking, payment]);
 
   const calculateTransferAmounts = (amount) => {
     const platformCommission = amount * 0.05;
@@ -261,121 +273,183 @@ const TransferPopup = ({
   };
 
   const getTotalPaidAmount = () => {
-    return payment?.amount || 0;
-  };
+  console.log('Getting total paid amount:', {
+    booking: booking,
+    payment: payment,
+    bookingPaymentInfo: booking?.paymentInfo,
+    bookingTransferDetails: booking?.transferDetails,
+    bookingPricing: booking?.pricing
+  });
 
-  const handleProceedTransfer = async () => {
-    if (!selectedBankAccount) {
-      alert('Please select a bank account to proceed with the transfer.');
-      return;
-    }
+  // First check if we have a specific payment object
+  if (payment?.amount) {
+    console.log('Using payment.amount:', payment.amount);
+    return payment.amount;
+  }
+  
+  // Check booking's paymentInfo.paidAmount (from your API response - this is where your data is!)
+  if (booking?.paymentInfo?.paidAmount !== undefined) {
+    console.log('Using booking.paymentInfo.paidAmount:', booking.paymentInfo.paidAmount);
+    return booking.paymentInfo.paidAmount;
+  }
+  
+  // Check booking's transferDetails.totalAmount
+  if (booking?.transferDetails?.totalAmount !== undefined) {
+    console.log('Using booking.transferDetails.totalAmount:', booking.transferDetails.totalAmount);
+    return booking.transferDetails.totalAmount;
+  }
+  
+  // Check booking's pricing.totalAmount
+  if (booking?.pricing?.totalAmount !== undefined) {
+    console.log('Using booking.pricing.totalAmount:', booking.pricing.totalAmount);
+    return booking.pricing.totalAmount;
+  }
+  
+  // If nothing found, check the payments array
+  if (booking?.payments && Array.isArray(booking.payments) && booking.payments.length > 0) {
+    // Sum up all completed payments
+    const total = booking.payments
+      .filter(p => p.status === 'completed')
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    console.log('Using sum of payments:', total);
+    return total;
+  }
+  
+  // Default fallback
+  console.log('No amount found, returning 1 as default');
+  return 1;
+};
 
-    try {
-      setTransferLoading(true);
-      setTransferStatus(null);
+  // MOVE THE handleManualTransferSubmit 
+  const handleManualTransferSubmit = async () => {
+  if (!selectedBankAccount) {
+    alert('Please select a bank account to proceed with the transfer.');
+    return;
+  }
 
-      const transferData = {
-        bookingId: booking._id || booking.id,
-        paymentId: payment?._id || payment?.id,
-        bankAccountId: selectedBankAccount._id,
-        notes: transferNotes || `Transfer for payment ${payment?._id || payment?.id || booking._id}`,
-      };
+  console.log('Validating form:', {
+    bookingId: manualTransferForm.bookingId,
+    originalAmount: manualTransferForm.originalAmount,
+    transactionReference: manualTransferForm.transactionReference,
+    hasBookingId: !!manualTransferForm.bookingId && manualTransferForm.bookingId.trim() !== '',
+    hasAmount: manualTransferForm.originalAmount > 0,
+    hasReference: !!manualTransferForm.transactionReference && manualTransferForm.transactionReference.trim() !== '',
+    selectedBankAccount: selectedBankAccount
+  });
 
-      console.log('🔄 Initiating transfer:', transferData);
+  // Validate required fields
+  if (!manualTransferForm.bookingId || manualTransferForm.bookingId.trim() === '') {
+    alert('Booking ID is required.');
+    return;
+  }
 
-      // Check if this is a live transfer
-      if (useRazorpay && isLiveMode) {
-        // Show confirmation for live transfers
-        const confirmTransfer = window.confirm(
-          `⚠️ LIVE TRANSFER CONFIRMATION\n\n` +
-          `You are about to transfer REAL MONEY:\n` +
-          `Amount: ₹${getTransferAmount().toLocaleString('en-IN')}\n` +
-          `To: ${selectedBankAccount.accountHolderName}\n` +
-          `Account: ${selectedBankAccount.accountNumber?.substring(0, 4)}****${selectedBankAccount.accountNumber?.substring(selectedBankAccount.accountNumber.length - 4)}\n\n` +
-          `Bank: ${selectedBankAccount.bankName}\n` +
-          `IFSC: ${selectedBankAccount.ifscCode || selectedBankAccount.ifsc}\n\n` +
-          `This action cannot be undone. Proceed?`
-        );
-        
-        if (!confirmTransfer) {
-          setTransferLoading(false);
-          return;
-        }
-      }
+  if (!manualTransferForm.originalAmount || manualTransferForm.originalAmount <= 0) {
+    alert(`Amount must be greater than 0. Current amount: ${manualTransferForm.originalAmount}`);
+    return;
+  }
 
-      let response;
-      if (useRazorpay) {
-        response = await adminPaymentsAPI.initiateRazorpayTransfer(transferData);
-      } else {
-        response = await adminPaymentsAPI.initiateManualTransfer(transferData);
-      }
+  if (!manualTransferForm.transactionReference || manualTransferForm.transactionReference.trim() === '') {
+    alert('Transaction Reference is required.');
+    return;
+  }
 
-      console.log('✅ Transfer API response:', response.data);
-      
-      if (response.data && response.data.success) {
-        setTransferStatus({
-          type: 'success',
-          message: response.data.message,
-          details: response.data.transferDetails,
-          isLiveTransfer: useRazorpay && isLiveMode
-        });
-        
-        // Show success message
-        if (useRazorpay && isLiveMode) {
-          if (response.data.transferDetails.razorpayUTR) {
-            alert(`✅ Payment Transfer Successful!\n\n` +
-                  `Amount: ₹${response.data.transferDetails.amount.toLocaleString('en-IN')}\n` +
-                  `UTR: ${response.data.transferDetails.razorpayUTR}\n` +
-                  `Status: ${response.data.transferDetails.status}\n\n` +
-                  `The money has been transferred to the property owner's bank account.`);
-          } else {
-            alert(`✅ Payment Transfer Initiated!\n\n` +
-                  `Amount: ₹${response.data.transferDetails.amount.toLocaleString('en-IN')}\n` +
-                  `Payout ID: ${response.data.transferDetails.razorpayPayoutId}\n` +
-                  `Status: ${response.data.transferDetails.status}\n\n` +
-                  `The transfer has been initiated. You will receive a notification when it's completed.`);
-          }
-        }
-        
-        // Refresh data
-        setTimeout(() => {
-          onClose();
-          if (onTransferComplete) {
-            onTransferComplete(response.data.transferDetails);
-          }
-          window.location.reload();
-        }, 3000);
-      } else {
-        setTransferStatus({
-          type: 'error',
-          message: response.data?.message || 'Transfer failed',
-          details: response.data?.error
-        });
-        
-        alert(`Transfer Failed:\n${response.data?.message || 'Unknown error'}`);
-      }
+  try {
+    setTransferLoading(true);
+    setTransferStatus(null);
 
-    } catch (error) {
-      console.error('🔥 Transfer process error:', error);
+    
+    
+    // Try to get clientId from bankAccount first 
+    const clientId = selectedBankAccount.clientId || booking?.clientId;
+    
+    console.log('Client ID to send:', {
+      stringClientId: booking?.clientId, 
+      bankAccountClientId: selectedBankAccount.clientId, 
+      usingId: clientId
+    });
+
+    // Prepare transfer data for manual transfer API
+    const transferData = {
+      bookingId: manualTransferForm.bookingId.trim(),
+      bankAccountId: selectedBankAccount._id,
+      originalAmount: manualTransferForm.originalAmount,
+      transactionReference: manualTransferForm.transactionReference.trim(),
+      notes: transferNotes || `Manual transfer for booking ${booking?._id?.substring(0, 8) || manualTransferForm.bookingId.substring(0, 8)}...`,
+      utrNumber: manualTransferForm.utrNumber.trim(),
+      paymentMode: manualTransferForm.paymentMode,
+      screenshotUrl: manualTransferForm.screenshotUrl.trim(),
+      clientId: clientId, // This should be ObjectId, not string
+      clientName: selectedBankAccount.accountHolderName
+    };
+
+    console.log('📤 Sending manual transfer data:', transferData);
+
+    // Call the manual transfer API
+    const response = await adminPaymentsAPI.initiateManualTransfer(transferData);
+
+    console.log('✅ Manual transfer API response:', response.data);
+    
+    if (response.data && response.data.success) {
+      const successMessage = response.data.message || 'Manual transfer recorded successfully';
       
       setTransferStatus({
-        type: 'error',
-        message: error.response?.data?.message || 'Transfer process failed.',
-        details: error.response?.data?.error || error.message
+        type: 'success',
+        message: successMessage,
+        details: response.data.data || response.data
       });
       
-      // Show specific error messages
-      if (error.response?.status === 400) {
-        alert(`Transfer Failed:\n${error.response.data.message}`);
-      } else if (error.response?.status === 500) {
-        alert('Server error occurred. Please try again or use manual transfer.');
-      } else if (!error.response) {
-        alert('Network error. Please check your connection.');
-      }
-    } finally {
-      setTransferLoading(false);
+      // Show success alert
+      alert(`✅ ${successMessage}\n\nReference: ${manualTransferForm.transactionReference}\nAmount: ₹${manualTransferForm.originalAmount.toLocaleString('en-IN')}`);
+      
+      // Close popup and refresh after 2 seconds
+      setTimeout(() => {
+        onClose();
+        if (onTransferComplete) {
+          onTransferComplete(response.data.data || response.data);
+        }
+      }, 2000);
+      
+    } else {
+      setTransferStatus({
+        type: 'error',
+        message: response.data?.message || 'Manual transfer failed',
+        details: response.data?.error
+      });
+      
+      alert(`Manual Transfer Failed:\n${response.data?.message || 'Unknown error'}`);
     }
-  };
+
+  } catch (error) {
+    console.error('🔥 Manual transfer process error:', error.response?.data || error);
+    
+    // Show the exact backend error message
+    let errorMessage = 'Manual transfer process failed.';
+    
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    // Special handling for ObjectId error
+    if (errorMessage.includes('Cast to ObjectId')) {
+      errorMessage = 'Invalid client ID format. Please ensure the property owner has a valid account.';
+    }
+    
+    setTransferStatus({
+      type: 'error',
+      message: errorMessage,
+      details: error.response?.data
+    });
+    
+    alert(`❌ Manual Transfer Failed:\n${errorMessage}`);
+  } finally {
+    setTransferLoading(false);
+  }
+};
+
 
   const transferAmounts = calculateTransferAmounts(getTotalPaidAmount());
 
@@ -464,15 +538,15 @@ const TransferPopup = ({
               </div>
               <div>
                 <h4 className="font-bold text-blue-800 text-lg">Payment Transfer Summary</h4>
-                <p className="text-blue-600 text-sm">Booking ID: {booking._id?.substring(0, 8)}...</p>
+                <p className="text-blue-600 text-sm">Booking ID: {booking?._id?.substring(0, 8) || manualTransferForm.bookingId?.substring(0, 8)}...</p>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div className="bg-white rounded-lg p-3 shadow-sm">
-                  <InfoRow label="Booking ID" value={booking._id?.substring(0, 12)} icon={FaIdCard} />
-                  <InfoRow label="Property Owner ID" value={booking.clientId || 'N/A'} icon={FaUser} />
+                  <InfoRow label="Booking ID" value={manualTransferForm.bookingId?.substring(0, 12) || 'N/A'} icon={FaIdCard} />
+                  <InfoRow label="Property Owner ID" value={booking?.clientId || selectedBankAccount?.clientId || 'N/A'} icon={FaUser} />
                   <InfoRow 
                     label="Payment Date" 
                     value={payment?.date ? new Date(payment.date).toLocaleDateString('en-IN', {
@@ -516,6 +590,128 @@ const TransferPopup = ({
             </div>
           </div>
 
+          {/* Manual Transfer Form (Only shown when manual transfer is selected) */}
+          {!useRazorpay && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <FaExclamationTriangle className="text-yellow-600 text-xl" />
+                <h4 className="font-bold text-yellow-800 text-lg">Manual Transfer Details</h4>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Booking ID *
+                    </label>
+                    <input
+                      type="text"
+                      value={manualTransferForm.bookingId}
+                      onChange={(e) => setManualTransferForm({
+                        ...manualTransferForm,
+                        bookingId: e.target.value
+                      })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="Enter booking ID"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount to Transfer (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      value={manualTransferForm.originalAmount}
+                      onChange={(e) => setManualTransferForm({
+                        ...manualTransferForm,
+                        originalAmount: parseFloat(e.target.value) || 0
+                      })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="Enter amount"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Transaction Reference *
+                    </label>
+                    <input
+                      type="text"
+                      value={manualTransferForm.transactionReference}
+                      onChange={(e) => setManualTransferForm({
+                        ...manualTransferForm,
+                        transactionReference: e.target.value
+                      })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="Enter transaction reference"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      UTR Number (*)
+                    </label>
+                    <input
+                      type="text"
+                      value={manualTransferForm.utrNumber}
+                      onChange={(e) => setManualTransferForm({
+                        ...manualTransferForm,
+                        utrNumber: e.target.value
+                      })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="Enter UTR number"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Mode
+                  </label>
+                  <select
+                    value={manualTransferForm.paymentMode}
+                    onChange={(e) => setManualTransferForm({
+                      ...manualTransferForm,
+                      paymentMode: e.target.value
+                    })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Cash Deposit">Cash Deposit</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Screenshot URL (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={manualTransferForm.screenshotUrl}
+                    onChange={(e) => setManualTransferForm({
+                      ...manualTransferForm,
+                      screenshotUrl: e.target.value
+                    })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    placeholder="Enter screenshot URL"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    URL of the transaction screenshot or proof
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Transfer Status Display */}
           {transferStatus && (
             <div className={`p-4 rounded-lg mb-6 animate-fade-in ${
@@ -541,7 +737,7 @@ const TransferPopup = ({
                         <div>
                           <span className="font-medium">Amount:</span> 
                           <span className={`ml-2 ${transferStatus.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                            ₹{transferStatus.details.amount?.toLocaleString('en-IN')}
+                            ₹{transferStatus.details.originalAmount?.toLocaleString('en-IN')}
                           </span>
                         </div>
                         <div>
@@ -551,14 +747,9 @@ const TransferPopup = ({
                           </span>
                         </div>
                       </div>
-                      {transferStatus.details.bankAccount && (
+                      {transferStatus.details.transactionReference && (
                         <p className={`text-sm ${transferStatus.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                          Account Holder: {transferStatus.details.bankAccount.holder}
-                        </p>
-                      )}
-                      {transferStatus.details.razorpayUTR && (
-                        <p className={`text-sm ${transferStatus.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                          UTR: {transferStatus.details.razorpayUTR}
+                          Reference: {transferStatus.details.transactionReference}
                         </p>
                       )}
                     </div>
@@ -724,7 +915,7 @@ const TransferPopup = ({
                   <div className="space-y-2">
                     <InfoRow 
                       label="Transfer Amount" 
-                      value={`₹${getTransferAmount().toLocaleString('en-IN')}`} 
+                      value={`₹${manualTransferForm.originalAmount?.toLocaleString('en-IN')}`} 
                       highlight 
                     />
                     <InfoRow 
@@ -747,6 +938,18 @@ const TransferPopup = ({
                         </span>
                       } 
                     />
+                    {!useRazorpay && (
+                      <>
+                        <InfoRow 
+                          label="Transaction Reference" 
+                          value={manualTransferForm.transactionReference} 
+                        />
+                        <InfoRow 
+                          label="Payment Mode" 
+                          value={manualTransferForm.paymentMode} 
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -801,7 +1004,7 @@ const TransferPopup = ({
           
           {bankAccounts.length > 0 && (
             <button
-              onClick={handleProceedTransfer}
+              onClick={handleManualTransferSubmit}
               disabled={!selectedBankAccount || transferLoading}
               className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
                 selectedBankAccount && !transferLoading
@@ -814,7 +1017,7 @@ const TransferPopup = ({
               {transferLoading ? (
                 <>
                   <FaSpinner className="animate-spin" />
-                  {useRazorpay ? 'Processing Transfer...' : 'Recording Transfer...'}
+                  {useRazorpay ? 'Processing Transfer...' : 'Recording Manual Transfer...'}
                 </>
               ) : (
                 <>
@@ -834,7 +1037,6 @@ const TransferPopup = ({
     </div>
   );
 };
-
 // Payment History Component
 const PaymentHistorySection = ({ booking, onTransferClick }) => {
   const [expandedPayment, setExpandedPayment] = useState(null);
@@ -1588,7 +1790,8 @@ const Bookings = () => {
   const handleTransferClick = async (booking, payment = null) => {
     try {
       console.log("🔄 Transfer initiated:", {
-        booking: booking._id,
+        bookingId: booking._id || booking.id,
+        booking: booking,
         payment: payment?._id || 'all payments'
       });
 
@@ -2027,7 +2230,7 @@ const Bookings = () => {
             }
           }}
           onTransferComplete={(transferDetails) => {
-            console.log('Transfer completed:', transferDetails);
+            console.log('Manual transfer completed:', transferDetails);
             fetchBookings(bookingType);
             
             const fetchBookingDetails = async () => {
@@ -2052,8 +2255,6 @@ const Bookings = () => {
 };
 
 export default Bookings;
-
-
 
 // import React, { useEffect, useState } from "react";
 // import { 

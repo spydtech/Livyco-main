@@ -166,7 +166,7 @@ const RecentlyListedProperties = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1e3b8a] py-10 px-5">
+      <div className="bg-[#0827B2] py-10 px-5">
         <h2 className="text-white text-2xl font-semibold text-center mb-6">
           Recently listed properties
         </h2>
@@ -185,7 +185,7 @@ const RecentlyListedProperties = () => {
 
   if (error) {
     return (
-      <div className="bg-[#1e3b8a] py-10 px-5 text-center">
+      <div className="bg-[#0827B2] py-10 px-5 text-center">
         <h2 className="text-white text-2xl font-semibold mb-4">
           Recently listed properties
         </h2>
@@ -202,7 +202,7 @@ const RecentlyListedProperties = () => {
 
   if (!properties.length) {
     return (
-      <div className="bg-[#1e3b8a] py-10 px-5 text-center">
+      <div className="bg-[#0827B2] py-10 px-5 text-center">
         <h2 className="text-white text-2xl font-semibold mb-4">
           Recently listed properties
         </h2>
@@ -212,7 +212,7 @@ const RecentlyListedProperties = () => {
   }
 
   return (
-    <div className="bg-[#1e3b8a] py-10 px-5">
+    <div className="bg-[#0827B2] py-10 px-5">
       <h2 className="text-white text-2xl font-semibold text-center mb-6">
         Recently listed properties
       </h2>

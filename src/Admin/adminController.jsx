@@ -390,12 +390,12 @@ export const adminPaymentsAPI = {
         endpoint: `/razorpay/transfer/initiate/${transferData.bookingId}`,
         data: transferData
       });
-      
+     
       const response = await api.post(`/razorpay/transfer/initiate/${transferData.bookingId}`, transferData);
-      
+     
       console.log("✅ Razorpay transfer API response:", response.data);
       return response;
-      
+     
     } catch (error) {
       console.error("❌ Razorpay transfer API error:", {
         status: error.response?.status,
@@ -405,20 +405,31 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
-
-  // Manual transfer - Recording only
+ 
+  // Manual transfer
   initiateManualTransfer: async (transferData) => {
     try {
-      console.log("🔄 Calling Manual transfer API:", {
-        endpoint: `/manual/transfer/initiate/${transferData.bookingId}`,
+      console.log("🔄 Calling NEW Manual transfer API:", {
+        endpoint: `/admin/manual-transfers`,
         data: transferData
       });
-      
-      const response = await api.post(`/manual/transfer/initiate/${transferData.bookingId}`, transferData);
-      
+     
+      const response = await api.post(`/admin/manual-transfers`, {
+        bookingId: transferData.bookingId,
+        bankAccountId: transferData.bankAccountId,
+        originalAmount: transferData.originalAmount,
+        transactionReference: transferData.transactionReference,
+        notes: transferData.notes,
+        utrNumber: transferData.utrNumber,
+        paymentMode: transferData.paymentMode,
+        screenshotUrl: transferData.screenshotUrl,
+        clientId: transferData.clientId,
+        clientName: transferData.clientName
+      });
+     
       console.log("✅ Manual transfer API response:", response.data);
       return response;
-      
+     
     } catch (error) {
       console.error("❌ Manual transfer API error:", {
         status: error.response?.status,
@@ -428,7 +439,62 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
-
+ 
+  // NEW: Get manual transfers by client ID
+  getManualTransfersByClient: async (clientId, filters = {}) => {
+    try {
+      console.log("🔄 Getting manual transfers for client:", clientId);
+     
+      const params = new URLSearchParams();
+      params.append('page', filters.page || 1);
+      params.append('limit', filters.limit || 10);
+     
+      if (filters.status) params.append('status', filters.status);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+     
+      const response = await api.get(`/manual-transfers/client/${clientId}?${params.toString()}`);
+     
+      console.log("✅ Manual transfers by client response:", {
+        count: response.data.data?.transfers?.length,
+        total: response.data.data?.pagination?.totalItems
+      });
+     
+      return response;
+     
+    } catch (error) {
+      console.error("❌ Get manual transfers by client error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
+    }
+  },
+ 
+  // NEW: Get manual transfers by booking ID
+  getManualTransfersByBooking: async (bookingId) => {
+    try {
+      console.log("🔄 Getting manual transfers for booking:", bookingId);
+     
+      const response = await api.get(`/manual-transfers/booking/${bookingId}`);
+     
+      console.log("✅ Manual transfers by booking response:", {
+        count: response.data.data?.length
+      });
+     
+      return response;
+     
+    } catch (error) {
+      console.error("❌ Get manual transfers by booking error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
+    }
+  },
+ 
   // Check payout status
   checkPayoutStatus: async (payoutId) => {
     try {
@@ -439,7 +505,7 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
-
+ 
   // Get Razorpay balance
   getRazorpayBalance: async () => {
     try {
@@ -450,7 +516,7 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
-
+ 
   // Get transfer details
   getTransferDetails: async (bookingId) => {
     try {
@@ -461,7 +527,7 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
-
+ 
   // Get payment history
   getPaymentHistory: async (bookingId) => {
     try {
@@ -472,7 +538,7 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
-
+ 
   // Get payments by client
   getPaymentsByClient: async (clientId) => {
     try {
@@ -483,7 +549,7 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
-
+ 
   // Health check
   getPaymentHealth: async () => {
     try {

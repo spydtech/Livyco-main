@@ -629,14 +629,24 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
+
 import { auth } from "../../firebase/firebase";
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  signInWithPopup,
+  GoogleAuthProvider,
+  getAdditionalUserInfo,
+  signOut 
+} from "firebase/auth";
 import { API_BASE_URL } from "../PropertyController";
 import axios from "axios";
 
 const ClientLogin = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+   const [googleLoading, setGoogleLoading] = useState(false);
+    const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const recaptchaVerifierRef = useRef(null);
@@ -760,6 +770,146 @@ const ClientLogin = () => {
       }, 1000);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      setError("");
+      setSuccess("");
+
+      console.log("Starting Firebase Google Sign-In...");
+      
+      // First sign out any existing session
+      try {
+        await signOut(auth);
+      } catch (signOutError) {
+        console.log("No existing session to sign out:", signOutError);
+      }
+      
+      // ✅ FIX 1: Create Google provider with explicit email scope
+      const provider = new GoogleAuthProvider();
+      provider.addScope('email'); // Explicitly request email
+      provider.addScope('profile'); // Explicitly request profile
+      
+      // Sign in with Google Popup via Firebase
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      console.log("Firebase Google Sign-In successful:", {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName,
+        photo: user.photoURL
+      });
+
+      // ✅ FIX 2: Get additional user info (contains email from Google)
+      const additionalUserInfo = getAdditionalUserInfo(result);
+      console.log("Additional user info:", additionalUserInfo);
+      
+      // ✅ FIX 3: Extract email from multiple sources
+      let userEmail = user.email;
+      
+      if (!userEmail && additionalUserInfo?.profile) {
+        // Try to get email from additional user info
+        const profile = additionalUserInfo.profile;
+        userEmail = profile.email || profile.emails?.[0]?.value;
+        console.log("Email from additional info:", userEmail);
+      }
+      
+      // ✅ FIX 4: If still no email, use a fallback
+      if (!userEmail) {
+        userEmail = `google_${user.uid}@placeholder.com`;
+        console.log("Using fallback email:", userEmail);
+      }
+      
+      console.log("Final email to send:", userEmail);
+      
+      // ✅ FIX 5: Force refresh token to get latest claims
+      const idToken = await user.getIdToken(true);
+      console.log("Firebase ID Token obtained, length:", idToken.length);
+      
+      // ✅ Send to backend with extracted email
+      const response = await axios.post(`${API_BASE_URL}/api/auth/google-signin`, {
+        token: idToken, // Firebase ID Token
+        email: userEmail, // Explicitly send the extracted email
+        role: 'client',
+        name: user.displayName || 'Google User',
+        photo: user.photoURL || ''
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000
+      });
+
+      console.log("Backend response:", response.data);
+
+      if (response.data.success) {
+        console.log("Backend authentication successful");
+        
+        // Store token and user data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('client', JSON.stringify(response.data.user));
+        
+        setSuccess("Google login successful! Redirecting...");
+        
+        // Navigate to home page
+        setTimeout(() => {
+          navigate('/client/dashboard');
+        }, 1000);
+      } else {
+        throw new Error(response.data.message || "Google sign-in failed");
+      }
+
+    } catch (err) {
+      console.error("Firebase Google Sign-In error:", err);
+      console.error("Full error object:", err);
+      
+      let errorMessage = "Google Sign-In failed. Please try again.";
+      
+      // Firebase-specific error handling
+      switch (err.code) {
+        case 'auth/popup-closed-by-user':
+          errorMessage = "Sign-in popup was closed. Please try again.";
+          break;
+        case 'auth/popup-blocked':
+          errorMessage = "Popup was blocked. Please allow popups for this site.";
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = "Network error. Please check your internet connection.";
+          break;
+        case 'auth/unauthorized-domain':
+          errorMessage = "This domain is not authorized for Google Sign-In.";
+          break;
+        case 'auth/cancelled-popup-request':
+          errorMessage = "Popup request was cancelled.";
+          break;
+        case 'auth/user-disabled':
+          errorMessage = "This account has been disabled.";
+          break;
+        case 'auth/account-exists-with-different-credential':
+          errorMessage = "An account already exists with the same email address but different sign-in credentials.";
+          break;
+        default:
+          if (err.response?.data?.message) {
+            errorMessage = err.response.data.message;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+      }
+      
+      setError(errorMessage);
+      
+      // Sign out from Firebase on error
+      try {
+        await signOut(auth);
+      } catch (signOutError) {
+        console.log("Error signing out:", signOutError);
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -1253,12 +1403,26 @@ const ClientLogin = () => {
             <hr className="flex-grow border-gray-300" />
           </div>
 
-          <button 
+           <button 
+            onClick={handleGoogleSignIn}
+            disabled={loading || googleLoading}
             type="button"
-            className="w-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg transition duration-200"
+            className="w-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FcGoogle className="text-2xl mr-2" />
-            Sign up with Google
+            {googleLoading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                SIGNING IN...
+              </span>
+            ) : (
+              <>
+                <FcGoogle className="text-2xl mr-2" />
+                Sign in with Google
+              </>
+            )}
           </button>
           
           {/* reCAPTCHA Container - Make sure it's in DOM */}
@@ -1270,3 +1434,498 @@ const ClientLogin = () => {
 };
 
 export default ClientLogin;
+
+
+
+
+
+// import React, { useState, useRef, useEffect } from "react";
+// import { useNavigate, Link } from 'react-router-dom';
+// import { FcGoogle } from 'react-icons/fc';
+// import { auth } from "../../firebase/firebase";
+// import { 
+//   RecaptchaVerifier, 
+//   signInWithPhoneNumber, 
+//   signInWithPopup,
+//   GoogleAuthProvider,
+//   getAdditionalUserInfo,
+//   signOut 
+// } from "firebase/auth";
+// import { API_BASE_URL } from "../PropertyController";
+// import axios from "axios";
+
+// const ClientLogin = () => {
+  
+//   const [phone, setPhone] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [googleLoading, setGoogleLoading] = useState(false);
+//   const [error, setError] = useState("");
+//   const [success, setSuccess] = useState("");
+//   const navigate = useNavigate();
+//   const recaptchaVerifierRef = useRef(null);
+
+//   // Initialize reCAPTCHA on component mount
+//   useEffect(() => {
+//     initializeRecaptcha();
+    
+//     return () => {
+//       // Cleanup on unmount
+//       if (recaptchaVerifierRef.current) {
+//         try {
+//           recaptchaVerifierRef.current.clear();
+//         } catch (err) {
+//           console.log("Recaptcha cleanup error:", err);
+//         }
+//       }
+//     };
+//   }, []);
+
+//   const initializeRecaptcha = () => {
+//     try {
+//       console.log("Initializing reCAPTCHA...");
+      
+//       // Clear any existing reCAPTCHA
+//       if (recaptchaVerifierRef.current) {
+//         recaptchaVerifierRef.current.clear();
+//       }
+
+//       // Create reCAPTCHA verifier with minimal configuration
+//       recaptchaVerifierRef.current = new RecaptchaVerifier(
+//         'recaptcha-container',
+//         {
+//           size: 'invisible',
+//           callback: (response) => {
+//             console.log("reCAPTCHA solved automatically");
+//           },
+//         },
+//         auth
+//       );
+
+//       console.log("reCAPTCHA initialized successfully");
+      
+//     } catch (error) {
+//       console.error("Failed to initialize reCAPTCHA:", error);
+//     }
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setError("");
+//     setSuccess("");
+
+//     if (!phone || phone.length !== 10) {
+//       setError("Please enter a valid 10-digit phone number.");
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+
+//       // 1. Check with backend if user exists and is a client
+//       console.log("Checking user existence...");
+//       const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { 
+//         phone,
+//         role: 'client' // Specify client role
+//       });
+      
+//       if (!response.data.success) {
+//         setError(response.data.message || "Phone number not registered as client. Please register first.");
+//         return;
+//       }
+
+//       console.log("Client found, proceeding with OTP...");
+
+//       // 2. Ensure reCAPTCHA is ready
+//       if (!recaptchaVerifierRef.current) {
+//         initializeRecaptcha();
+//       }
+
+//       const phoneNumber = "+91" + phone;
+//       const appVerifier = recaptchaVerifierRef.current;
+      
+//       console.log("Sending OTP to:", phoneNumber);
+      
+//       // 3. Send OTP via Firebase
+//       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+//       window.confirmationResult = confirmation;
+
+//       // Store data for OTP verification
+//       sessionStorage.setItem('otpVerificationData', JSON.stringify({
+//         phone,
+//         userData: response.data.user,
+//         role: 'client',
+//         timestamp: Date.now()
+//       }));
+
+//       console.log("OTP sent successfully, navigating to verification...");
+//       navigate("/client/client-otpverify");
+
+//     } catch (err) {
+//       console.error("Error in handleSubmit:", err);
+      
+//       // Handle specific Firebase errors
+//       let errorMessage = "Failed to send OTP. Please try again.";
+      
+//       switch (err.code) {
+//         case 'auth/invalid-phone-number':
+//           errorMessage = "Invalid phone number format.";
+//           break;
+//         case 'auth/quota-exceeded':
+//           errorMessage = "Too many attempts. Please try again later.";
+//           break;
+//         case 'auth/too-many-requests':
+//           errorMessage = "Too many requests. Please try again later.";
+//           break;
+//         case 'auth/network-request-failed':
+//           errorMessage = "Network error. Please check your internet connection.";
+//           break;
+//         case 'auth/app-not-authorized':
+//           errorMessage = "Firebase app not authorized. Please contact support.";
+//           break;
+//         case 'auth/operation-not-allowed':
+//           errorMessage = "Phone authentication is not enabled. Please contact support.";
+//           break;
+//         case 'auth/recaptcha-not-enabled':
+//           errorMessage = "reCAPTCHA not enabled. Please contact support.";
+//           break;
+//         default:
+//           errorMessage = err.response?.data?.message || err.message || errorMessage;
+//       }
+      
+//       setError(errorMessage);
+      
+//       // Reinitialize reCAPTCHA on error
+//       setTimeout(() => {
+//         initializeRecaptcha();
+//       }, 1000);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Firebase Google Sign-In for Client
+
+// const handleGoogleSignIn = async () => {
+//     try {
+//       setGoogleLoading(true);
+//       setError("");
+//       setSuccess("");
+
+//       console.log("Starting Firebase Google Sign-In...");
+      
+//       // First sign out any existing session
+//       try {
+//         await signOut(auth);
+//       } catch (signOutError) {
+//         console.log("No existing session to sign out:", signOutError);
+//       }
+      
+//       // ✅ FIX 1: Create Google provider with explicit email scope
+//       const provider = new GoogleAuthProvider();
+//       provider.addScope('email'); // Explicitly request email
+//       provider.addScope('profile'); // Explicitly request profile
+      
+//       // Sign in with Google Popup via Firebase
+//       const result = await signInWithPopup(auth, provider);
+//       const user = result.user;
+      
+//       console.log("Firebase Google Sign-In successful:", {
+//         uid: user.uid,
+//         email: user.email,
+//         name: user.displayName,
+//         photo: user.photoURL
+//       });
+
+//       // ✅ FIX 2: Get additional user info (contains email from Google)
+//       const additionalUserInfo = getAdditionalUserInfo(result);
+//       console.log("Additional user info:", additionalUserInfo);
+      
+//       // ✅ FIX 3: Extract email from multiple sources
+//       let userEmail = user.email;
+      
+//       if (!userEmail && additionalUserInfo?.profile) {
+//         // Try to get email from additional user info
+//         const profile = additionalUserInfo.profile;
+//         userEmail = profile.email || profile.emails?.[0]?.value;
+//         console.log("Email from additional info:", userEmail);
+//       }
+      
+//       // ✅ FIX 4: If still no email, use a fallback
+//       if (!userEmail) {
+//         userEmail = `google_${user.uid}@placeholder.com`;
+//         console.log("Using fallback email:", userEmail);
+//       }
+      
+//       console.log("Final email to send:", userEmail);
+      
+//       // ✅ FIX 5: Force refresh token to get latest claims
+//       const idToken = await user.getIdToken(true);
+//       console.log("Firebase ID Token obtained, length:", idToken.length);
+      
+//       // ✅ Send to backend with extracted email
+//       const response = await axios.post(`${API_BASE_URL}/api/auth/google-signin`, {
+//         token: idToken, // Firebase ID Token
+//         email: userEmail, // Explicitly send the extracted email
+//         role: 'client',
+//         name: user.displayName || 'Google User',
+//         photo: user.photoURL || ''
+//       }, {
+//         headers: {
+//           'Content-Type': 'application/json'
+//         },
+//         timeout: 15000
+//       });
+
+//       console.log("Backend response:", response.data);
+
+//       if (response.data.success) {
+//         console.log("Backend authentication successful");
+        
+//         // Store token and user data
+//         localStorage.setItem('token', response.data.token);
+//         localStorage.setItem('client', JSON.stringify(response.data.user));
+        
+//         setSuccess("Google login successful! Redirecting...");
+        
+//         // Navigate to home page
+//         setTimeout(() => {
+//           navigate('/client/dashboard');
+//         }, 1000);
+//       } else {
+//         throw new Error(response.data.message || "Google sign-in failed");
+//       }
+
+//     } catch (err) {
+//       console.error("Firebase Google Sign-In error:", err);
+//       console.error("Full error object:", err);
+      
+//       let errorMessage = "Google Sign-In failed. Please try again.";
+      
+//       // Firebase-specific error handling
+//       switch (err.code) {
+//         case 'auth/popup-closed-by-user':
+//           errorMessage = "Sign-in popup was closed. Please try again.";
+//           break;
+//         case 'auth/popup-blocked':
+//           errorMessage = "Popup was blocked. Please allow popups for this site.";
+//           break;
+//         case 'auth/network-request-failed':
+//           errorMessage = "Network error. Please check your internet connection.";
+//           break;
+//         case 'auth/unauthorized-domain':
+//           errorMessage = "This domain is not authorized for Google Sign-In.";
+//           break;
+//         case 'auth/cancelled-popup-request':
+//           errorMessage = "Popup request was cancelled.";
+//           break;
+//         case 'auth/user-disabled':
+//           errorMessage = "This account has been disabled.";
+//           break;
+//         case 'auth/account-exists-with-different-credential':
+//           errorMessage = "An account already exists with the same email address but different sign-in credentials.";
+//           break;
+//         default:
+//           if (err.response?.data?.message) {
+//             errorMessage = err.response.data.message;
+//           } else if (err.message) {
+//             errorMessage = err.message;
+//           }
+//       }
+      
+//       setError(errorMessage);
+      
+//       // Sign out from Firebase on error
+//       try {
+//         await signOut(auth);
+//       } catch (signOutError) {
+//         console.log("Error signing out:", signOutError);
+//       }
+//     } finally {
+//       setGoogleLoading(false);
+//     }
+//   };
+//   // Alternative method using window object
+//   const handleSubmitAlternative = async (e) => {
+//     e.preventDefault();
+//     setError("");
+//     setSuccess("");
+
+//     if (!phone || phone.length !== 10) {
+//       setError("Please enter a valid 10-digit phone number.");
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+
+//       // Check user
+//       const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { 
+//         phone,
+//         role: 'client'
+//       });
+      
+//       if (!response.data.success) {
+//         setError(response.data.message);
+//         return;
+//       }
+
+//       // Simple reCAPTCHA setup
+//       if (window.recaptchaVerifier) {
+//         window.recaptchaVerifier.clear();
+//       }
+
+//       window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+//         size: 'invisible',
+//       }, auth);
+
+//       const phoneNumber = "+91" + phone;
+//       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+//       window.confirmationResult = confirmation;
+
+//       sessionStorage.setItem('otpVerificationData', JSON.stringify({
+//         phone,
+//         userData: response.data.user,
+//         role: 'client'
+//       }));
+
+//       navigate("/client/client-otpverify");
+
+//     } catch (err) {
+//       console.error("Alternative method error:", err);
+//       setError(err.message || "Failed to send OTP. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const resetRecaptcha = () => {
+//     initializeRecaptcha();
+//     setError("Security check reset. Please try again.");
+//   };
+
+//   return (
+//     <div className="h-screen flex items-center justify-center bg-blue-900">
+//       <div className="flex items-center md:max-w-5xl w-full lg:px-6 md:px-6 md:space-x-20 lg:space-x-40">
+//         {/* Left Side Image */}
+//         <div className="w-1/2 hidden md:block md:-ml-10 -ml-0">
+//           <svg width="500" height="600" viewBox="0 0 795 795" fill="none" xmlns="http://www.w3.org/2000/svg">
+//             {/* Your SVG content here */}
+//           </svg>
+//         </div>
+        
+//         {/* Right Side Form */}
+//         <div className="bg-white p-8 rounded-lg shadow-lg w-full md:w-1/3">
+//           <h2 className="text-2xl font-semibold mb-4 text-center">Client Login</h2>
+          
+//           {success && (
+//             <div className="p-3 bg-green-50 border border-green-200 rounded-lg mb-4">
+//               <p className="text-green-600 text-sm">{success}</p>
+//             </div>
+//           )}
+          
+//           <form onSubmit={handleSubmit} className="space-y-4">
+//             <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+//             <input
+//               type="tel"
+//               value={phone}
+//               onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+//               placeholder="Enter your 10-digit mobile number"
+//               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+//               maxLength={10}
+//               required
+//             />
+            
+//             {error && (
+//               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+//                 <p className="text-red-600 text-sm">{error}</p>
+//                 {error.includes("reCAPTCHA") && (
+//                   <button
+//                     type="button"
+//                     onClick={resetRecaptcha}
+//                     className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+//                   >
+//                     Reset Security Check
+//                   </button>
+//                 )}
+//                 {error.includes("Alternative") && (
+//                   <button
+//                     type="button"
+//                     onClick={handleSubmitAlternative}
+//                     className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+//                   >
+//                     Try alternative method
+//                   </button>
+//                 )}
+//               </div>
+//             )}
+            
+//             <p className="text-xs text-gray-500 mt-2">
+//               By signing up, you agree to our{" "}
+//               <span className="text-blue-500 cursor-pointer">Terms of Use</span> and{" "}
+//               <span className="text-blue-500 cursor-pointer">Privacy Policy</span>.
+//             </p>
+            
+//             <Link to="/client/register">
+//               <p className="text-xs text-gray-500 text-center mt-2">
+//                 If you don't have an account?{" "}
+//                 <span className="text-blue-500 cursor-pointer hover:underline">Register as Client</span>
+//               </p>
+//             </Link>
+
+//             <button
+//               type="submit"
+//               disabled={loading}
+//               className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded-lg disabled:opacity-50 transition duration-200"
+//             >
+//               {loading ? (
+//                 <span className="flex items-center justify-center">
+//                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+//                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+//                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+//                   </svg>
+//                   Sending OTP...
+//                 </span>
+//               ) : (
+//                 'SEND OTP'
+//               )}
+//             </button>
+//           </form>
+
+//           <div className="flex items-center my-4">
+//             <hr className="flex-grow border-gray-300" />
+//             <span className="text-gray-500 mx-2">OR</span>
+//             <hr className="flex-grow border-gray-300" />
+//           </div>
+
+//           {/* Firebase Google Sign In Button */}
+//           <button 
+//             onClick={handleGoogleSignIn}
+//             disabled={loading || googleLoading}
+//             type="button"
+//             className="w-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+//           >
+//             {googleLoading ? (
+//               <span className="flex items-center justify-center">
+//                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+//                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+//                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+//                 </svg>
+//                 SIGNING IN...
+//               </span>
+//             ) : (
+//               <>
+//                 <FcGoogle className="text-2xl mr-2" />
+//                 Sign in with Google
+//               </>
+//             )}
+//           </button>
+          
+//           {/* reCAPTCHA Container - Make sure it's in DOM */}
+//           <div id="recaptcha-container" className="mt-4"></div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default ClientLogin;
