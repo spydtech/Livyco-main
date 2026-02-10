@@ -273,6 +273,8 @@ function UserLogin() {
       const response = await axios.post(`${API_BASE_URL}/api/auth/check-user`, { 
         phone,
         role: 'user' // Specify role for user login
+     }, {
+        timeout: 20000 // Increased timeout
       });
       
       if (!response.data.success) {
@@ -418,7 +420,7 @@ function UserLogin() {
         headers: {
           'Content-Type': 'application/json'
         },
-        timeout: 15000
+        timeout: 30000
       });
 
       console.log("Backend response:", response.data);

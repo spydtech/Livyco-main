@@ -502,6 +502,10 @@ export default function UserOtpVerfication() {
 
     try {
       setLoading(true);
+        // Add timeout warning
+      const timeoutWarning = setTimeout(() => {
+        setError("Verification is taking longer than expected. Please wait...");
+      }, 10000);
       
       // 1. Verify OTP with Firebase
       console.log("Verifying OTP with Firebase...");
@@ -519,7 +523,7 @@ export default function UserOtpVerfication() {
         idToken,
         role: 'user' 
       }, {
-        timeout: 15000,
+        timeout: 30000,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -527,6 +531,7 @@ export default function UserOtpVerfication() {
       });
 
       console.log("Backend response:", response.data);
+       clearTimeout(timeoutWarning);
 
       if (!response.data.success) {
         throw new Error(response.data.message || "OTP verification failed");
