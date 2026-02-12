@@ -1,6 +1,6 @@
 import React from "react";
 import { Routes, Route, NavLink } from "react-router-dom";
-import { FaSearch, FaBell, FaUserCircle, FaAddressBook } from "react-icons/fa";
+import { FaSearch, FaBell, FaUserCircle, FaAddressBook, FaExchangeAlt } from "react-icons/fa";
 import { HiOutlineViewGrid, HiUsers, HiChartPie, HiLogout  } from "react-icons/hi";
 import { BiMoney, BiSupport } from "react-icons/bi";
 import { useState, useEffect } from "react";
@@ -21,6 +21,7 @@ import { adminNotificationAPI } from "../adminController";
 import axios from "axios";
 import AdminNotifications from "../adminNotification/AdminNotifications";
 import AdminContactsPage from "../AdminContacts/AdminContactsPage";
+import TransferHistory from "../TransferHistory/TransferHistory";
 
 const menuItems = [
   { name: "Dashboard", icon: HiOutlineViewGrid, path: "/admin/dashboard" },
@@ -28,6 +29,7 @@ const menuItems = [
   { name: "Manage Users", icon: HiUsers, path: "/admin/dashboard/manageusers" },
   { name: "Custom Reviews", icon: HiUsers, path: "/admin/dashboard/reviews" },
   { name:"Bookings", icon: HiUsers, path: "/admin/dashboard/bookings" },
+  { name: "Transfer History", icon: FaExchangeAlt, path: "/admin/dashboard/transferhistory" },
   { name: "Financial Reports", icon: BiMoney, path: "/admin/dashboard/finacialReport" },
   { name: "Contact List", icon: FaAddressBook, path: "/admin/dashboard/contacts" },
  
@@ -191,6 +193,7 @@ const Dashboard = () => {
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/support" element={<SupportDashboard/>} />
           <Route path="/contacts" element={<AdminContactsPage />} />
+          <Route path="/transferhistory" element={<TransferHistory/>} />
  
           
         </Routes>

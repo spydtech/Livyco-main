@@ -3789,6 +3789,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { FiMessageCircle, FiPhone } from "react-icons/fi";
+import { API_BASE_URL } from "../PropertyController";
 
 const TenantProfile = () => {
   const [showMoveOutForm, setShowMoveOutForm] = useState(false);
@@ -3872,7 +3873,7 @@ const TenantProfile = () => {
     let url, method;
     
     // Use absolute URL to your backend server
-    const baseUrl = 'http://localhost:5000';
+    const baseUrl = API_BASE_URL || "http://localhost:5000"; // Replace with your actual backend URL
     
     if (bookingType === "online") {
       // Use PUT for online bookings: /api/bookings/:bookingId/status

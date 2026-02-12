@@ -2209,7 +2209,7 @@ const FigmaDeluxeHostel = () => {
               
               {durationType === "custom" && (
                 <div className="col-span-2 flex flex-col sm:flex-row gap-2 w-full">
-                  <input
+                  {/* <input
                     type="date"
                     placeholder="Start Date"
                     value={customStartDate}
@@ -2218,13 +2218,13 @@ const FigmaDeluxeHostel = () => {
                       setSelectedDate(e.target.value);
                     }}
                     className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
-                  />
+                  /> */}
                   <input
                     type="date"
                     placeholder="End Date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-full"
+                    className="border px-2 sm:px-3 py-1 sm:py-2 rounded text-sm w-1/2"
                   />
                 </div>
               )}

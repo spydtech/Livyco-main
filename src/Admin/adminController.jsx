@@ -505,6 +505,35 @@ export const adminPaymentsAPI = {
       throw error;
     }
   },
+  getAllManualTransfers: async (filters = {}) => {
+  try {
+    console.log("🔄 Getting all manual transfers with filters:", filters);
+   
+    const params = new URLSearchParams();
+    params.append('page', filters.page || 1);
+    params.append('limit', filters.limit || 10);
+   
+    if (filters.search) params.append('search', filters.search);
+    if (filters.status) params.append('status', filters.status);
+   
+    const response = await api.get(`/admin/manual-transfers?${params.toString()}`);
+   
+    console.log("✅ All manual transfers response:", {
+      count: response.data.data?.length,
+      total: response.data.total
+    });
+   
+    return response;
+   
+  } catch (error) {
+    console.error("❌ Get all manual transfers error:", {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw error;
+  }
+},
  
   // Get Razorpay balance
   getRazorpayBalance: async () => {
@@ -802,3 +831,4 @@ export const adminContactsAPI = {
         throw error;
       })
 };
+

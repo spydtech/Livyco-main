@@ -412,12 +412,97 @@ const HostelInfrastructure = () => {
   }, [stayType, checkIn, checkOut, selectedBeds, selectedProperty]);
 
   // ✅ Proceed button
+// const handleProceed = async () => {
+//   if (!selectedBedId || !stayType) {
+//     alert("Please select a bed and stay type");
+//     return;
+//   }
+
+//   // 1️⃣ Find selected bed details
+//   let selectedRoomDetails = null;
+//   for (const sharingType in roomsBySharing) {
+//     for (const floorGroup of roomsBySharing[sharingType]) {
+//       const bed = floorGroup.beds.find(
+//         (b) => `${b.room}-${b.bed.replace(/\s+/g, "-")}` === selectedBedId
+//       );
+//       if (bed) {
+//         selectedRoomDetails = {
+//           roomIdentifier: `${bed.room}-${bed.bed}`,
+//           sharingType,
+//           floor: floorGroup.floor,
+//           roomNumber: bed.room,
+//           bed: bed.bed,
+//         };
+//         break;
+//       }
+//     }
+//     if (selectedRoomDetails) break;
+//   }
+
+//   if (!selectedRoomDetails) {
+//     alert("Invalid bed selection");
+//     return;
+//   }
+
+//   try {
+//     // ✅ Use existing tenant id
+//     const userId = tenantData._id || tenantData.id;
+//     if (!userId) {
+//       alert("No tenant ID found. Please create tenant first.");
+//       return;
+//     }
+
+//     // ✅ Build booking payload
+//     const pricingPayload = {
+//       monthlyRent: selectedRoomPrice,
+//       securityDeposit: selectedRoomDeposit,
+//       maintenanceFee: 0,
+//       totalRent,
+//     };
+
+//     const storedUser = JSON.parse(localStorage.getItem("user"));
+//     const clientIdFromLocalStorageOrState =
+//       storedUser?._id || tenantData?.clientId;
+
+//     const payload = {
+//       tenant: userId,
+//       propertyId: selectedPropertyId,
+//       roomDetails: selectedRoomDetails,
+//       stayType,
+//       checkInDate: new Date(checkIn),
+//       checkOutDate: new Date(checkOut),
+//       personCount: persons,
+//       pricing: pricingPayload,
+//       createdBy: clientIdFromLocalStorageOrState, // client creating this booking
+//       bookingStatus: "confirmed",
+//     };
+
+//     // 3️⃣ Save booking
+//     const res = await fetch("http://localhost:5000/api/offline-bookings", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify(payload),
+//     });
+
+//     const data = await res.json();
+//     if (res.ok) {
+//       alert("Offline booking created successfully!");
+//     } else {
+//       alert("Booking failed: " + data.message);
+//     }
+//   } catch (err) {
+//     console.error(err);
+//     alert("Booking failed!");
+//   }
+// };
+
+// ✅ Proceed button
 const handleProceed = async () => {
   if (!selectedBedId || !stayType) {
     alert("Please select a bed and stay type");
     return;
   }
-
+ 
   // 1️⃣ Find selected bed details
   let selectedRoomDetails = null;
   for (const sharingType in roomsBySharing) {
@@ -438,12 +523,12 @@ const handleProceed = async () => {
     }
     if (selectedRoomDetails) break;
   }
-
+ 
   if (!selectedRoomDetails) {
     alert("Invalid bed selection");
     return;
   }
-
+ 
   try {
     // ✅ Use existing tenant id
     const userId = tenantData._id || tenantData.id;
@@ -451,7 +536,7 @@ const handleProceed = async () => {
       alert("No tenant ID found. Please create tenant first.");
       return;
     }
-
+ 
     // ✅ Build booking payload
     const pricingPayload = {
       monthlyRent: selectedRoomPrice,
@@ -459,43 +544,89 @@ const handleProceed = async () => {
       maintenanceFee: 0,
       totalRent,
     };
-
+ 
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const clientIdFromLocalStorageOrState =
       storedUser?._id || tenantData?.clientId;
-
+ 
     const payload = {
       tenant: userId,
       propertyId: selectedPropertyId,
       roomDetails: selectedRoomDetails,
       stayType,
-      checkInDate: new Date(checkIn),
-      checkOutDate: new Date(checkOut),
+      checkInDate: checkIn,
+      checkOutDate: checkOut,
       personCount: persons,
       pricing: pricingPayload,
-      createdBy: clientIdFromLocalStorageOrState, // client creating this booking
+      createdBy: clientIdFromLocalStorageOrState,
       bookingStatus: "confirmed",
     };
-
-    // 3️⃣ Save booking
-    const res = await fetch("http://localhost:5000/api/offline-bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      alert("Offline booking created successfully!");
+ 
+    console.log("Sending payload:", payload);
+ 
+    // 3️⃣ Save booking using the offlineBookingAPI
+    const response = await offlineBookingAPI.createOfflineBooking(payload);
+   
+    // Check if we got a valid response
+    if (response && response.data) {
+      // SUCCESS: Show the success popup
+      alert("✅ Offline booking created successfully!");
+      console.log("Booking response:", response.data);
+     
+      // Optional: Show booking ID if available
+      const bookingId = response.data?._id ||
+                        response.data?.bookingId ||
+                        response.data?.data?._id ||
+                        response.data?.data?.bookingId;
+     
+      if (bookingId) {
+        console.log("Booking created with ID:", bookingId);
+        // You could also show the booking ID in the alert:
+        // alert(`✅ Offline booking created successfully!\nBooking ID: ${bookingId}`);
+      }
+     
+      // Reset the form
+      setSelectedBedId(null);
+      setStayType("");
+      setCheckIn("");
+      setCheckOut("");
+      setSelectedPropertyId("");
+      setSelectedBeds(null);
+      setTotalRent(0);
+     
+      // Optional: Navigate to a success page or bookings list
+      // window.location.href = "/client/bookings";
+      // or
+      // window.location.href = `/booking-success/${bookingId}`;
     } else {
-      alert("Booking failed: " + data.message);
+      alert("⚠️ Booking completed but no response data received");
     }
+   
   } catch (err) {
-    console.error(err);
-    alert("Booking failed!");
+    console.error("Booking error:", err);
+    console.error("Error details:", err.response?.data || err.message);
+   
+    // Check if it's the specific "created successfully" error from your API
+    if (err.message && err.message.includes("created successfully")) {
+      // Even though API threw an error, booking was created
+      alert("✅ Offline booking created successfully!");
+      console.log("Booking created despite API error message");
+     
+      // Reset form
+      setSelectedBedId(null);
+      setStayType("");
+      setCheckIn("");
+      setCheckOut("");
+      setSelectedPropertyId("");
+      setSelectedBeds(null);
+      setTotalRent(0);
+    } else {
+      // Show actual error
+      const errorMessage = err.response?.data?.message || err.message || "Please try again";
+      alert(`❌ Booking failed: ${errorMessage}`);
+    }
   }
 };
-
 
 
 

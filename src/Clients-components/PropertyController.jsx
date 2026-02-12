@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { getAuthToken } from '../utils/tokenUtils';
 
-//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+//export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.livyco.com';
 
 // Create a separate axios instance without interceptors for token refresh
 const refreshApi = axios.create({
@@ -1531,14 +1531,19 @@ export const offlineBookingAPI = {
       }),
  
   // Create offline booking
-  createOfflineBooking: (bookingData) =>
-    api.post('/api/offline-bookings', bookingData)
-      .then(response => {
-        if (!response.data?.success) {
-          throw new Error(response.data?.message || 'Failed to create offline booking');
-        }
-        return response;
-      }),
+ createOfflineBooking: (bookingData) =>
+  api.post('/api/offline-bookings', bookingData)
+    .then(response => {
+      console.log("Offline booking response:", response.data);
+     
+      // Special case: if message says "created successfully", don't throw error
+      const message = response.data?.message || '';
+      if (response.data?.success === false &&
+          !message.toLowerCase().includes('created successfully')) {
+        throw new Error(response.data?.message || 'Failed to create offline booking');
+      }
+      return response;
+    }),
  
   // Update offline booking
   updateOfflineBooking: (bookingId, updates) =>
@@ -1570,6 +1575,26 @@ export const offlineBookingAPI = {
         return response;
       })
 };
+
+// Event Calendar API
+export const eventAPI = {
+  // Get events for a client
+  getClientEvents: (clientId, params = {}) =>
+    api.get(`/api/events/client/${clientId}`, { params }),
+ 
+  // Create a new event
+  createEvent: (eventData) =>
+    api.post('/api/events', eventData),
+ 
+  // Update an existing event
+  updateEvent: (eventId, updates) =>
+    api.put(`/api/events/${eventId}`, updates),
+ 
+  // Delete an event
+  deleteEvent: (eventId) =>
+    api.delete(`/api/events/${eventId}`),
+};
+ 
 
 // PropertyController.jsx
 // export const manualTransferAPI = {
