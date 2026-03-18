@@ -2396,7 +2396,7 @@ const FigmaDeluxeHostel = () => {
     </div>
     <div className="mb-3 sm:mb-4 text-sm sm:text-base">
       <strong>Advance Amount: </strong>
-      {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.price || 0}` : '₹0'}
+      {selectedRoomType ? `₹${sharingTypes.find(st => st.type === selectedRoomType)?.price * globalSelectedRooms.length || 0}` : '₹0'}
     </div>
     <div className="mb-3 sm:mb-4 text-sm sm:text-base">
       <strong>Security Deposit: </strong>
@@ -2404,7 +2404,7 @@ const FigmaDeluxeHostel = () => {
     </div>
     <div className="mb-3 sm:mb-4 text-sm sm:text-base">
       <strong>Total Amount: </strong>
-      {selectedRoomType ? `₹${(sharingTypes.find(st => st.type === selectedRoomType)?.price + (sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length)) || 0}` : '₹0'}
+      {selectedRoomType ? `₹${(sharingTypes.find(st => st.type === selectedRoomType)?.price * globalSelectedRooms.length + (sharingTypes.find(st => st.type === selectedRoomType)?.deposit * globalSelectedRooms.length)) || 0}` : '₹0'}
     </div>
     <div className="mb-3 sm:mb-4 text-sm sm:text-base">
       <strong>Selected Beds: </strong>
